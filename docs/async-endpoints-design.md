@@ -1,5 +1,15 @@
 # AsyncEndpoints Initial Design
 
+- It will allow developers to build asynchronous APIs, which processes the request in background
+- When user sends the request to Async endpoint it will queue the request and immediately respond with 202 (Accepted) with request id and other necessary metadata
+- It will add a new Job record and worker will pick up those jobs as per availability and process them
+- Worker will update job meta data (like status) throughout the life time of the job
+- It will also retry based on configurations
+- There will be an endpoint to check the latest status of the job, it will also show response for completed jobs and exceptions for failed jobs
+- It should show results for each runs for particular request
+- Request send with request id in header will be used for making request idempotent
+- Request send without request id will have a warning to use that header
+
 ## Program.cs
 
 ```cs
@@ -7,9 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddAsyncEndpoints()
-    .AddAsyncEndpointsInMemoryStore()
-    .AddAsyncEndpointsRedisStore()
-    .AddAsyncEndpointsEntityFrameworkCoreStore()
+    .AddAsyncEndpointsRedisStore() // Lowest priority
+    .AddAsyncEndpointsEntityFrameworkCoreStore() // Lowest priority
     .AddAsyncEndpointsHandlersFromAssemblyContaining<IAsyncEndpointHandler<,>>() // Does not work with AOT compilation
     .AddAsyncEndpointsHandler<AsyncEndpointHandler<Request, Response>>(); // Alternative way to register handler
 
@@ -17,9 +26,9 @@ var app = builder.Build();
 
 app.MapAsyncPost<Request, Response>("/{resourceId}", async (HttpContext context, Delegate next) => {
     // Optional Handler:
-    //      For synchronous tasks, for example, request validation.
-    //      All will be running before storing the task in queue.
-    //      Once complete we can call next for queueing the request
+    // For synchronous tasks, for example, request validation.
+    // All will be running before storing the task in queue.
+    // Once complete we can call next for queueing the request
     await next();
 });
 
