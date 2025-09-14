@@ -4,9 +4,9 @@ namespace AsyncEndpoints;
 
 public class Job
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; init; } = Guid.NewGuid();
     public JobStatus Status { get; set; } = JobStatus.Queued;
-    public string Payload { get; set; } = string.Empty;
+    public string Payload { get; init; } = string.Empty;
     public string? Result { get; set; } = null;
     public string? Exception { get; set; } = null;
     public int RetryCount { get; set; } = 0;

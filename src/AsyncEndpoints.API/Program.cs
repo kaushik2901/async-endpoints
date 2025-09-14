@@ -1,3 +1,5 @@
+using AsyncEndpoints;
+
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -21,6 +23,11 @@ todosApi.MapGet("/{id}", (int id) =>
     sampleTodos.FirstOrDefault(a => a.Id == id) is { } todo
         ? Results.Ok(todo)
         : Results.NotFound());
+
+app.MapAsyncPost<Todo, Todo>("/todo-async", (context) =>
+{
+    return null;
+});
 
 app.Run();
 

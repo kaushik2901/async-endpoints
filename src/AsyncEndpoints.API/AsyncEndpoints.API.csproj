@@ -6,4 +6,7 @@
 		<InvariantGlobalization>true</InvariantGlobalization>
 		<PublishAot>true</PublishAot>
 	</PropertyGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\AsyncEndpoints\AsyncEndpoints.csproj" />
+	</ItemGroup>
 </Project>
