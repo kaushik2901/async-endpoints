@@ -2,6 +2,6 @@
 
 internal static class AsyncEndpointConstants
 {
-    internal static readonly string JobIdHeaderName = "X-Job-Id";
+    internal static readonly string JobIdHeaderName = "Async-Job-Id";
     internal static readonly int MaximumRetries = 3;
 }
