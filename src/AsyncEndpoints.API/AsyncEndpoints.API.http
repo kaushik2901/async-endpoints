@@ -9,3 +9,24 @@ GET {{AsyncEndpoints.API_HostAddress}}/todos/1
 Accept: application/json
 
 ###
+
+POST {{AsyncEndpoints.API_HostAddress}}/todo-async
+Accept: application/json
+Content-Type: application/json
+X-Job-Id: 1045e46e-d4f0-44ff-83d3-b4a34396cd0b
+
+{
+    "id": 1,
+    "title": "Ok"
+}
+
+###
+
+POST {{AsyncEndpoints.API_HostAddress}}/todo-async
+Accept: application/json
+Content-Type: application/json
+
+{
+    "id": 1,
+    "title": "Ok"
+}
