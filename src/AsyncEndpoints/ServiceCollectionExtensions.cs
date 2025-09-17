@@ -1,6 +1,7 @@
 using AsyncEndpoints.AsyncEndpointRequestHandler;
 using AsyncEndpoints.Configurations;
 using AsyncEndpoints.Job;
+using AsyncEndpoints.RouteBuilder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AsyncEndpoints;
@@ -9,8 +10,10 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services)
     {
+        services.AddHttpContextAccessor();
         services.AddSingleton<AsyncEndpointConfig>();
         services.AddSingleton<IJobStore, InMemoryJobStore>();
+        services.AddScoped<AsyncEndpointRequestDelegate>();
         return services;
     }
 
