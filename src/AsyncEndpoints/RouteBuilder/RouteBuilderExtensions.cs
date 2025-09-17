@@ -1,4 +1,5 @@
 ﻿using AsyncEndpoints.Constants;
+using AsyncEndpoints.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +19,15 @@ public static class RouteBuilderExtensions
         Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null)
     {
         return endpoints
-            .MapPost(pattern, async (HttpContext httpContext, TRequest request, [FromServices] AsyncEndpointRequestDelegate asyncEndpointRequestDelegate, CancellationToken token) =>
-            {
-                var value = await RouteBuilderExtensionsHelpers.HandleRequestDelegate(handler, httpContext, request, token);
-                if (value != null) return value;
-                return await asyncEndpointRequestDelegate.HandleAsync(name, request, token);
-            })
+            .MapPost(pattern, Handle(name, handler))
             .WithTags(AsyncEndpointConstants.AsyncEndpointTag);
+    }
+
+    private static Func<HttpContext, TRequest, IAsyncEndpointRequestDelegate, CancellationToken, Task<IResult>> Handle<TRequest>(
+        string name,
+        Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null)
+    {
+        return (httpContext, request, [FromServices] asyncEndpointRequestDelegate, token) =>
+            asyncEndpointRequestDelegate.HandleAsync(name, httpContext, request, handler, token);
     }
 }
