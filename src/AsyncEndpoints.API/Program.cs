@@ -11,7 +11,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 builder.Services
     .AddAsyncEndpoints()
-    .AddAsyncEndpointHandler<SampleRequestHandler, SampleRequest, SampleResponse>("Job name");
+    .AddAsyncEndpointHandler<SampleRequestHandler, SampleRequest, SampleResponse>("Job name")
+    .AddAsyncEndpointsWorker();
 
 var app = builder.Build();
 

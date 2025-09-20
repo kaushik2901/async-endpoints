@@ -1,3 +1,4 @@
+using AsyncEndpoints.BackgroundWorker;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.InMemoryStore;
 using AsyncEndpoints.Services;
@@ -13,6 +14,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AsyncEndpointConfig>();
         services.AddSingleton<IJobStore, InMemoryJobStore>();
         services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
+        return services;
+    }
+
+    public static IServiceCollection AddAsyncEndpointsWorker(this  IServiceCollection services)
+    {
+        services.AddHostedService<AsyncEndpointsBackgroundService>();
         return services;
     }
 
