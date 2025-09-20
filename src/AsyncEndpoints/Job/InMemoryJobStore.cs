@@ -14,12 +14,27 @@ public class InMemoryJobStore : IJobStore
     {
         try
         {
-            jobs.TryAdd(job.Id, job);
+            if (job == null)
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("INVALID_JOB", "Job cannot be null")));
+
+            if (job.Id == Guid.Empty)
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty")));
+
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<MethodResult>(cancellationToken);
+
+            if (!jobs.TryAdd(job.Id, job))
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("JOB_ADD_FAILED", $"Failed to add job with ID {job.Id}")));
+
             return Task.FromResult(MethodResult.Success());
         }
         catch (Exception ex)
         {
-            return Task.FromResult(MethodResult.Failure(ex));
+            return Task.FromResult(MethodResult.Failure(
+                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error adding job: {ex.Message}", ex)));
         }
     }
 
@@ -27,12 +42,21 @@ public class InMemoryJobStore : IJobStore
     {
         try
         {
+            if (id == Guid.Empty)
+                return Task.FromResult(MethodResult<Job?>.Failure(
+                    AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty")));
+
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<MethodResult<Job?>>(cancellationToken);
+
             jobs.TryGetValue(id, out var job);
+
             return Task.FromResult(MethodResult<Job?>.Success(job));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(MethodResult<Job?>.Failure(ex));
+            return Task.FromResult(MethodResult<Job?>.Failure(
+                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error retrieving job: {ex.Message}", ex)));
         }
     }
 }
