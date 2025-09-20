@@ -19,17 +19,18 @@ builder.Services
     .AddAsyncEndpoints()
     .AddAsyncEndpointsRedisStore() // Lowest priority
     .AddAsyncEndpointsEntityFrameworkCoreStore() // Lowest priority
-    .AddAsyncEndpointsHandlersFromAssemblyContaining<IAsyncEndpointHandler<,>>() // Does not work with AOT compilation
-    .AddAsyncEndpointsHandler<AsyncEndpointHandler<Request, Response>>(); // Alternative way to register handler
+    .AddAsyncEndpointsHandler<AsyncEndpointHandler, Request, Response>("Job Name"); // Register handlers
 
 var app = builder.Build();
 
-app.MapAsyncPost<Request, Response>("/{resourceId}", async (HttpContext context, Delegate next) => {
+app.MapAsyncPost<Request, Response>("Job Name", "/async-endpoints/resources/");
+app.MapAsyncPost<Request, Response>("Job Name", "/async-endpoints/resources/{resourceId}", async (httpContext, request, token) => {
     // Optional Handler:
     // For synchronous tasks, for example, request validation.
     // All will be running before storing the task in queue.
-    // Once complete we can call next for queueing the request
-    await next();
+    // It should return Results object
+    // Job will be only queued if null is returned.
+    return null;
 });
 
 await app.RunAsync();
@@ -38,9 +39,9 @@ await app.RunAsync();
 ## AsyncEndpointHandler.cs
 
 ```cs
-public class AsyncEndpointHandler<Request, Response>(ILogger<AsyncEndpointHandler<Request, Response>> logger) : IAsyncEndpointHandler<Request, Response>
+public class AsyncEndpointHandler<Request, Response>(ILogger<AsyncEndpointHandler<Request, Response>> logger) : IAsyncEndpointRequestHandler<Request, Response>
 {
-    public async Task<ApiOperationResult<Response>> HandleAsync(AsyncContext<Request> context)
+    public async Task<MethodResult<Response>> HandleAsync(AsyncContext<Request> context, CancellationToken token)
     {
         var resourceId = context.Request.RouteParameters.ResourceId;
         var queryCollection = context.Request.Query;
@@ -48,16 +49,16 @@ public class AsyncEndpointHandler<Request, Response>(ILogger<AsyncEndpointHandle
 
         logger.LogInformation("Handling request for resourceId {ResourceId}", resourceId);
 
-        var result = await Process(resourceId, queryCollection, headers);
+        var result = await Process(resourceId, queryCollection, headers, token);
 
         if (!result.IsSucceeded)
         {
             logger.LogWarning("Request failed: {Errors}", string.Join(", ", result.Errors));
-            return ApiOperationResult<Response>.Failure(result.Errors);
+            return MethodResult<Response>.Failure(result.Errors);
         }
 
         logger.LogInformation("Request processed successfully.");
-        return ApiOperationResult<Response>.Success(result.Data);
+        return MethodResult<Response>.Success(result.Data);
     }
 }
 ```
