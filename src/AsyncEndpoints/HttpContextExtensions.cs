@@ -7,7 +7,7 @@ public static class HttpContextExtensions
 {
     public static Guid GetOrCreateJobId(this HttpContext httpContext)
     {
-        if (!httpContext.Request.Headers.TryGetValue(AsyncEndpointConstants.JobIdHeaderName, out var jobIdHeaderValueString))
+        if (!httpContext.Request.Headers.TryGetValue(AsyncEndpointsConstants.JobIdHeaderName, out var jobIdHeaderValueString))
         {
             return Guid.NewGuid();
         }

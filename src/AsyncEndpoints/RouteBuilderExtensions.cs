@@ -19,7 +19,7 @@ public static class RouteBuilderExtensions
     {
         return endpoints
             .MapPost(pattern, Handle(name, handler))
-            .WithTags(AsyncEndpointConstants.AsyncEndpointTag);
+            .WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
     }
 
     private static Func<HttpContext, TRequest, IAsyncEndpointRequestDelegate, CancellationToken, Task<IResult>> Handle<TRequest>(

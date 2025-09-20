@@ -1,6 +1,6 @@
 ﻿namespace AsyncEndpoints;
 
-public sealed class AsyncEndpointConfig
+public sealed class AsyncEndpointsConfigurations
 {
     public int MaximumRetries { get; set; } = 3;
 }

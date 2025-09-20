@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services)
     {
         services.AddHttpContextAccessor();
-        services.AddSingleton<AsyncEndpointConfig>();
+        services.AddSingleton<AsyncEndpointsConfigurations>();
         services.AddSingleton<IJobStore, InMemoryJobStore>();
         services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
         return services;
