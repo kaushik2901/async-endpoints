@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncEndpoints.Utilities;
 
 namespace AsyncEndpoints.Job;
 
@@ -9,15 +10,29 @@ public class InMemoryJobStore : IJobStore
 {
     private readonly ConcurrentDictionary<Guid, Job> jobs = new();
 
-    public Task Add(Job job, CancellationToken cancellationToken)
+    public Task<MethodResult> Add(Job job, CancellationToken cancellationToken)
     {
-        jobs.TryAdd(job.Id, job);
-        return Task.CompletedTask;
+        try
+        {
+            jobs.TryAdd(job.Id, job);
+            return Task.FromResult(MethodResult.Success());
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(MethodResult.Failure(ex));
+        }
     }
 
-    public Task<Job?> Get(Guid id, CancellationToken cancellationToken)
+    public Task<MethodResult<Job?>> Get(Guid id, CancellationToken cancellationToken)
     {
-        jobs.TryGetValue(id, out var job);
-        return Task.FromResult(job);
+        try
+        {
+            jobs.TryGetValue(id, out var job);
+            return Task.FromResult(MethodResult<Job?>.Success(job));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(MethodResult<Job?>.Failure(ex));
+        }
     }
 }

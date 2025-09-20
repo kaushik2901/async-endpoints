@@ -29,8 +29,8 @@ public class AsyncEndpointRequestDelegate(IJobStore jobStore) : IAsyncEndpointRe
     {
         var id = JobIdHelper.GetJobId(httpContext);
 
-        var existingJob = await jobStore.Get(id, token);
-        if (existingJob != null) return existingJob;
+        var result = await jobStore.Get(id, token);
+        if (result.IsSuccess && result.Data != null) return result.Data;
        
         var job = Job.Job.Create(id, jobName, payload);
         await jobStore.Add(job, token);
