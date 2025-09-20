@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncEndpoints.Entities;
 using AsyncEndpoints.Utilities;
 
-namespace AsyncEndpoints.Job;
+namespace AsyncEndpoints.Contracts;
 
 public interface IJobStore
 {

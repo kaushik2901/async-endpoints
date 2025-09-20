@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace AsyncEndpoints.Context;
+namespace AsyncEndpoints;
 
 public class AsyncContext<TRequest>(TRequest request)
 {

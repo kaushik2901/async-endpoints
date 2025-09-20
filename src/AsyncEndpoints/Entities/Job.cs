@@ -1,7 +1,6 @@
 ﻿using System;
-using AsyncEndpoints.Constants;
 
-namespace AsyncEndpoints.Job;
+namespace AsyncEndpoints.Entities;
 
 public class Job
 {

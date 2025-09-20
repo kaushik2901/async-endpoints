@@ -1,4 +1,4 @@
-﻿namespace AsyncEndpoints.Job;
+﻿namespace AsyncEndpoints.Entities;
 
 public enum JobStatus
 {

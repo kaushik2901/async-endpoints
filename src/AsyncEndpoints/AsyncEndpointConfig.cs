@@ -1,4 +1,4 @@
-﻿namespace AsyncEndpoints.Configurations;
+﻿namespace AsyncEndpoints;
 
 public class AsyncEndpointConfig
 {

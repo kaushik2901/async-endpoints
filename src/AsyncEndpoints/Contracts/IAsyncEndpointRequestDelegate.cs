@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace AsyncEndpoints.Services;
+namespace AsyncEndpoints.Contracts;
 
 public interface IAsyncEndpointRequestDelegate
 {

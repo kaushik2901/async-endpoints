@@ -1,6 +1,5 @@
-using AsyncEndpoints.AsyncEndpointRequestHandler;
-using AsyncEndpoints.Configurations;
-using AsyncEndpoints.Job;
+using AsyncEndpoints.Contracts;
+using AsyncEndpoints.InMemoryStore;
 using AsyncEndpoints.Services;
 using Microsoft.Extensions.DependencyInjection;
 

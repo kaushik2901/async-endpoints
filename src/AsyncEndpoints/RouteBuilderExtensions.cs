@@ -1,5 +1,4 @@
-﻿using AsyncEndpoints.Constants;
-using AsyncEndpoints.Services;
+﻿using AsyncEndpoints.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsyncEndpoints.RouteBuilder;
+namespace AsyncEndpoints;
 
 public static class RouteBuilderExtensions
 {

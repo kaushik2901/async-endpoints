@@ -1,18 +1,12 @@
 ﻿using System;
-using AsyncEndpoints.Constants;
 using Microsoft.AspNetCore.Http;
 
-namespace AsyncEndpoints.Job;
+namespace AsyncEndpoints;
 
-internal static class JobIdHelper
+internal static class HttpContextExtensions
 {
-    public static Guid GetJobId(HttpContext? httpContext)
+    public static Guid GetOrCreateJobId(this HttpContext httpContext)
     {
-        if (httpContext == null)
-        {
-            return Guid.NewGuid();
-        }
-
         if (!httpContext.Request.Headers.TryGetValue(AsyncEndpointConstants.JobIdHeaderName, out var jobIdHeaderValueString))
         {
             return Guid.NewGuid();

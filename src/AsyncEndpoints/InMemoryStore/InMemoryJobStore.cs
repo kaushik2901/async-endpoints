@@ -2,9 +2,11 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Entities;
 using AsyncEndpoints.Utilities;
 
-namespace AsyncEndpoints.Job;
+namespace AsyncEndpoints.InMemoryStore;
 
 public class InMemoryJobStore : IJobStore
 {

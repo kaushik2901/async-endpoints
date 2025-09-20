@@ -1,4 +1,4 @@
-﻿namespace AsyncEndpoints.Constants;
+﻿namespace AsyncEndpoints;
 
 internal static class AsyncEndpointConstants
 {

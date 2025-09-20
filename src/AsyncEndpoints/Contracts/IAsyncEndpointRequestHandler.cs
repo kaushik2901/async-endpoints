@@ -1,10 +1,10 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using AsyncEndpoints.Context;
+using AsyncEndpoints.Utilities;
 
-namespace AsyncEndpoints.AsyncEndpointRequestHandler;
+namespace AsyncEndpoints.Contracts;
 
 public interface IAsyncEndpointRequestHandler<TRequest, TResponse>
 {
-    Task<TResponse> HandleAsync(AsyncContext<TRequest> context, CancellationToken token);
+    Task<MethodResult<TResponse>> HandleAsync(AsyncContext<TRequest> context, CancellationToken token);
 }

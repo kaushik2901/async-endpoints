@@ -2,7 +2,8 @@
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncEndpoints.Job;
+using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Entities;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.Services;
@@ -25,14 +26,14 @@ public class AsyncEndpointRequestDelegate(IJobStore jobStore) : IAsyncEndpointRe
         return Results.Accepted("", job);
     }
 
-    private async Task<Job.Job> HandleAsync(string jobName, string payload, HttpContext httpContext, CancellationToken token)
+    private async Task<Job> HandleAsync(string jobName, string payload, HttpContext httpContext, CancellationToken token)
     {
-        var id = JobIdHelper.GetJobId(httpContext);
+        var id = httpContext.GetOrCreateJobId();
 
         var result = await jobStore.Get(id, token);
         if (result.IsSuccess && result.Data != null) return result.Data;
        
-        var job = Job.Job.Create(id, jobName, payload);
+        var job = Job.Create(id, jobName, payload);
         await jobStore.Add(job, token);
 
         return job;

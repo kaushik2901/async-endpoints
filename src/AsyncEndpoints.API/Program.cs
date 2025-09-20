@@ -1,7 +1,6 @@
 using AsyncEndpoints;
 using AsyncEndpoints.API.Models;
 using AsyncEndpoints.API.Services;
-using AsyncEndpoints.RouteBuilder;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
