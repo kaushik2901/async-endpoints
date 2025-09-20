@@ -17,13 +17,13 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddAsyncEndpointsWorker(this  IServiceCollection services)
+    public static IServiceCollection AddAsyncEndpointsWorker(this IServiceCollection services)
     {
         services.AddHostedService<AsyncEndpointsBackgroundService>();
         return services;
     }
 
-    public static IServiceCollection AddAsyncEndpointHandler<TAsyncEndpointRequestHandler, TRequest, TResponse>(this IServiceCollection services, string jobName) 
+    public static IServiceCollection AddAsyncEndpointHandler<TAsyncEndpointRequestHandler, TRequest, TResponse>(this IServiceCollection services, string jobName)
         where TAsyncEndpointRequestHandler : class, IAsyncEndpointRequestHandler<TRequest, TResponse>
     {
         services.AddKeyedScoped<IAsyncEndpointRequestHandler<TRequest, TResponse>, TAsyncEndpointRequestHandler>(jobName);

@@ -32,7 +32,7 @@ public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore) : IAsyncEnd
 
         var result = await jobStore.Get(id, token);
         if (result.IsSuccess && result.Data != null) return result.Data;
-       
+
         var job = Job.Create(id, jobName, payload);
         await jobStore.Add(job, token);
 

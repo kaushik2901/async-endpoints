@@ -37,7 +37,7 @@ public class MethodResult<T> : MethodResult
         Data = data;
     }
 
-    private MethodResult(AsyncEndpointError error, Exception? exception = null) 
+    private MethodResult(AsyncEndpointError error, Exception? exception = null)
         : base(error, exception)
     {
     }
