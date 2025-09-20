@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints;
 
-internal static class HttpContextExtensions
+public static class HttpContextExtensions
 {
     public static Guid GetOrCreateJobId(this HttpContext httpContext)
     {

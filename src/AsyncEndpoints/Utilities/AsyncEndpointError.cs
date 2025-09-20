@@ -2,7 +2,7 @@ using System;
 
 namespace AsyncEndpoints.Utilities;
 
-public class AsyncEndpointError(string code, string message, Exception? exception = null)
+public sealed class AsyncEndpointError(string code, string message, Exception? exception = null)
 {
     public string Code { get; } = code ?? throw new ArgumentNullException(nameof(code));
     public string Message { get; } = message ?? throw new ArgumentNullException(nameof(message));

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.Services;
 
-public class AsyncEndpointRequestDelegate(IJobStore jobStore) : IAsyncEndpointRequestDelegate
+public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore) : IAsyncEndpointRequestDelegate
 {
     public async Task<IResult> HandleAsync<TRequest>(
         string jobName,
