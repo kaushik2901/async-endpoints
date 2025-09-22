@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
@@ -59,6 +61,53 @@ public class InMemoryJobStore : IJobStore
         {
             return Task.FromResult(MethodResult<Job?>.Failure(
                 AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error retrieving job: {ex.Message}", ex)));
+        }
+    }
+
+    public Task<MethodResult<List<Job>>> GetByStatus(JobStatus status, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<MethodResult<List<Job>>>(cancellationToken);
+
+            var jobsWithStatus = jobs.Values
+                .Where(job => job.Status == status)
+                .ToList();
+
+            return Task.FromResult(MethodResult<List<Job>>.Success(jobsWithStatus));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(MethodResult<List<Job>>.Failure(
+                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error retrieving jobs by status: {ex.Message}", ex)));
+        }
+    }
+
+    public Task<MethodResult> Update(Job job, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (job == null)
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("INVALID_JOB", "Job cannot be null")));
+
+            if (job.Id == Guid.Empty)
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty")));
+
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<MethodResult>(cancellationToken);
+
+            // Update the job in the dictionary
+            jobs[job.Id] = job;
+
+            return Task.FromResult(MethodResult.Success());
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(MethodResult.Failure(
+                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error updating job: {ex.Message}", ex)));
         }
     }
 }

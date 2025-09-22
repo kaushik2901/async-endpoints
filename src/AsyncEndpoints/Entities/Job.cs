@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 
 namespace AsyncEndpoints.Entities;
 
@@ -26,5 +27,38 @@ public sealed class Job
             Name = name,
             Payload = payload
         };
+    }
+    
+    public void UpdateStatus(JobStatus status)
+    {
+        Status = status;
+        LastUpdatedAt = DateTimeOffset.UtcNow;
+        
+        switch (status)
+        {
+            case JobStatus.InProgress:
+                StartedAt = DateTimeOffset.UtcNow;
+                break;
+            case JobStatus.Completed:
+            case JobStatus.Failed:
+            case JobStatus.Canceled:
+                CompletedAt = DateTimeOffset.UtcNow;
+                break;
+        }
+    }
+    
+    public void SetResult(string result)
+    {
+        Result = result;
+    }
+    
+    public void SetException(string exception)
+    {
+        Exception = exception;
+    }
+    
+    public void IncrementRetryCount()
+    {
+        RetryCount++;
     }
 }
