@@ -64,7 +64,7 @@ public class InMemoryJobStore : IJobStore
         }
     }
 
-    public Task<MethodResult<List<Job>>> GetByStatus(JobStatus status, CancellationToken cancellationToken)
+    public Task<MethodResult<List<Job>>> GetByStatus(JobStatus status, int maxSize, CancellationToken cancellationToken)
     {
         try
         {
@@ -73,6 +73,7 @@ public class InMemoryJobStore : IJobStore
 
             var jobsWithStatus = jobs.Values
                 .Where(job => job.Status == status)
+                .Take(maxSize)
                 .ToList();
 
             return Task.FromResult(MethodResult<List<Job>>.Success(jobsWithStatus));
