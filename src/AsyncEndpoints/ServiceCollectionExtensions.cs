@@ -21,10 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AsyncEndpointsConfigurations>();
         services.AddSingleton<IJobStore, InMemoryJobStore>();
         services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
-        services.ConfigureHttpJsonOptions(options =>
-        {
-            options.SerializerOptions.TypeInfoResolverChain.Add(AsyncEndpointsJsonSerializationContext.Default);
-        });
+        services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsJsonSerializationContext.Default);
 
         return services;
     }
