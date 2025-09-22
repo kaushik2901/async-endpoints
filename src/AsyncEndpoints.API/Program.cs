@@ -7,6 +7,7 @@ var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services
     .AddAsyncEndpoints(options => options.MaximumRetries = 5)
+    .AddAsyncEndpointsInMemoryStore()
     .AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default)
     .AddAsyncEndpointHandler<SampleRequestHandler, SampleRequest, SampleResponse>("Job name")
     .AddAsyncEndpointsWorker();

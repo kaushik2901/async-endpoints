@@ -19,10 +19,15 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
         services.AddSingleton<AsyncEndpointsConfigurations>();
-        services.AddSingleton<IJobStore, InMemoryJobStore>();
         services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
         services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsJsonSerializationContext.Default);
 
+        return services;
+    }
+
+    public static IServiceCollection AddAsyncEndpointsInMemoryStore(this IServiceCollection services)
+    {
+        services.AddSingleton<IJobStore, InMemoryJobStore>();
         return services;
     }
 

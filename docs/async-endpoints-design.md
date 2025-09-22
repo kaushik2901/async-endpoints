@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddAsyncEndpoints()
+    .AddAsyncEndpointsInMemoryStore()
     .AddAsyncEndpointsRedisStore() // Lowest priority
     .AddAsyncEndpointsEntityFrameworkCoreStore() // Lowest priority
     .AddAsyncEndpointsHandler<AsyncEndpointHandler, Request, Response>("Job Name"); // Register handlers
