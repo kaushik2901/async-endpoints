@@ -1,3 +1,5 @@
+using System;
+using System.Text.Json.Serialization.Metadata;
 using AsyncEndpoints.BackgroundWorker;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.InMemoryStore;
@@ -8,12 +10,32 @@ namespace AsyncEndpoints;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services)
+    public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services, Action<AsyncEndpointsConfigurations>? configureOptions = null)
     {
+        if (configureOptions != null)
+        {
+            services.Configure(configureOptions);
+        }
+
         services.AddHttpContextAccessor();
         services.AddSingleton<AsyncEndpointsConfigurations>();
         services.AddSingleton<IJobStore, InMemoryJobStore>();
         services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.TypeInfoResolverChain.Add(AsyncEndpointsJsonSerializationContext.Default);
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddAsyncEndpointsJsonTypeInfoResolver(this IServiceCollection services, IJsonTypeInfoResolver jsonTypeInfoResolver)
+    {
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.TypeInfoResolverChain.Add(jsonTypeInfoResolver);
+        });
+
         return services;
     }
 

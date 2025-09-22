@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
 using AsyncEndpoints.API.Models;
 
+namespace AsyncEndpoints.API;
+
 [JsonSerializable(typeof(SampleRequest))]
 [JsonSerializable(typeof(SampleResponse))]
-internal partial class AsyncEndpointsJsonSerializerContext : JsonSerializerContext
+public partial class ApplicationJsonSerializationContext : JsonSerializerContext
 {
 
 }

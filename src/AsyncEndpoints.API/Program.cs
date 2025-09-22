@@ -1,16 +1,13 @@
 using AsyncEndpoints;
+using AsyncEndpoints.API;
 using AsyncEndpoints.API.Models;
 using AsyncEndpoints.API.Services;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, AsyncEndpointsJsonSerializerContext.Default);
-});
-
 builder.Services
-    .AddAsyncEndpoints()
+    .AddAsyncEndpoints(options => options.MaximumRetries = 5)
+    .AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default)
     .AddAsyncEndpointHandler<SampleRequestHandler, SampleRequest, SampleResponse>("Job name")
     .AddAsyncEndpointsWorker();
 
