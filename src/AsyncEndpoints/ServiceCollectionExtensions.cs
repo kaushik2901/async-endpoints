@@ -43,8 +43,8 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddAsyncEndpointsWorker(this IServiceCollection services)
     {
-        services.AddTransient<JobConsumerService>();
-        services.AddTransient<JobProducerService>();
+        services.AddTransient<IJobConsumerService, JobConsumerService>();
+        services.AddTransient<IJobProducerService, JobProducerService>();
         services.AddHostedService<AsyncEndpointsBackgroundService>();
         return services;
     }

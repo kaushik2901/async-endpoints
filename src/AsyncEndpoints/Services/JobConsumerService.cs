@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Services;
 
-public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jobStore)
+public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jobStore) : IJobConsumerService
 {
     public async Task ConsumeJobsAsync(ChannelReader<Job> readerJobChannel, SemaphoreSlim semaphoreSlim, CancellationToken stoppingToken)
     {

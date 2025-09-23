@@ -14,8 +14,8 @@ namespace AsyncEndpoints.BackgroundWorker;
 public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposable, IDisposable
 {
     private readonly ILogger<AsyncEndpointsBackgroundService> _logger;
-    private readonly JobProducerService _jobProducerService;
-    private readonly JobConsumerService _jobConsumerService;
+    private readonly IJobProducerService _jobProducerService;
+    private readonly IJobConsumerService _jobConsumerService;
     private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations;
     private readonly Channel<Job> _jobChannel;
     private readonly ChannelReader<Job> _readerJobChannel;
@@ -28,8 +28,8 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
     public AsyncEndpointsBackgroundService(
         ILogger<AsyncEndpointsBackgroundService> logger,
         IOptions<AsyncEndpointsConfigurations> configurations,
-        JobProducerService jobProducerService,
-        JobConsumerService jobConsumerService)
+        IJobProducerService jobProducerService,
+        IJobConsumerService jobConsumerService)
     {
         _logger = logger;
         _workerConfigurations = configurations.Value.WorkerConfigurations;
