@@ -52,18 +52,43 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         );
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(false);
-        GC.SuppressFinalize(this);
-    }
-
     public override void Dispose()
     {
         Dispose(true);
         base.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing)
+        {
+            try
+            {
+                // Synchronous cleanup
+                _shutdownTokenSource.Cancel();
+                _writerJobChannel.TryComplete();
+
+                _semaphoreSlim.Dispose();
+                _shutdownTokenSource.Dispose();
+                _shutdownSemaphore.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during synchronous disposal");
+            }
+            finally
+            {
+                _disposed = true;
+            }
+        }
     }
 
     protected virtual async ValueTask DisposeAsyncCore()
@@ -98,31 +123,6 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         {
             _shutdownSemaphore.Release();
             _disposed = true;
-        }
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed && disposing)
-        {
-            try
-            {
-                // Synchronous cleanup
-                _shutdownTokenSource.Cancel();
-                _writerJobChannel.TryComplete();
-
-                _semaphoreSlim.Dispose();
-                _shutdownTokenSource.Dispose();
-                _shutdownSemaphore.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during synchronous disposal");
-            }
-            finally
-            {
-                _disposed = true;
-            }
         }
     }
 
