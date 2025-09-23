@@ -3,36 +3,38 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.BackgroundWorker;
 
-public class AsyncEndpointsBackgroundService : BackgroundService, IDisposable
+public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposable, IDisposable
 {
     private readonly ILogger<AsyncEndpointsBackgroundService> _logger;
-    private readonly IJobStore _jobStore;
+    private readonly JobProducerService _jobProducerService;
+    private readonly JobConsumerService _jobConsumerService;
     private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations;
     private readonly Channel<Job> _jobChannel;
     private readonly ChannelReader<Job> _readerJobChannel;
     private readonly ChannelWriter<Job> _writerJobChannel;
     private readonly SemaphoreSlim _semaphoreSlim;
-
+    private readonly CancellationTokenSource _shutdownTokenSource = new();
+    private readonly SemaphoreSlim _shutdownSemaphore = new(1, 1);
     private bool _disposed = false;
 
     public AsyncEndpointsBackgroundService(
         ILogger<AsyncEndpointsBackgroundService> logger,
         IOptions<AsyncEndpointsConfigurations> configurations,
-        IServiceProvider serviceProvider,
-        IJobStore jobStore)
+        JobProducerService jobProducerService,
+        JobConsumerService jobConsumerService)
     {
         _logger = logger;
         _workerConfigurations = configurations.Value.WorkerConfigurations;
-        _jobStore = jobStore;
+        _jobProducerService = jobProducerService;
+        _jobConsumerService = jobConsumerService;
 
         var channelOptions = new BoundedChannelOptions(_workerConfigurations.MaximumQueueSize)
         {
@@ -50,20 +52,77 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IDisposable
         );
     }
 
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(false);
+        GC.SuppressFinalize(this);
+    }
+
     public override void Dispose()
     {
-        base.Dispose();
         Dispose(true);
+        base.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (_disposed)
+            return;
+
+        await _shutdownSemaphore.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_disposed)
+                return;
+
+            _logger.LogInformation("Starting graceful shutdown of AsyncEndpoints Background Service");
+
+            // Signal shutdown
+            _shutdownTokenSource.Cancel();
+
+            // Complete the channel to stop producer
+            _writerJobChannel.TryComplete();
+
+            // Wait for all work to complete with timeout
+            await WaitForWorkCompletionAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+            _logger.LogInformation("AsyncEndpoints Background Service graceful shutdown completed");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during async disposal");
+        }
+        finally
+        {
+            _shutdownSemaphore.Release();
+            _disposed = true;
+        }
     }
 
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed && disposing)
         {
-            _semaphoreSlim.Dispose();
-            _writerJobChannel.Complete();
-            _disposed = true;
+            try
+            {
+                // Synchronous cleanup
+                _shutdownTokenSource.Cancel();
+                _writerJobChannel.TryComplete();
+
+                _semaphoreSlim.Dispose();
+                _shutdownTokenSource.Dispose();
+                _shutdownSemaphore.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during synchronous disposal");
+            }
+            finally
+            {
+                _disposed = true;
+            }
         }
     }
 
@@ -71,9 +130,9 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IDisposable
     {
         _logger.LogInformation("AsyncEndpoints Background Service is starting");
 
-        var producerTask = ProduceJobsAsync(stoppingToken);
+        var producerTask = _jobProducerService.ProduceJobsAsync(_writerJobChannel, stoppingToken);
         var consumerTasks = Enumerable.Range(0, _workerConfigurations.MaximumConcurrency)
-            .Select(_ => ConsumeJobsAsync(stoppingToken))
+            .Select(_ => _jobConsumerService.ConsumeJobsAsync(_readerJobChannel, _semaphoreSlim, stoppingToken))
             .ToArray();
 
         await Task.WhenAll([producerTask, .. consumerTasks]);
@@ -81,155 +140,27 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IDisposable
         _logger.LogInformation("AsyncEndpoints Background Service is stopping");
     }
 
-    private async Task ProduceJobsAsync(CancellationToken stoppingToken)
+    private async Task WaitForWorkCompletionAsync(TimeSpan timeout)
     {
-        try
+        var deadline = DateTime.UtcNow.Add(timeout);
+
+        // Wait for semaphore to indicate all work is done
+        // (All permits available means no work in progress)
+        while (DateTime.UtcNow < deadline)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            if (_semaphoreSlim.CurrentCount == _workerConfigurations.MaximumConcurrency)
             {
-                try
-                {
-                    var queuedJobsResult = await _jobStore.GetByStatus(JobStatus.Queued, _workerConfigurations.BatchSize, stoppingToken);
-                    if (queuedJobsResult.IsFailure)
-                    {
-                        _logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
-                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                        continue;
-                    }
-
-                    var queuedJobs = queuedJobsResult.Data ?? [];
-                    _logger.LogDebug("Found {Count} queued jobs to process", queuedJobs.Count);
-
-                    foreach (var job in queuedJobs)
-                    {
-                        if (stoppingToken.IsCancellationRequested)
-                            break;
-
-                        await _writerJobChannel.WriteAsync(job, stoppingToken);
-                    }
-
-                    await Task.Delay(TimeSpan.FromMilliseconds(_workerConfigurations.PollingIntervalMs), stoppingToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in job producer");
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                }
-            }
-        }
-        finally
-        {
-            _writerJobChannel.Complete();
-        }
-    }
-
-    private async Task ConsumeJobsAsync(CancellationToken stoppingToken)
-    {
-        await foreach (var job in _readerJobChannel.ReadAllAsync(stoppingToken))
-        {
-            if (stoppingToken.IsCancellationRequested)
+                // All permits available, no work in progress
                 break;
-
-            await _semaphoreSlim.WaitAsync(stoppingToken);
-
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await ProcessJobAsync(job, stoppingToken);
-                }
-                finally
-                {
-                    _semaphoreSlim.Release();
-                }
-            }, stoppingToken);
-        }
-    }
-
-    private async Task ProcessJobAsync(Job job, CancellationToken cancellationToken)
-    {
-        job.UpdateStatus(JobStatus.InProgress);
-
-        var updateResult = await _jobStore.Update(job, cancellationToken);
-        if (updateResult.IsFailure)
-        {
-            _logger.LogError("Failed to update job {JobId} status to InProgress: {Error}", job.Id, updateResult.Error?.Message);
-            return;
-        }
-
-        try
-        {
-            var result = await ProcessJobPayloadAsync(job, cancellationToken);
-
-            if (result.IsSuccess)
-            {
-                job.UpdateStatus(JobStatus.Completed);
-                job.SetResult(result.Data?.ToString() ?? string.Empty);
-            }
-            else
-            {
-                job.UpdateStatus(JobStatus.Failed);
-                job.SetException(result.Error?.ToString() ?? "Unknown error");
             }
 
-            await _jobStore.Update(job, cancellationToken);
-
-            if (result.IsSuccess)
-                _logger.LogInformation("Successfully processed job {JobId}", job.Id);
-            else
-                _logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
+            await Task.Delay(100).ConfigureAwait(false);
         }
-        catch (Exception ex)
+
+        if (_semaphoreSlim.CurrentCount < _workerConfigurations.MaximumConcurrency)
         {
-            _logger.LogError(ex, "Error processing job {JobId}", job.Id);
-
-            if (job.RetryCount < job.MaxRetries)
-            {
-                job.IncrementRetryCount();
-                job.UpdateStatus(JobStatus.Queued);
-                job.SetException(ex.Message);
-                await _jobStore.Update(job, cancellationToken);
-
-                _logger.LogInformation("Job {JobId} will be retried. Retry count: {RetryCount}", job.Id, job.RetryCount);
-            }
-            else
-            {
-                // Mark as failed after max retries
-                job.UpdateStatus(JobStatus.Failed);
-                job.SetException(ex.Message);
-                await _jobStore.Update(job, cancellationToken);
-
-                _logger.LogError("Job {JobId} failed after {RetryCount} retries", job.Id, job.RetryCount);
-            }
-        }
-    }
-
-    private async Task<MethodResult<object?>> ProcessJobPayloadAsync(Job job, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Processing job {JobId} with name {JobName}", job.Id, job.Name);
-
-        // In a real implementation, we would:
-        // 1. Deserialize the payload based on the job name
-        // 2. Resolve the appropriate handler from the service provider
-        // 3. Call the handler with the deserialized payload
-        // 4. Store the result in the job
-
-        // For now, we'll simulate the process
-        try
-        {
-            // Simulate some work
-            await Task.Delay(1000, cancellationToken);
-
-            // Simulate a successful result
-            return MethodResult<object?>.Success(new { Message = "Job processed successfully", JobId = job.Id });
-        }
-        catch (Exception ex)
-        {
-            return MethodResult<object?>.Failure(ex);
+            _logger.LogWarning("Some work may still be in progress during shutdown. Active jobs: {ActiveJobs}",
+                _workerConfigurations.MaximumConcurrency - _semaphoreSlim.CurrentCount);
         }
     }
 }

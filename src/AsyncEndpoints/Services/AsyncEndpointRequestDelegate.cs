@@ -41,7 +41,6 @@ public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore, IOptions<Js
         return job;
     }
 
-
     private static async Task<IResult?> HandleRequestDelegate<TRequest>(Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, TRequest request, CancellationToken token)
     {
         if (handler != null)
