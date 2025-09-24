@@ -4,7 +4,7 @@ using AsyncEndpoints.Entities;
 
 namespace AsyncEndpoints.Services;
 
-public interface IJobProcessor
+public interface IJobProcessorService
 {
     Task ProcessAsync(Job job, CancellationToken cancellationToken);
 }

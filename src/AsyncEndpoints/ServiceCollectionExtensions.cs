@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<IJobConsumerService, JobConsumerService>();
         services.AddTransient<IJobProducerService, JobProducerService>();
-        services.AddTransient<IJobProcessor, JobProcessor>();
+        services.AddTransient<IJobProcessorService, JobProcessorService>();
         services.AddTransient<IHandlerExecutionService, HandlerExecutionService>();
         services.AddHostedService<AsyncEndpointsBackgroundService>();
 

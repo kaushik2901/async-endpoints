@@ -11,9 +11,9 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Services;
 
-public class JobProcessor(ILogger<JobProcessor> logger, IJobStore jobStore, IHandlerExecutionService handlerExecutionService, IOptions<JsonOptions> jsonOptions) : IJobProcessor
+public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore jobStore, IHandlerExecutionService handlerExecutionService, IOptions<JsonOptions> jsonOptions) : IJobProcessorService
 {
-    private readonly ILogger<JobProcessor> _logger = logger;
+    private readonly ILogger<JobProcessorService> _logger = logger;
     private readonly IJobStore _jobStore = jobStore;
     private readonly IHandlerExecutionService _handlerExecutionService = handlerExecutionService;
     private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;

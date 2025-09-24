@@ -7,10 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Services;
 
-public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcessor jobProcessor) : IJobConsumerService
+public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcessorService jobProcessorService) : IJobConsumerService
 {
     private readonly ILogger<JobConsumerService> _logger = logger;
-    private readonly IJobProcessor _jobProcessor = jobProcessor;
+    private readonly IJobProcessorService _jobProcessorService = jobProcessorService;
 
     public async Task ConsumeJobsAsync(ChannelReader<Job> readerJobChannel, SemaphoreSlim semaphoreSlim, CancellationToken stoppingToken)
     {
@@ -25,7 +25,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcesso
 
                 try
                 {
-                    await _jobProcessor.ProcessAsync(job, stoppingToken);
+                    await _jobProcessorService.ProcessAsync(job, stoppingToken);
                 }
                 catch (Exception ex)
                 {
