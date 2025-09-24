@@ -72,7 +72,6 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         {
             try
             {
-                // Synchronous cleanup
                 _shutdownTokenSource.Cancel();
                 _writerJobChannel.TryComplete();
 

@@ -4,7 +4,6 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
-using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -25,10 +24,11 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
             while (!stoppingToken.IsCancellationRequested)
             {
                 var adaptiveDelay = basePollingInterval;
+
                 try
                 {
+                    // TODO: Do something about Scheduled jobs
                     var queuedJobsResult = await _jobStore.GetByStatus(JobStatus.Queued, _workerConfigurations.BatchSize, stoppingToken);
-
                     if (queuedJobsResult.IsFailure)
                     {
                         _logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
@@ -38,6 +38,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                     }
 
                     var queuedJobs = queuedJobsResult.Data ?? [];
+
                     _logger.LogDebug("Found {Count} queued jobs to process", queuedJobs.Count);
 
                     if (queuedJobs.Count == 0)
@@ -53,14 +54,6 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                         {
                             if (stoppingToken.IsCancellationRequested)
                                 break;
-
-                            // Validate if a handler exists for this job name (cached check for AOT efficiency)
-                            if (!HandlerExistsForJobAsync(job.Name))
-                            {
-                                _logger.LogWarning("No handler registered for job name: {JobName}", job.Name);
-                                // Mark job as failed or skip it
-                                continue;
-                            }
 
                             // Try non-blocking write first
                             if (writerJobChannel.TryWrite(job))
@@ -110,11 +103,5 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
         {
             writerJobChannel.Complete();
         }
-    }
-
-    private static bool HandlerExistsForJobAsync(string jobName)
-    {
-        var handlerRegistration = HandlerRegistrationTracker.GetHandlerRegistration(jobName);
-        return handlerRegistration != null;
     }
 }
