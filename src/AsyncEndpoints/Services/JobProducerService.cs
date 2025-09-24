@@ -4,6 +4,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -53,6 +54,14 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                             if (stoppingToken.IsCancellationRequested)
                                 break;
 
+                            // Validate if a handler exists for this job name (cached check for AOT efficiency)
+                            if (!HandlerExistsForJobAsync(job.Name))
+                            {
+                                _logger.LogWarning("No handler registered for job name: {JobName}", job.Name);
+                                // Mark job as failed or skip it
+                                continue;
+                            }
+
                             // Try non-blocking write first
                             if (writerJobChannel.TryWrite(job))
                             {
@@ -101,5 +110,11 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
         {
             writerJobChannel.Complete();
         }
+    }
+
+    private static bool HandlerExistsForJobAsync(string jobName)
+    {
+        var handlerRegistration = HandlerRegistrationTracker.GetHandlerRegistration(jobName);
+        return handlerRegistration != null;
     }
 }

@@ -4,6 +4,7 @@ using AsyncEndpoints.BackgroundWorker;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.InMemoryStore;
 using AsyncEndpoints.Services;
+using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AsyncEndpoints;
@@ -45,6 +46,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<IJobConsumerService, JobConsumerService>();
         services.AddTransient<IJobProducerService, JobProducerService>();
+        services.AddTransient<IHandlerExecutionService, HandlerExecutionService>();
         services.AddHostedService<AsyncEndpointsBackgroundService>();
         return services;
     }
@@ -53,6 +55,15 @@ public static class ServiceCollectionExtensions
         where TAsyncEndpointRequestHandler : class, IAsyncEndpointRequestHandler<TRequest, TResponse>
     {
         services.AddKeyedScoped<IAsyncEndpointRequestHandler<TRequest, TResponse>, TAsyncEndpointRequestHandler>(jobName);
+
+        HandlerRegistrationTracker.Register<TRequest, TResponse>(jobName,
+            async (serviceProvider, request, cancellationToken) =>
+            {
+                var handler = serviceProvider.GetRequiredKeyedService<IAsyncEndpointRequestHandler<TRequest, TResponse>>(jobName);
+                var context = new AsyncContext<TRequest>(request);
+                return await handler.HandleAsync(context, cancellationToken);
+            });
+
         return services;
     }
 }
