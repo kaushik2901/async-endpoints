@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace AsyncEndpoints.Entities;
 
@@ -7,6 +8,9 @@ public sealed class Job
     public Guid Id { get; init; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
     public JobStatus Status { get; set; } = JobStatus.Queued;
+    public Dictionary<string, List<string?>> Headers { get; set; } = [];
+    public Dictionary<string, object?> RouteParams { get; set; } = [];
+    public List<KeyValuePair<string, List<string?>>> QueryParams { get; set; } = [];
     public string Payload { get; init; } = string.Empty;
     public string? Result { get; set; } = null;
     public string? Exception { get; set; } = null;
@@ -26,6 +30,19 @@ public sealed class Job
             Id = id,
             Name = name,
             Payload = payload
+        };
+    }
+
+    public static Job Create(Guid id, string name, string payload, Dictionary<string, List<string?>> headers, Dictionary<string, object?> routeParams, List<KeyValuePair<string, List<string?>>> queryParams)
+    {
+        return new Job
+        {
+            Id = id,
+            Name = name,
+            Payload = payload,
+            Headers = headers,
+            RouteParams = routeParams,
+            QueryParams = queryParams
         };
     }
 

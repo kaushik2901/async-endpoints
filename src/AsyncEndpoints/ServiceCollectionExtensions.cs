@@ -29,6 +29,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAsyncEndpointsInMemoryStore(this IServiceCollection services)
     {
         services.AddSingleton<IJobStore, InMemoryJobStore>();
+
         return services;
     }
 
@@ -48,6 +49,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IJobProducerService, JobProducerService>();
         services.AddTransient<IHandlerExecutionService, HandlerExecutionService>();
         services.AddHostedService<AsyncEndpointsBackgroundService>();
+
         return services;
     }
 
@@ -57,10 +59,10 @@ public static class ServiceCollectionExtensions
         services.AddKeyedScoped<IAsyncEndpointRequestHandler<TRequest, TResponse>, TAsyncEndpointRequestHandler>(jobName);
 
         HandlerRegistrationTracker.Register<TRequest, TResponse>(jobName,
-            async (serviceProvider, request, cancellationToken) =>
+            async (serviceProvider, request, job, cancellationToken) =>
             {
                 var handler = serviceProvider.GetRequiredKeyedService<IAsyncEndpointRequestHandler<TRequest, TResponse>>(jobName);
-                var context = new AsyncContext<TRequest>(request);
+                var context = AsyncContextBuilder.Build(request, job);
                 return await handler.HandleAsync(context, cancellationToken);
             });
 

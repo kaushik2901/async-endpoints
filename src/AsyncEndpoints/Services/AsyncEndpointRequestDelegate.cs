@@ -38,7 +38,11 @@ public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore, IOptions<Js
         var result = await _jobStore.Get(id, token);
         if (result.IsSuccess && result.Data != null) return result.Data;
 
-        var job = Job.Create(id, jobName, payload);
+        var headers = httpContext.GetHeadersFromContext();
+        var routeParams = httpContext.GetRouteParamsFromContext();
+        var queryParams = httpContext.GetQueryParamsFromContext();
+
+        var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams);
         await _jobStore.Add(job, token);
 
         return job;

@@ -111,7 +111,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
             }
 
             // Execute handler using the AOT-optimized service
-            var result = await _handlerExecutionService.ExecuteHandlerAsync(job.Name, request, cancellationToken);
+            var result = await _handlerExecutionService.ExecuteHandlerAsync(job.Name, request, job, cancellationToken);
             if (!result.IsSuccess)
             {
                 return MethodResult<string>.Failure(result.Error!);
