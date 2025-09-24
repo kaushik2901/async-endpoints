@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Options;
@@ -27,8 +28,9 @@ public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore, IOptions<Js
 
         var payload = JsonSerializer.Serialize(request, _jsonOptions.Value.SerializerOptions);
         var job = await HandleAsync(jobName, payload, httpContext, cancellationToken);
+        var jobResponse = JobResponseMapper.ToResponse(job);
 
-        return Results.Accepted("", job);
+        return Results.Accepted("", jobResponse);
     }
 
     private async Task<Job> HandleAsync(string jobName, string payload, HttpContext httpContext, CancellationToken token)
