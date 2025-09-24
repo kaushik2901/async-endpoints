@@ -11,6 +11,8 @@ namespace AsyncEndpoints.Services;
 
 public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jobStore, IOptions<AsyncEndpointsConfigurations> configurations) : IJobProducerService
 {
+    private readonly ILogger<JobProducerService> _logger = logger;
+    private readonly IJobStore _jobStore = jobStore;
     private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations = configurations.Value.WorkerConfigurations;
 
     public async Task ProduceJobsAsync(ChannelWriter<Job> _writerJobChannel, CancellationToken stoppingToken)
@@ -21,16 +23,16 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
             {
                 try
                 {
-                    var queuedJobsResult = await jobStore.GetByStatus(JobStatus.Queued, _workerConfigurations.BatchSize, stoppingToken);
+                    var queuedJobsResult = await _jobStore.GetByStatus(JobStatus.Queued, _workerConfigurations.BatchSize, stoppingToken);
                     if (queuedJobsResult.IsFailure)
                     {
-                        logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
+                        _logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
                         await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                         continue;
                     }
 
                     var queuedJobs = queuedJobsResult.Data ?? [];
-                    logger.LogDebug("Found {Count} queued jobs to process", queuedJobs.Count);
+                    _logger.LogDebug("Found {Count} queued jobs to process", queuedJobs.Count);
 
                     foreach (var job in queuedJobs)
                     {
@@ -48,7 +50,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error in job producer");
+                    _logger.LogError(ex, "Error in job producer");
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                 }
             }

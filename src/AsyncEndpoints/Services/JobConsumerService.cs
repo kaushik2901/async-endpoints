@@ -11,6 +11,9 @@ namespace AsyncEndpoints.Services;
 
 public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jobStore) : IJobConsumerService
 {
+    private readonly ILogger<JobConsumerService> _logger = logger;
+    private readonly IJobStore _jobStore = jobStore;
+
     public async Task ConsumeJobsAsync(ChannelReader<Job> readerJobChannel, SemaphoreSlim semaphoreSlim, CancellationToken stoppingToken)
     {
         try
@@ -28,7 +31,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error processing job {JobId}", job.Id);
+                    _logger.LogError(ex, "Error processing job {JobId}", job.Id);
                 }
                 finally
                 {
@@ -42,7 +45,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Consumer task failed");
+            _logger.LogError(ex, "Consumer task failed");
             throw; // Let the background service handle the failure
         }
     }
@@ -54,7 +57,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
         if (!await UpdateJobStatusWithRetry(job, JobStatus.InProgress, null, null, cancellationToken))
         {
             job.UpdateStatus(originalJobStatus);
-            logger.LogError("Failed to update job {JobId} status to InProgress", job.Id);
+            _logger.LogError("Failed to update job {JobId} status to InProgress", job.Id);
             return;
         }
 
@@ -72,9 +75,9 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
             }
 
             if (result.IsSuccess)
-                logger.LogInformation("Successfully processed job {JobId}", job.Id);
+                _logger.LogInformation("Successfully processed job {JobId}", job.Id);
             else
-                logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
+                _logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
         }
         catch (Exception ex)
         {
@@ -92,13 +95,13 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
 
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            var updateResult = await jobStore.Update(job, cancellationToken);
+            var updateResult = await _jobStore.Update(job, cancellationToken);
             if (updateResult.IsSuccess)
             {
                 return true;
             }
 
-            logger.LogWarning("Failed to update job {JobId} to {Status} (attempt {Attempt}/{MaxAttempts}): {Error}",
+            _logger.LogWarning("Failed to update job {JobId} to {Status} (attempt {Attempt}/{MaxAttempts}): {Error}",
                 job.Id, status, attempt, maxRetries, updateResult.Error?.Message);
 
             if (attempt < maxRetries)
@@ -107,14 +110,14 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
             }
         }
 
-        logger.LogError("Failed to update job {JobId} status to {Status} after {MaxAttempts} attempts",
+        _logger.LogError("Failed to update job {JobId} status to {Status} after {MaxAttempts} attempts",
             job.Id, status, maxRetries);
         return false;
     }
 
     private async Task HandleJobException(Job job, Exception ex, CancellationToken cancellationToken)
     {
-        logger.LogError(ex, "Error processing job {JobId}", job.Id);
+        _logger.LogError(ex, "Error processing job {JobId}", job.Id);
 
         if (job.RetryCount < job.MaxRetries)
         {
@@ -134,7 +137,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
 
             if (updateSuccess)
             {
-                logger.LogInformation("Job {JobId} scheduled for retry {RetryCount}/{MaxRetries} at {RetryTime}",
+                _logger.LogInformation("Job {JobId} scheduled for retry {RetryCount}/{MaxRetries} at {RetryTime}",
                     job.Id, job.RetryCount, job.MaxRetries, delayUntil);
             }
         }
@@ -146,13 +149,13 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobStore jo
 
             await UpdateJobStatusWithRetry(job, JobStatus.Failed, null, ex.Message, cancellationToken);
 
-            logger.LogError("Job {JobId} failed permanently after {RetryCount} attempts", job.Id, job.RetryCount);
+            _logger.LogError("Job {JobId} failed permanently after {RetryCount} attempts", job.Id, job.RetryCount);
         }
     }
 
     private async Task<MethodResult<object?>> ProcessJobPayloadAsync(Job job, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Processing job {JobId} with name {JobName}", job.Id, job.Name);
+        _logger.LogInformation("Processing job {JobId} with name {JobName}", job.Id, job.Name);
 
         // In a real implementation, we would:
         // 1. Deserialize the payload based on the job name

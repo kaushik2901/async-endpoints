@@ -12,6 +12,9 @@ namespace AsyncEndpoints.Services;
 
 public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore, IOptions<JsonOptions> jsonOptions) : IAsyncEndpointRequestDelegate
 {
+    private readonly IJobStore _jobStore = jobStore;
+    private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
+
     public async Task<IResult> HandleAsync<TRequest>(
         string jobName,
         HttpContext httpContext,
@@ -22,7 +25,7 @@ public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore, IOptions<Js
         var handlerResponse = await HandleRequestDelegate(handler, httpContext, request, cancellationToken);
         if (handlerResponse != null) return handlerResponse;
 
-        var payload = JsonSerializer.Serialize(request, jsonOptions.Value.SerializerOptions);
+        var payload = JsonSerializer.Serialize(request, _jsonOptions.Value.SerializerOptions);
         var job = await HandleAsync(jobName, payload, httpContext, cancellationToken);
 
         return Results.Accepted("", job);
@@ -32,11 +35,11 @@ public sealed class AsyncEndpointRequestDelegate(IJobStore jobStore, IOptions<Js
     {
         var id = httpContext.GetOrCreateJobId();
 
-        var result = await jobStore.Get(id, token);
+        var result = await _jobStore.Get(id, token);
         if (result.IsSuccess && result.Data != null) return result.Data;
 
         var job = Job.Create(id, jobName, payload);
-        await jobStore.Add(job, token);
+        await _jobStore.Add(job, token);
 
         return job;
     }
