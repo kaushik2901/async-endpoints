@@ -15,34 +15,75 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
     private readonly IJobStore _jobStore = jobStore;
     private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations = configurations.Value.WorkerConfigurations;
 
-    public async Task ProduceJobsAsync(ChannelWriter<Job> _writerJobChannel, CancellationToken stoppingToken)
+    public async Task ProduceJobsAsync(ChannelWriter<Job> writerJobChannel, CancellationToken stoppingToken)
     {
+        var basePollingInterval = TimeSpan.FromMilliseconds(_workerConfigurations.PollingIntervalMs);
+
         try
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                var adaptiveDelay = basePollingInterval;
                 try
                 {
                     var queuedJobsResult = await _jobStore.GetByStatus(JobStatus.Queued, _workerConfigurations.BatchSize, stoppingToken);
+
                     if (queuedJobsResult.IsFailure)
                     {
                         _logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
-                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                        adaptiveDelay = TimeSpan.FromSeconds(5);
+                        await Task.Delay(adaptiveDelay, stoppingToken);
                         continue;
                     }
 
                     var queuedJobs = queuedJobsResult.Data ?? [];
                     _logger.LogDebug("Found {Count} queued jobs to process", queuedJobs.Count);
 
-                    foreach (var job in queuedJobs)
+                    if (queuedJobs.Count == 0)
                     {
-                        if (stoppingToken.IsCancellationRequested)
-                            break;
+                        // No jobs found - use longer delay
+                        adaptiveDelay = TimeSpan.FromMilliseconds(Math.Min(_workerConfigurations.PollingIntervalMs * 3, 30000));
+                    }
+                    else
+                    {
+                        var enqueuedCount = 0;
 
-                        await _writerJobChannel.WriteAsync(job, stoppingToken);
+                        foreach (var job in queuedJobs)
+                        {
+                            if (stoppingToken.IsCancellationRequested)
+                                break;
+
+                            // Try non-blocking write first
+                            if (writerJobChannel.TryWrite(job))
+                            {
+                                enqueuedCount++;
+                            }
+                            else
+                            {
+                                // Channel is full - use timeout to avoid indefinite blocking
+                                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                                using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, timeoutCts.Token);
+
+                                try
+                                {
+                                    await writerJobChannel.WriteAsync(job, combinedCts.Token);
+                                    enqueuedCount++;
+                                }
+                                catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested)
+                                {
+                                    _logger.LogDebug("Channel write timeout - channel likely full");
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Adaptive delay based on enqueueing success
+                        adaptiveDelay = enqueuedCount == queuedJobs.Count
+                            ? basePollingInterval
+                            : TimeSpan.FromMilliseconds(_workerConfigurations.PollingIntervalMs * 2);
                     }
 
-                    await Task.Delay(TimeSpan.FromMilliseconds(_workerConfigurations.PollingIntervalMs), stoppingToken);
+                    await Task.Delay(adaptiveDelay, stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {
@@ -51,13 +92,14 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error in job producer");
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    adaptiveDelay = TimeSpan.FromSeconds(5);
+                    await Task.Delay(adaptiveDelay, stoppingToken);
                 }
             }
         }
         finally
         {
-            _writerJobChannel.Complete();
+            writerJobChannel.Complete();
         }
     }
 }
