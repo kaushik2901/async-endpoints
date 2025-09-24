@@ -59,28 +59,24 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore 
 
         try
         {
-            // Deserialize the payload to the expected request type
             var handlerRegistration = HandlerRegistrationTracker.GetHandlerRegistration(job.Name);
             if (handlerRegistration == null)
             {
                 return MethodResult<string>.Failure(new InvalidOperationException($"Handler registration not found for job name: {job.Name}"));
             }
 
-            // Deserialize the payload to the expected request type
             var request = JsonSerializer.Deserialize(job.Payload, handlerRegistration.RequestType, _jsonOptions.Value.SerializerOptions);
             if (request == null)
             {
                 return MethodResult<string>.Failure(new InvalidOperationException($"Failed to deserialize request payload for job: {job.Name}"));
             }
 
-            // Execute handler using the AOT-optimized service
             var result = await _handlerExecutionService.ExecuteHandlerAsync(job.Name, request, job, cancellationToken);
             if (!result.IsSuccess)
             {
                 return MethodResult<string>.Failure(result.Error!);
             }
 
-            // Serialize the result to string
             var serializedResult = JsonSerializer.Serialize(result.Data, handlerRegistration.ResponseType, _jsonOptions.Value.SerializerOptions);
 
             return MethodResult<string>.Success(serializedResult);

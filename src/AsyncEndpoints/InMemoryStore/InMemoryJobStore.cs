@@ -100,7 +100,6 @@ public class InMemoryJobStore : IJobStore
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<MethodResult>(cancellationToken);
 
-            // Update the job in the dictionary
             jobs[job.Id] = job;
 
             return Task.FromResult(MethodResult.Success());

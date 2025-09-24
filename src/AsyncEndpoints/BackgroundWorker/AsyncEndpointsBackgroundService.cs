@@ -104,13 +104,10 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 
             _logger.LogInformation("Starting graceful shutdown of AsyncEndpoints Background Service");
 
-            // Signal shutdown
             _shutdownTokenSource.Cancel();
 
-            // Complete the channel to stop producer
             _writerJobChannel.TryComplete();
 
-            // Wait for all work to complete with timeout
             await WaitForWorkCompletionAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
             _logger.LogInformation("AsyncEndpoints Background Service graceful shutdown completed");

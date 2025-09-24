@@ -44,7 +44,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcesso
         catch (Exception ex)
         {
             _logger.LogError(ex, "Consumer task failed");
-            throw; // Let the background service handle the failure
+            throw;
         }
     }
 }
