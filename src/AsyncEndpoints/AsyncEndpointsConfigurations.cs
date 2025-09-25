@@ -9,9 +9,8 @@ public sealed class AsyncEndpointsConfigurations
 {
     /// <summary>
     /// Gets or sets the maximum number of retry attempts for failed jobs.
-    /// Default value is 3.
     /// </summary>
-    public int MaximumRetries { get; set; } = 3;
+    public int MaximumRetries { get; set; } = AsyncEndpointsConstants.MaximumRetries;
 
     /// <summary>
     /// Gets or sets the worker-specific configurations.
@@ -38,26 +37,22 @@ public sealed class AsyncEndpointsWorkerConfigurations
 
     /// <summary>
     /// Gets or sets the polling interval in milliseconds for checking new jobs.
-    /// Default value is 1000ms (1 second).
     /// </summary>
-    public int PollingIntervalMs { get; set; } = 1000;
+    public int PollingIntervalMs { get; set; } = AsyncEndpointsConstants.DefaultPollingIntervalMs;
 
     /// <summary>
     /// Gets or sets the timeout in minutes for job execution.
     /// Jobs that run longer than this will be marked as failed.
-    /// Default value is 30 minutes.
     /// </summary>
-    public int JobTimeoutMinutes { get; set; } = 30;
+    public int JobTimeoutMinutes { get; set; } = AsyncEndpointsConstants.DefaultJobTimeoutMinutes;
 
     /// <summary>
     /// Gets or sets the maximum number of jobs to process in a single batch.
-    /// Default value is 5.
     /// </summary>
-    public int BatchSize { get; set; } = 5;
+    public int BatchSize { get; set; } = AsyncEndpointsConstants.DefaultBatchSize;
 
     /// <summary>
     /// Gets or sets the maximum size of the job queue.
-    /// Default value is 50 jobs.
     /// </summary>
-    public int MaximumQueueSize { get; set; } = 50;
+    public int MaximumQueueSize { get; set; } = AsyncEndpointsConstants.DefaultMaximumQueueSize;
 }

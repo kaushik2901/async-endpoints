@@ -111,7 +111,7 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 
             _writerJobChannel.TryComplete();
 
-            await WaitForWorkCompletionAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            await WaitForWorkCompletionAsync(TimeSpan.FromSeconds(AsyncEndpointsConstants.BackgroundServiceShutdownTimeoutSeconds)).ConfigureAwait(false);
 
             _logger.LogInformation("AsyncEndpoints Background Service graceful shutdown completed");
         }
@@ -154,7 +154,7 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
                 break;
             }
 
-            await Task.Delay(100).ConfigureAwait(false);
+            await Task.Delay(AsyncEndpointsConstants.BackgroundServiceWaitDelayMs).ConfigureAwait(false);
         }
 
         if (_semaphoreSlim.CurrentCount < _workerConfigurations.MaximumConcurrency)

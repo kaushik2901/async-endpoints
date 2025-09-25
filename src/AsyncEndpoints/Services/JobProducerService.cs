@@ -36,7 +36,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                     if (queuedJobsResult.IsFailure)
                     {
                         _logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
-                        adaptiveDelay = TimeSpan.FromSeconds(5);
+                        adaptiveDelay = TimeSpan.FromSeconds(AsyncEndpointsConstants.JobProducerErrorDelaySeconds);
                         await Task.Delay(adaptiveDelay, stoppingToken);
                         continue;
                     }
@@ -48,7 +48,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                     if (queuedJobs.Count == 0)
                     {
                         // No jobs found - use longer delay
-                        adaptiveDelay = TimeSpan.FromMilliseconds(Math.Min(_workerConfigurations.PollingIntervalMs * 3, 30000));
+                        adaptiveDelay = TimeSpan.FromMilliseconds(Math.Min(_workerConfigurations.PollingIntervalMs * 3, AsyncEndpointsConstants.JobProducerMaxDelayMs));
                     }
                     else
                     {
@@ -67,7 +67,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                             else
                             {
                                 // Channel is full - use timeout to avoid indefinite blocking
-                                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(AsyncEndpointsConstants.JobProducerChannelWriteTimeoutSeconds));
                                 using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, timeoutCts.Token);
 
                                 try
@@ -98,7 +98,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error in job producer");
-                    adaptiveDelay = TimeSpan.FromSeconds(5);
+                    adaptiveDelay = TimeSpan.FromSeconds(AsyncEndpointsConstants.JobProducerErrorDelaySeconds);
                     await Task.Delay(adaptiveDelay, stoppingToken);
                 }
             }

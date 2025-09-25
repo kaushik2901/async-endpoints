@@ -248,7 +248,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
                 existingJob.IncrementRetryCount();
                 _logger.LogDebug("Job {JobId} retry count incremented to {RetryCount}", id, existingJob.RetryCount);
 
-                var retryDelay = TimeSpan.FromSeconds(Math.Pow(2, existingJob.RetryCount) * 5);
+                var retryDelay = TimeSpan.FromSeconds(Math.Pow(2, existingJob.RetryCount) * AsyncEndpointsConstants.RetryDelayBaseSeconds);
                 existingJob.SetRetryTime(DateTime.UtcNow.Add(retryDelay));
 
                 existingJob.WorkerId = null;

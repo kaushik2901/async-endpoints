@@ -68,7 +68,7 @@ namespace AsyncEndpoints.Utilities
 
             if (level == 0) // Only add separator at the top level
             {
-                sb.AppendLine(new string('-', 50));
+                sb.AppendLine(new string('-', AsyncEndpointsConstants.ExceptionSeparatorLength));
             }
         }
     }
