@@ -9,6 +9,11 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Services;
 
+/// <summary>
+/// Implements the IJobProducerService interface to produce jobs and write them to a channel.
+/// Polls the job store for queued jobs and writes them to the channel for consumption.
+/// Implements adaptive polling based on job availability and channel capacity.
+/// </summary>
 public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jobStore, IOptions<AsyncEndpointsConfigurations> configurations) : IJobProducerService
 {
     private readonly ILogger<JobProducerService> _logger = logger;

@@ -7,6 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Services;
 
+/// <summary>
+/// Implements the IJobConsumerService interface to consume jobs from a channel and process them.
+/// Uses a semaphore to control the level of concurrency for job processing.
+/// </summary>
 public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcessorService jobProcessorService) : IJobConsumerService
 {
     private readonly ILogger<JobConsumerService> _logger = logger;

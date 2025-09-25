@@ -11,6 +11,10 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.InMemoryStore;
 
+/// <summary>
+/// An in-memory implementation of the IJobStore interface.
+/// This implementation stores jobs in a thread-safe concurrent dictionary and is suitable for development or single-instance deployments.
+/// </summary>
 public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
 {
     private readonly ILogger<InMemoryJobStore> _logger = logger;

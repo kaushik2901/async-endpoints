@@ -11,6 +11,11 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Services;
 
+/// <summary>
+/// Implements the IJobProcessorService interface to process individual jobs.
+/// Handles the execution of job payloads, serialization/deserialization of requests and responses,
+/// and updates job status and results in the job store.
+/// </summary>
 public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore jobStore, IHandlerExecutionService handlerExecutionService, IOptions<JsonOptions> jsonOptions) : IJobProcessorService
 {
     private readonly ILogger<JobProcessorService> _logger = logger;

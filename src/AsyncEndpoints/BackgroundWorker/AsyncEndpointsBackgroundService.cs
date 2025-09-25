@@ -11,6 +11,10 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.BackgroundWorker;
 
+/// <summary>
+/// A background service that manages the processing of asynchronous jobs using producer-consumer pattern.
+/// It coordinates job production and consumption with configurable concurrency and queue limits.
+/// </summary>
 public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposable, IDisposable
 {
     private readonly ILogger<AsyncEndpointsBackgroundService> _logger;
