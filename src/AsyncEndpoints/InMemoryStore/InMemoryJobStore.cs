@@ -64,15 +64,21 @@ public class InMemoryJobStore : IJobStore
         }
     }
 
-    public Task<MethodResult<List<Job>>> GetByStatus(JobStatus status, int maxSize, CancellationToken cancellationToken)
+    public Task<MethodResult<List<Job>>> GetQueuedJobs(int maxSize, CancellationToken cancellationToken)
     {
         try
         {
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<MethodResult<List<Job>>>(cancellationToken);
 
+            var now = DateTime.UtcNow;
+            List<JobStatus> statuses = [JobStatus.Queued, JobStatus.Scheduled];
+
             var jobsWithStatus = jobs.Values
-                .Where(job => job.Status == status)
+                .Where(job => job.Status == JobStatus.Queued ||
+                    (job.Status == JobStatus.Scheduled &&
+                    (job.RetryDelayUntil == null || job.RetryDelayUntil <= now))
+                )
                 .Take(maxSize)
                 .ToList();
 
@@ -152,7 +158,21 @@ public class InMemoryJobStore : IJobStore
                 return Task.FromResult(MethodResult.Failure(
                     AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found")));
 
-            existingJob.SetException(exception);
+            if (existingJob.RetryCount < existingJob.MaxRetries)
+            {
+                existingJob.IncrementRetryCount();
+
+                var retryDelay = TimeSpan.FromSeconds(Math.Pow(2, existingJob.RetryCount) * 5);
+                existingJob.SetRetryTime(DateTime.UtcNow.Add(retryDelay));
+
+                existingJob.UpdateStatus(JobStatus.Scheduled);
+
+                existingJob.Exception = exception;
+            }
+            else
+            {
+                existingJob.SetException(exception);
+            }
 
             return Task.FromResult(MethodResult.Success());
         }

@@ -27,8 +27,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
 
                 try
                 {
-                    // TODO: Do something about Scheduled jobs
-                    var queuedJobsResult = await _jobStore.GetByStatus(JobStatus.Queued, _workerConfigurations.BatchSize, stoppingToken);
+                    var queuedJobsResult = await _jobStore.GetQueuedJobs(_workerConfigurations.BatchSize, stoppingToken);
                     if (queuedJobsResult.IsFailure)
                     {
                         _logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
