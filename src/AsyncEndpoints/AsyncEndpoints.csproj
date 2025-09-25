@@ -2,7 +2,14 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
+		<AssemblyTitle>AsyncEndpoints</AssemblyTitle>
 	</PropertyGroup>
+	
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>AsyncEndpoints.UnitTests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
