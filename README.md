@@ -14,7 +14,7 @@ AsyncEndpoints is a .NET library that enables developers to easily build asynchr
 
 ## Installation
 
-Install the AsyncEndpoints NuGet package:
+Install the AsyncEndpoints NuGet package (Yet to be published in public):
 
 ```bash
 dotnet add package AsyncEndpoints
