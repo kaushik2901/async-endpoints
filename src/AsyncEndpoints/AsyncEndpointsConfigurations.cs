@@ -10,6 +10,7 @@ public sealed class AsyncEndpointsConfigurations
 
 public sealed class AsyncEndpointsWorkerConfigurations
 {
+    public Guid WorkerId { get; set; } = Guid.NewGuid();
     public int MaximumConcurrency { get; set; } = Environment.ProcessorCount;
     public int PollingIntervalMs { get; set; } = 1000;
     public int JobTimeoutMinutes { get; set; } = 30;

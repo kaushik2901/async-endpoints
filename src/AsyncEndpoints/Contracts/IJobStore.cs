@@ -11,7 +11,7 @@ public interface IJobStore
 {
     Task<MethodResult<Job?>> Get(Guid id, CancellationToken cancellationToken);
     Task<MethodResult> Add(Job job, CancellationToken cancellationToken);
-    Task<MethodResult<List<Job>>> GetQueuedJobs(int maxSize, CancellationToken cancellationToken);
+    Task<MethodResult<List<Job>>> GetQueuedJobs(Guid workerId, int maxSize, CancellationToken cancellationToken);
     Task<MethodResult> UpdateJobStatus(Guid id, JobStatus status, CancellationToken cancellationToken);
     Task<MethodResult> UpdateJobResult(Guid id, string result, CancellationToken cancellationToken);
     Task<MethodResult> UpdateJobException(Guid id, string exception, CancellationToken cancellationToken);

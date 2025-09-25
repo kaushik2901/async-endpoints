@@ -17,6 +17,7 @@ public sealed class Job
     public int RetryCount { get; set; } = 0;
     public int MaxRetries { get; set; } = AsyncEndpointsConstants.MaximumRetries;
     public DateTime? RetryDelayUntil { get; set; } = null;
+    public Guid? WorkerId { get; set; } = null;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? StartedAt { get; set; } = null;
     public DateTimeOffset? CompletedAt { get; set; } = null;

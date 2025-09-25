@@ -64,7 +64,7 @@ public class InMemoryJobStore : IJobStore
         }
     }
 
-    public Task<MethodResult<List<Job>>> GetQueuedJobs(int maxSize, CancellationToken cancellationToken)
+    public Task<MethodResult<List<Job>>> GetQueuedJobs(Guid workerId, int maxSize, CancellationToken cancellationToken)
     {
         try
         {
@@ -74,15 +74,22 @@ public class InMemoryJobStore : IJobStore
             var now = DateTime.UtcNow;
             List<JobStatus> statuses = [JobStatus.Queued, JobStatus.Scheduled];
 
-            var jobsWithStatus = jobs.Values
-                .Where(job => job.Status == JobStatus.Queued ||
+            var availableJobs = jobs.Values
+                .Where(job => job.WorkerId == null)
+                .Where(job => (
+                    job.Status == JobStatus.Queued ||
                     (job.Status == JobStatus.Scheduled &&
-                    (job.RetryDelayUntil == null || job.RetryDelayUntil <= now))
+                    (job.RetryDelayUntil == null || job.RetryDelayUntil <= now)))
                 )
                 .Take(maxSize)
                 .ToList();
 
-            return Task.FromResult(MethodResult<List<Job>>.Success(jobsWithStatus));
+            foreach (var job in availableJobs)
+            {
+                job.WorkerId = workerId;
+            }
+
+            return Task.FromResult(MethodResult<List<Job>>.Success(availableJobs));
         }
         catch (Exception ex)
         {
@@ -107,6 +114,11 @@ public class InMemoryJobStore : IJobStore
                     AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found")));
 
             existingJob.UpdateStatus(status);
+
+            if (status == JobStatus.Queued || status == JobStatus.Scheduled)
+            {
+                existingJob.WorkerId = null;
+            }
 
             return Task.FromResult(MethodResult.Success());
         }
@@ -165,6 +177,7 @@ public class InMemoryJobStore : IJobStore
                 var retryDelay = TimeSpan.FromSeconds(Math.Pow(2, existingJob.RetryCount) * 5);
                 existingJob.SetRetryTime(DateTime.UtcNow.Add(retryDelay));
 
+                existingJob.WorkerId = null;
                 existingJob.UpdateStatus(JobStatus.Scheduled);
 
                 existingJob.Exception = exception;
