@@ -67,11 +67,13 @@ public sealed class Job
     public void SetResult(string result)
     {
         Result = result;
+        UpdateStatus(JobStatus.Completed);
     }
 
     public void SetException(string exception)
     {
         Exception = exception;
+        UpdateStatus(JobStatus.Failed);
     }
 
     public void IncrementRetryCount()

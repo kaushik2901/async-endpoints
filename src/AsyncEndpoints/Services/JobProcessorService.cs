@@ -20,11 +20,9 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore 
 
     public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
     {
-        var originalJobStatus = job.Status;
-
-        if (!await UpdateJobStatusWithRetry(job, JobStatus.InProgress, null, null, cancellationToken))
+        var updateJobStatusResult = await _jobStore.UpdateJobStatus(job.Id, JobStatus.InProgress, cancellationToken);
+        if (!updateJobStatusResult.IsSuccess)
         {
-            job.UpdateStatus(originalJobStatus);
             _logger.LogError("Failed to update job {JobId} status to InProgress", job.Id);
             return;
         }
@@ -34,22 +32,21 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore 
             var result = await ProcessJobPayloadAsync(job, cancellationToken);
 
             if (result.IsSuccess)
-            {
-                await UpdateJobStatusWithRetry(job, JobStatus.Completed, result.Data?.ToString(), null, cancellationToken);
-            }
-            else
-            {
-                await UpdateJobStatusWithRetry(job, JobStatus.Failed, null, result.Error?.ToString() ?? "Unknown error", cancellationToken);
-            }
-
-            if (result.IsSuccess)
                 _logger.LogInformation("Successfully processed job {JobId}", job.Id);
             else
                 _logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
+
+            var jobUpdateResult = await UpdateJob(job, result, cancellationToken);
+
+            if (jobUpdateResult.IsSuccess)
+                _logger.LogInformation("Successfully updated job {JobId}", job.Id);
+            else
+                _logger.LogError("Failed to update job {JobId}: {Error}", job.Id, result.Error?.Message);
         }
         catch (Exception ex)
         {
-            await HandleJobException(job, ex, cancellationToken);
+            var serializedException = ExceptionSerializer.Serialize(ex);
+            await _jobStore.UpdateJobException(job.Id, serializedException, cancellationToken);
         }
     }
 
@@ -87,71 +84,13 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore 
         }
     }
 
-    private async Task HandleJobException(Job job, Exception ex, CancellationToken cancellationToken)
+    private async Task<MethodResult> UpdateJob(Job job, MethodResult<string> processJobResult, CancellationToken cancellationToken)
     {
-        _logger.LogError(ex, "Error processing job {JobId}", job.Id);
-
-        if (job.RetryCount < job.MaxRetries)
+        if (processJobResult.IsSuccess)
         {
-            job.IncrementRetryCount();
-
-            // Calculate exponential backoff with jitter
-            var baseDelay = TimeSpan.FromMinutes(Math.Pow(2, job.RetryCount - 1)); // 1, 2, 4, 8 minutes
-            var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, 30000)); // 0-30 seconds
-            var delayUntil = DateTime.UtcNow.Add(baseDelay).Add(jitter);
-
-            // Set retry time and queue for future processing
-            job.SetRetryTime(delayUntil);
-            job.UpdateStatus(JobStatus.Scheduled); // New status for delayed jobs
-            job.SetException(ex.Message);
-
-            var updateSuccess = await UpdateJobStatusWithRetry(job, JobStatus.Scheduled, null, ex.Message, cancellationToken);
-
-            if (updateSuccess)
-            {
-                _logger.LogInformation("Job {JobId} scheduled for retry {RetryCount}/{MaxRetries} at {RetryTime}",
-                    job.Id, job.RetryCount, job.MaxRetries, delayUntil);
-            }
-        }
-        else
-        {
-            // Mark as permanently failed
-            job.UpdateStatus(JobStatus.Failed);
-            job.SetException(ex.Message);
-
-            await UpdateJobStatusWithRetry(job, JobStatus.Failed, null, ex.Message, cancellationToken);
-
-            _logger.LogError("Job {JobId} failed permanently after {RetryCount} attempts", job.Id, job.RetryCount);
-        }
-    }
-
-    private async Task<bool> UpdateJobStatusWithRetry(Job job, JobStatus status, string? result = null, string? exception = null, CancellationToken cancellationToken = default)
-    {
-        const int maxRetries = 3;
-
-        job.UpdateStatus(status);
-        if (result != null) job.SetResult(result);
-        if (exception != null) job.SetException(exception);
-
-        for (int attempt = 1; attempt <= maxRetries; attempt++)
-        {
-            var updateResult = await _jobStore.Update(job, cancellationToken);
-            if (updateResult.IsSuccess)
-            {
-                return true;
-            }
-
-            _logger.LogWarning("Failed to update job {JobId} to {Status} (attempt {Attempt}/{MaxAttempts}): {Error}",
-                job.Id, status, attempt, maxRetries, updateResult.Error?.Message);
-
-            if (attempt < maxRetries)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt), cancellationToken);
-            }
+            return await _jobStore.UpdateJobResult(job.Id, processJobResult.Data ?? string.Empty, cancellationToken);
         }
 
-        _logger.LogError("Failed to update job {JobId} status to {Status} after {MaxAttempts} attempts",
-            job.Id, status, maxRetries);
-        return false;
+        return await _jobStore.UpdateJobException(job.Id, processJobResult.Error?.ToString() ?? string.Empty, cancellationToken);
     }
 }

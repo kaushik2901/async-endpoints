@@ -85,29 +85,81 @@ public class InMemoryJobStore : IJobStore
         }
     }
 
-    public Task<MethodResult> Update(Job job, CancellationToken cancellationToken)
+    public Task<MethodResult> UpdateJobStatus(Guid id, JobStatus status, CancellationToken cancellationToken)
     {
         try
         {
-            if (job == null)
-                return Task.FromResult(MethodResult.Failure(
-                    AsyncEndpointError.FromCode("INVALID_JOB", "Job cannot be null")));
-
-            if (job.Id == Guid.Empty)
+            if (id == Guid.Empty)
                 return Task.FromResult(MethodResult.Failure(
                     AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty")));
 
             if (cancellationToken.IsCancellationRequested)
                 return Task.FromCanceled<MethodResult>(cancellationToken);
 
-            jobs[job.Id] = job;
+            if (!jobs.TryGetValue(id, out var existingJob))
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found")));
+
+            existingJob.UpdateStatus(status);
 
             return Task.FromResult(MethodResult.Success());
         }
         catch (Exception ex)
         {
             return Task.FromResult(MethodResult.Failure(
-                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error updating job: {ex.Message}", ex)));
+                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error updating job status: {ex.Message}", ex)));
+        }
+    }
+
+    public Task<MethodResult> UpdateJobResult(Guid id, string result, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty")));
+
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<MethodResult>(cancellationToken);
+
+            if (!jobs.TryGetValue(id, out var existingJob))
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found")));
+
+            existingJob.SetResult(result);
+
+            return Task.FromResult(MethodResult.Success());
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(MethodResult.Failure(
+                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error updating job status: {ex.Message}", ex)));
+        }
+    }
+
+    public Task<MethodResult> UpdateJobException(Guid id, string exception, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty")));
+
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromCanceled<MethodResult>(cancellationToken);
+
+            if (!jobs.TryGetValue(id, out var existingJob))
+                return Task.FromResult(MethodResult.Failure(
+                    AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found")));
+
+            existingJob.SetException(exception);
+
+            return Task.FromResult(MethodResult.Success());
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(MethodResult.Failure(
+                AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error updating job status: {ex.Message}", ex)));
         }
     }
 }
