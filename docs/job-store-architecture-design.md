@@ -302,6 +302,7 @@ The JobStore is responsible for data-related operations only:
 
 - **Data Persistence**: Store and retrieve job data from the underlying storage system
 - **Atomic Operations**: Ensure data consistency through atomic operations where possible
+- **Distributed Locking**: Implement distributed locking mechanisms appropriate for the storage system
 - **Connection Management**: Handle connections, transactions, and resource management for the storage system
 - **Querying**: Provide methods to retrieve jobs based on various criteria
 - **Indexing**: Implement appropriate indexing strategies for efficient queries
@@ -327,6 +328,118 @@ The JobManager handles the job lifecycle and business logic:
 - Direct data access implementation details
 - Storage-specific optimization
 - Database-specific transaction management
+
+### Distributed Locking Implementation
+
+#### How the Architecture Enables Distributed Locking
+
+The separation of concerns in this design allows each JobStore implementation to use the most appropriate distributed locking mechanism for its underlying storage system:
+
+**RedisJobStore Implementation:**
+- Uses Redis atomic operations (LPOP, LPUSH) for job claiming
+- Leverages Redis locks (SET key NX EX) for distributed synchronization
+- Uses Redis sorted sets for scheduling with atomic operations
+
+**EFCoreJobStore Implementation:**
+- Uses database transactions with row-level locking (SELECT ... FOR UPDATE)
+- Implements optimistic locking with version fields
+- Uses database-specific locking mechanisms (SQL Server row locks, PostgreSQL advisory locks)
+
+**InMemoryJobStore Implementation:**
+- Uses .NET concurrent collections and SemaphoreSlim for in-process synchronization
+- Provides thread-safe operations without network overhead
+
+#### Distributed Locking Methods in IJobStore
+
+The `ClaimJobsForWorker` method in IJobStore is designed to be atomic and provide distributed locking:
+
+```csharp
+/// <summary>
+/// Atomically claims available jobs for a specific worker
+/// Implements distributed locking appropriate for the underlying storage
+/// </summary>
+Task<MethodResult<List<Job>>> ClaimJobsForWorker(Guid workerId, int maxClaimCount, CancellationToken cancellationToken);
+```
+
+This method ensures that:
+1. Only one worker can claim a specific job at a time
+2. The operation is atomic to prevent race conditions
+3. Each JobStore implementation can use the most efficient locking mechanism for its storage system
+
+#### Example Implementation Pattern
+
+**RedisJobStore:**
+```csharp
+public async Task<MethodResult<List<Job>>> ClaimJobsForWorker(Guid workerId, int maxClaimCount, CancellationToken cancellationToken)
+{
+    // Use Redis Lua script for atomic job claiming
+    var luaScript = @"
+        local jobs = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, ARGV[2])
+        if #jobs > 0 then
+            for _, jobId in ipairs(jobs) do
+                redis.call('HSET', ARGV[3] .. jobId, 'workerId', ARGV[4])
+                redis.call('HSET', ARGV[3] .. jobId, 'status', 'InProgress')
+            end
+        end
+        return jobs
+    ";
+    
+    var result = await _redisDb.ScriptEvaluateAsync(luaScript, 
+        new RedisKey[] { "scheduled_jobs" },
+        new RedisValue[] { DateTimeOffset.UtcNow.ToUnixTimeSeconds(), maxClaimCount, "job:", workerId.ToString() });
+    
+    // Process result...
+}
+```
+
+**EFCoreJobStore:**
+```csharp
+public async Task<MethodResult<List<Job>>> ClaimJobsForWorker(Guid workerId, int maxClaimCount, CancellationToken cancellationToken)
+{
+    using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+    try
+    {
+        var availableJobs = await _context.Jobs
+            .Where(j => j.WorkerId == null && 
+                       (j.Status == JobStatus.Queued || 
+                        (j.Status == JobStatus.Scheduled && j.RetryDelayUntil <= DateTime.UtcNow)))
+            .OrderBy(j => j.CreatedAt)
+            .Take(maxClaimCount)
+            .Select(j => j.Id)
+            .ToListAsync(cancellationToken);
+        
+        // Use pessimistic locking to lock the selected rows
+        var jobsToClaim = await _context.Jobs
+            .Where(j => availableJobs.Contains(j.Id))
+            .AsTracking()
+            .ToListAsync(cancellationToken);
+        
+        foreach (var job in jobsToClaim)
+        {
+            job.WorkerId = workerId;
+            job.UpdateStatus(JobStatus.InProgress);
+        }
+        
+        await _context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        
+        return MethodResult<List<Job>>.Success(jobsToClaim);
+    }
+    catch (Exception ex)
+    {
+        await transaction.RollbackAsync(cancellationToken);
+        throw;
+    }
+}
+```
+
+#### Benefits of This Approach
+
+1. **Implementation-Specific Optimizations**: Each job store can use the most efficient locking mechanism for its storage system
+2. **Distributed Safety**: Proper distributed locking prevents multiple workers from processing the same job
+3. **Performance**: Each implementation can optimize for its specific storage system's capabilities
+4. **Scalability**: The locking mechanism scales with the underlying storage system
+5. **Flexibility**: New storage systems can be added with their own optimized locking strategies
 
 ## Performance Considerations
 
