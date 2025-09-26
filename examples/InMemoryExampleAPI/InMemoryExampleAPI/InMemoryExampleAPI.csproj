@@ -7,6 +7,6 @@
 		<PublishAot>true</PublishAot>
 	</PropertyGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\AsyncEndpoints\AsyncEndpoints.csproj" />
+	  <ProjectReference Include="..\..\..\src\AsyncEndpoints\AsyncEndpoints.csproj" />
 	</ItemGroup>
 </Project>

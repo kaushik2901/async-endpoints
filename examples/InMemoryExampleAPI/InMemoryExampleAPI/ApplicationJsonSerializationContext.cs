@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using AsyncEndpoints.API.Models;
+using InMemoryExampleAPI.Models;
 
 namespace AsyncEndpoints.API;
 

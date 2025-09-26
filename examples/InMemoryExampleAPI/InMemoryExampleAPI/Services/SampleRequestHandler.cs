@@ -1,8 +1,9 @@
-﻿using AsyncEndpoints.API.Models;
+﻿using AsyncEndpoints;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Utilities;
+using InMemoryExampleAPI.Models;
 
-namespace AsyncEndpoints.API.Services;
+namespace InMemoryExampleAPI.Services;
 
 public class SampleRequestHandler : IAsyncEndpointRequestHandler<SampleRequest, SampleResponse>
 {

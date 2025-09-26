@@ -1,4 +1,4 @@
-﻿namespace AsyncEndpoints.API.Models;
+﻿namespace InMemoryExampleAPI.Models;
 
 public class SampleRequest
 {
