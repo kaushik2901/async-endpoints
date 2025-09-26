@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 
@@ -16,7 +11,7 @@ public class HandlerRegistrationTrackerTests
     {
         // Arrange
         var jobName = "test-job";
-        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc = 
+        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc =
             (provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result" }));
 
         // Act
@@ -48,8 +43,8 @@ public class HandlerRegistrationTrackerTests
         var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var testJob = new Job();
         var testRequest = new TestRequest { Value = "request" };
-        
-        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc = 
+
+        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc =
             (provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result" }));
 
         // Act
@@ -58,7 +53,7 @@ public class HandlerRegistrationTrackerTests
 
         // Assert
         Assert.NotNull(invoker);
-        
+
         var result = await invoker(serviceProvider, testRequest, testJob, CancellationToken.None);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
@@ -81,11 +76,11 @@ public class HandlerRegistrationTrackerTests
         // Arrange
         var jobName1 = "job1";
         var jobName2 = "job2";
-        
-        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc1 = 
+
+        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc1 =
             (provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result1" }));
-            
-        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc2 = 
+
+        Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc2 =
             (provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result2" }));
 
         // Act
@@ -95,15 +90,15 @@ public class HandlerRegistrationTrackerTests
         // Assert
         var registration1 = HandlerRegistrationTracker.GetHandlerRegistration(jobName1);
         var registration2 = HandlerRegistrationTracker.GetHandlerRegistration(jobName2);
-        
+
         Assert.NotNull(registration1);
         Assert.NotNull(registration2);
         Assert.Equal(jobName1, registration1.JobName);
         Assert.Equal(jobName2, registration2.JobName);
-        
+
         var invoker1 = HandlerRegistrationTracker.GetInvoker(jobName1);
         var invoker2 = HandlerRegistrationTracker.GetInvoker(jobName2);
-        
+
         Assert.NotNull(invoker1);
         Assert.NotNull(invoker2);
     }

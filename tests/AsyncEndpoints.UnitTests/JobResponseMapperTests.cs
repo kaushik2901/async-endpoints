@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Utilities;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 
@@ -17,7 +14,7 @@ public class JobResponseMapperTests
         var startedAt = DateTimeOffset.UtcNow.AddHours(-1);
         var completedAt = DateTimeOffset.UtcNow.AddMinutes(-30);
         var lastUpdatedAt = DateTimeOffset.UtcNow;
-        
+
         var job = new Job
         {
             Id = jobId,

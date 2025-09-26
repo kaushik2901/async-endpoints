@@ -1,12 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Primitives;
-using Moq;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 
@@ -86,7 +78,7 @@ public class HttpContextExtensionsTests
         Assert.Equal("Value1", result["Header1"].First());
         Assert.Equal("Value2", result["Header2"].First());
         Assert.Equal("Value3", result["header3"].First());
-        
+
         // Test case-insensitive lookup
         Assert.Equal("Value1", result["header1"].First());
         Assert.Equal("Value2", result["HEADER2"].First());

@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using AsyncEndpoints.Entities;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 

@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace AsyncEndpoints.UnitTests;
 
 public class AsyncEndpointsConstantsTests

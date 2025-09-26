@@ -1,6 +1,4 @@
-using System;
 using AsyncEndpoints.Utilities;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 

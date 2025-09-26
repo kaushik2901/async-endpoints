@@ -1,6 +1,3 @@
-using System;
-using Xunit;
-
 namespace AsyncEndpoints.UnitTests;
 
 public class AsyncEndpointsConfigurationsTests
@@ -21,7 +18,7 @@ public class AsyncEndpointsConfigurationsTests
     {
         // Arrange
         var config = new AsyncEndpointsConfigurations();
-        
+
         // Act
         config.MaximumRetries = 5;
 
@@ -81,7 +78,7 @@ public class AsyncEndpointsWorkerConfigurationsTests
         // Arrange
         var config = new AsyncEndpointsWorkerConfigurations();
         var testWorkerId = Guid.NewGuid();
-        
+
         // Act
         config.WorkerId = testWorkerId;
         config.MaximumConcurrency = 10;

@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.InMemoryStore;
-using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 
@@ -146,11 +139,11 @@ public class InMemoryJobStoreTests
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data!.Count);
-        
+
         var jobIds = result.Data.Select(j => j.Id).ToList();
         Assert.Contains(job1.Id, jobIds);
         Assert.Contains(job2.Id, jobIds);
-        
+
         // Check that worker ID was assigned to jobs
         foreach (var job in result.Data)
         {
@@ -216,7 +209,7 @@ public class InMemoryJobStoreTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Null(result.Error);
-        
+
         var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
         Assert.Equal(JobStatus.InProgress, getJobResult.Data!.Status);
     }
@@ -263,7 +256,7 @@ public class InMemoryJobStoreTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Null(result.Error);
-        
+
         var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
         Assert.Equal(expectedResult, getJobResult.Data!.Result);
         Assert.Equal(JobStatus.Completed, getJobResult.Data.Status);
@@ -311,7 +304,7 @@ public class InMemoryJobStoreTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Null(result.Error);
-        
+
         var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
         Assert.Equal(expectedException, getJobResult.Data!.Exception);
         Assert.Equal(JobStatus.Failed, getJobResult.Data.Status); // Should be failed since at max retries
@@ -332,7 +325,7 @@ public class InMemoryJobStoreTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Null(result.Error);
-        
+
         var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
         Assert.Equal(expectedException, getJobResult.Data!.Exception);
         Assert.Equal(1, getJobResult.Data.RetryCount); // First retry
@@ -355,7 +348,7 @@ public class InMemoryJobStoreTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Null(result.Error);
-        
+
         var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
         Assert.Equal(expectedException, getJobResult.Data!.Exception);
         Assert.Equal(3, getJobResult.Data.RetryCount); // No increment

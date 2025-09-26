@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Utilities;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 
@@ -15,7 +13,7 @@ public class AsyncContextBuilderTests
         var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
         var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
         var queryParams = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", new List<string?> { "value1" }) };
-        
+
         var job = new Job
         {
             Headers = headers,

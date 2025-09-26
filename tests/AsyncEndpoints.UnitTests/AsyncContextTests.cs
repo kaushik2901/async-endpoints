@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Xunit;
-
 namespace AsyncEndpoints.UnitTests;
 
 public class AsyncContextTests

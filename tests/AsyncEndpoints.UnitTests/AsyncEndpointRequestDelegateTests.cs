@@ -1,19 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
-using AsyncEndpoints.Entities;
 using AsyncEndpoints.Services;
-using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace AsyncEndpoints.UnitTests;
 
@@ -48,7 +40,7 @@ public class AsyncEndpointRequestDelegateTests
         var httpContext = CreateHttpContext();
         var request = new TestRequest { Value = "test" };
         var expectedResponse = Results.Ok("Custom Response");
-        Func<HttpContext, TestRequest, CancellationToken, Task<IResult?>> customHandler = 
+        Func<HttpContext, TestRequest, CancellationToken, Task<IResult?>> customHandler =
             (ctx, req, token) => Task.FromResult<IResult?>(expectedResponse);
 
         // Act
@@ -67,7 +59,7 @@ public class AsyncEndpointRequestDelegateTests
         var httpContext = CreateHttpContext();
         var request = new TestRequest { Value = "test" };
         var expectedResponse = Results.Ok("Custom Response");
-        Func<HttpContext, TestRequest, CancellationToken, Task<IResult?>> customHandler = 
+        Func<HttpContext, TestRequest, CancellationToken, Task<IResult?>> customHandler =
             (ctx, req, token) => Task.FromResult<IResult?>(expectedResponse);
 
         // Act
@@ -83,11 +75,11 @@ public class AsyncEndpointRequestDelegateTests
         context.Request.Method = "POST";
         context.Request.Path = "/test";
         context.Request.ContentLength = 0;
-        
+
         // Set up a basic service provider
         var serviceProvider = new ServiceCollection().BuildServiceProvider();
         context.RequestServices = serviceProvider;
-        
+
         return context;
     }
 }
