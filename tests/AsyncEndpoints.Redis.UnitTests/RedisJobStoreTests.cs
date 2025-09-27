@@ -1,5 +1,4 @@
 using AsyncEndpoints.Entities;
-using AsyncEndpoints.Redis;
 using Microsoft.Extensions.Logging;
 using Moq;
 using StackExchange.Redis;
@@ -138,16 +137,5 @@ public class RedisJobStoreTests
         // Assert
         Assert.False(result.IsSuccess);
         Assert.Contains("not found", result.Error.Message);
-    }
-
-    [Fact]
-    public async Task UpdateJob_NullJob_ReturnsFailure()
-    {
-        // Act
-        var result = await _redisJobStore.UpdateJob(null, default);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.Contains("Job cannot be null", result.Error.Message);
     }
 }

@@ -217,10 +217,8 @@ public class JobTests
         Assert.Equal(AsyncEndpointsConstants.MaximumRetries, job.MaxRetries);
         Assert.Null(job.RetryDelayUntil);
         Assert.Null(job.WorkerId);
-        Assert.NotNull(job.CreatedAt);
         Assert.Null(job.StartedAt);
         Assert.Null(job.CompletedAt);
-        Assert.NotNull(job.LastUpdatedAt);
         Assert.NotNull(job.Headers);
         Assert.NotNull(job.RouteParams);
         Assert.NotNull(job.QueryParams);

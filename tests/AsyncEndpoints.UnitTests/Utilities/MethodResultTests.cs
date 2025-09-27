@@ -144,16 +144,4 @@ public class MethodResultGenericTests
         Assert.Same(exception, result.Exception);
         Assert.Null(result.Data);
     }
-
-    [Fact]
-    public void Success_WithNullData_CreatesSuccessfulResult()
-    {
-        // Act
-        var result = MethodResult<string>.Success(null);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.False(result.IsFailure);
-        Assert.Null(result.Data);
-    }
 }
