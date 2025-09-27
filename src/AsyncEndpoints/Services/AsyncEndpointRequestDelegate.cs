@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
-using AsyncEndpoints.Entities;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
@@ -12,10 +11,10 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Services;
 
-public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobStore jobStore, IOptions<JsonOptions> jsonOptions) : IAsyncEndpointRequestDelegate
+public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, IOptions<JsonOptions> jsonOptions) : IAsyncEndpointRequestDelegate
 {
     private readonly ILogger<AsyncEndpointRequestDelegate> _logger = logger;
-    private readonly IJobStore _jobStore = jobStore;
+    private readonly IJobManager _jobManager = jobManager;
     private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
 
     public async Task<IResult> HandleAsync<TRequest>(
@@ -37,37 +36,19 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
         var payload = JsonSerializer.Serialize(request, _jsonOptions.Value.SerializerOptions);
         _logger.LogDebug("Serialized request payload for job: {JobName}", jobName);
 
-        var job = await HandleAsync(jobName, payload, httpContext, cancellationToken);
+        var submitJobResult = await _jobManager.SubmitJob(jobName, payload, httpContext, cancellationToken);
+        if (submitJobResult.IsSuccess)
+        {
+            // TODO: Handler error properly
+            return Results.Problem(submitJobResult.Error!.Message);
+        }
+
+        var job = submitJobResult.Data!;
         var jobResponse = JobResponseMapper.ToResponse(job);
 
         _logger.LogInformation("Created job {JobId} for job: {JobName}", job.Id, jobName);
 
         return Results.Accepted("", jobResponse);
-    }
-
-    private async Task<Job> HandleAsync(string jobName, string payload, HttpContext httpContext, CancellationToken token)
-    {
-        _logger.LogDebug("Processing job creation for: {JobName}", jobName);
-
-        var id = httpContext.GetOrCreateJobId();
-
-        var result = await _jobStore.Get(id, token);
-        if (result.IsSuccess && result.Data != null)
-        {
-            _logger.LogDebug("Found existing job {JobId} for job: {JobName}", id, jobName);
-            return result.Data;
-        }
-
-        var headers = httpContext.GetHeadersFromContext();
-        var routeParams = httpContext.GetRouteParamsFromContext();
-        var queryParams = httpContext.GetQueryParamsFromContext();
-
-        var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams);
-        _logger.LogDebug("Creating new job {JobId} for job: {JobName}", id, jobName);
-
-        await _jobStore.Add(job, token);
-
-        return job;
     }
 
     private static async Task<IResult?> HandleRequestDelegate<TRequest>(Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, TRequest request, CancellationToken token)

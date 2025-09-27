@@ -9,21 +9,8 @@ public class AsyncEndpointsConfigurationsTests
         var config = new AsyncEndpointsConfigurations();
 
         // Assert
-        Assert.Equal(AsyncEndpointsConstants.MaximumRetries, config.MaximumRetries);
         Assert.NotNull(config.WorkerConfigurations);
-    }
-
-    [Fact]
-    public void MaximumRetries_CanBeSet()
-    {
-        // Arrange
-        var config = new AsyncEndpointsConfigurations();
-
-        // Act
-        config.MaximumRetries = 5;
-
-        // Assert
-        Assert.Equal(5, config.MaximumRetries);
+        Assert.NotNull(config.JobManagerConfiguration);
     }
 
     [Fact]
@@ -39,6 +26,21 @@ public class AsyncEndpointsConfigurationsTests
         // Assert
         Assert.Same(newWorkerConfig, config.WorkerConfigurations);
         Assert.Equal(8, config.WorkerConfigurations.MaximumConcurrency);
+    }
+
+    [Fact]
+    public void JobManagerConfiguration_CanBeSet()
+    {
+        // Arrange
+        var config = new AsyncEndpointsConfigurations();
+        var newJobManagerConfiguration = new AsyncEndpointsJobManagerConfiguration { DefaultMaxRetries = 8 };
+
+        // Act
+        config.JobManagerConfiguration = newJobManagerConfiguration;
+
+        // Assert
+        Assert.Same(newJobManagerConfiguration, config.JobManagerConfiguration);
+        Assert.Equal(8, config.JobManagerConfiguration.DefaultMaxRetries);
     }
 }
 

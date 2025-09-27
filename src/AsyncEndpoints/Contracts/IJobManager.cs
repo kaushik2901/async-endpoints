@@ -1,0 +1,35 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using AsyncEndpoints.Entities;
+using AsyncEndpoints.Utilities;
+using Microsoft.AspNetCore.Http;
+
+namespace AsyncEndpoints.Contracts;
+
+/// <summary>
+/// Defines a contract for managing the job lifecycle, retries, worker assignment, and scheduling.
+/// </summary>
+public interface IJobManager
+{
+    /// <summary>
+    /// Submits a new job to the system
+    /// </summary>
+    Task<MethodResult<Job>> SubmitJob(string jobName, string payload, HttpContext httpContext, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Claims available jobs for processing by a worker
+    /// </summary>
+    Task<MethodResult<List<Job>>> ClaimJobsForProcessing(Guid workerId, int maxClaimCount, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Processes a successful job completion
+    /// </summary>
+    Task<MethodResult> ProcessJobSuccess(Guid jobId, string result, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Processes a failed job (with potential retry logic)
+    /// </summary>
+    Task<MethodResult> ProcessJobFailure(Guid jobId, string exception, CancellationToken cancellationToken);
+}

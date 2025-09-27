@@ -71,7 +71,7 @@ public class HandlerRegistrationTrackerTests
     }
 
     [Fact]
-    public async Task RegisterMultipleHandlers_EachIsAccessible()
+    public void RegisterMultipleHandlers_EachIsAccessible()
     {
         // Arrange
         var jobName1 = "job1";

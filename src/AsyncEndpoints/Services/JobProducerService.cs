@@ -11,13 +11,13 @@ namespace AsyncEndpoints.Services;
 
 /// <summary>
 /// Implements the IJobProducerService interface to produce jobs and write them to a channel.
-/// Polls the job store for queued jobs and writes them to the channel for consumption.
+/// Polls the job manager for queued jobs and writes them to the channel for consumption.
 /// Implements adaptive polling based on job availability and channel capacity.
 /// </summary>
-public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jobStore, IOptions<AsyncEndpointsConfigurations> configurations) : IJobProducerService
+public class JobProducerService(ILogger<JobProducerService> logger, IJobManager jobManager, IOptions<AsyncEndpointsConfigurations> configurations) : IJobProducerService
 {
     private readonly ILogger<JobProducerService> _logger = logger;
-    private readonly IJobStore _jobStore = jobStore;
+    private readonly IJobManager _jobManager = jobManager;
     private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations = configurations.Value.WorkerConfigurations;
 
     public async Task ProduceJobsAsync(ChannelWriter<Job> writerJobChannel, CancellationToken stoppingToken)
@@ -32,10 +32,10 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
 
                 try
                 {
-                    var queuedJobsResult = await _jobStore.GetQueuedJobs(_workerConfigurations.WorkerId, _workerConfigurations.BatchSize, stoppingToken);
+                    var queuedJobsResult = await _jobManager.ClaimJobsForProcessing(_workerConfigurations.WorkerId, _workerConfigurations.BatchSize, stoppingToken);
                     if (queuedJobsResult.IsFailure)
                     {
-                        _logger.LogError("Failed to retrieve queued jobs: {Error}", queuedJobsResult.Error?.Message);
+                        _logger.LogError("Failed to claim jobs for processing: {Error}", queuedJobsResult.Error?.Message);
                         adaptiveDelay = TimeSpan.FromSeconds(AsyncEndpointsConstants.JobProducerErrorDelaySeconds);
                         await Task.Delay(adaptiveDelay, stoppingToken);
                         continue;
@@ -43,7 +43,7 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobStore jo
 
                     var queuedJobs = queuedJobsResult.Data ?? [];
 
-                    _logger.LogDebug("Found {Count} queued jobs to process", queuedJobs.Count);
+                    _logger.LogDebug("Found {Count} jobs to process", queuedJobs.Count);
 
                     if (queuedJobs.Count == 0)
                     {

@@ -47,7 +47,6 @@ public class ServiceCollectionExtensionsTests
         var config = provider.GetRequiredService<AsyncEndpointsConfigurations>();
 
         // Test the default values
-        Assert.Equal(AsyncEndpointsConstants.MaximumRetries, config.MaximumRetries);
         Assert.Equal(AsyncEndpointsConstants.DefaultPollingIntervalMs, config.WorkerConfigurations.PollingIntervalMs);
     }
 

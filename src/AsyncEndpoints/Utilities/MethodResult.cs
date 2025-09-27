@@ -20,7 +20,7 @@ public class MethodResult
     /// <summary>
     /// Gets the error information if the operation failed.
     /// </summary>
-    public AsyncEndpointError? Error { get; }
+    public AsyncEndpointError Error { get; }
 
     /// <summary>
     /// Gets the exception that occurred during the operation, if any.
@@ -30,7 +30,7 @@ public class MethodResult
     protected MethodResult()
     {
         IsSuccess = true;
-        Error = null;
+        Error = AsyncEndpointError.FromCode("PLACEHOLDER_ERROR", string.Empty);
     }
 
     protected MethodResult(AsyncEndpointError error, Exception? exception = null)

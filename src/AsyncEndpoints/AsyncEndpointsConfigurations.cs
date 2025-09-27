@@ -8,14 +8,11 @@ namespace AsyncEndpoints;
 public sealed class AsyncEndpointsConfigurations
 {
     /// <summary>
-    /// Gets or sets the maximum number of retry attempts for failed jobs.
-    /// </summary>
-    public int MaximumRetries { get; set; } = AsyncEndpointsConstants.MaximumRetries;
-
-    /// <summary>
     /// Gets or sets the worker-specific configurations.
     /// </summary>
     public AsyncEndpointsWorkerConfigurations WorkerConfigurations { get; set; } = new();
+
+    public AsyncEndpointsJobManagerConfiguration JobManagerConfiguration { get; set; } = new();
 }
 
 /// <summary>
@@ -55,4 +52,15 @@ public sealed class AsyncEndpointsWorkerConfigurations
     /// Gets or sets the maximum size of the job queue.
     /// </summary>
     public int MaximumQueueSize { get; set; } = AsyncEndpointsConstants.DefaultMaximumQueueSize;
+}
+
+public sealed class AsyncEndpointsJobManagerConfiguration
+{
+    public int DefaultMaxRetries { get; set; } = AsyncEndpointsConstants.MaximumRetries;
+    public double RetryDelayBaseSeconds { get; set; } = 2.0;
+    public TimeSpan JobClaimTimeout { get; set; } = TimeSpan.FromMinutes(5);
+    public int MaxConcurrentJobs { get; set; } = 10;
+    public int JobPollingIntervalMs { get; set; } = 1000;
+    public int MaxClaimBatchSize { get; set; } = 10;
+    public TimeSpan StaleJobClaimCheckInterval { get; set; } = TimeSpan.FromMinutes(1);
 }

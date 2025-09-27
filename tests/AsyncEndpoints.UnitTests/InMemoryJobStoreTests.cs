@@ -19,13 +19,13 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task Add_WithValidJob_Succeeds()
+    public async Task CreateJob_WithValidJob_Succeeds()
     {
         // Arrange
         var job = new Job { Id = Guid.NewGuid(), Name = "TestJob" };
 
         // Act
-        var result = await _jobStore.Add(job, _cancellationToken);
+        var result = await _jobStore.CreateJob(job, _cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -33,10 +33,10 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task Add_WithNullJob_Fails()
+    public async Task CreateJob_WithNullJob_Fails()
     {
         // Act
-        var result = await _jobStore.Add(null!, _cancellationToken);
+        var result = await _jobStore.CreateJob(null!, _cancellationToken);
 
         // Assert
         Assert.False(result.IsSuccess);
@@ -45,13 +45,13 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task Add_WithEmptyJobId_Fails()
+    public async Task CreateJob_WithEmptyJobId_Fails()
     {
         // Arrange
         var job = new Job { Id = Guid.Empty, Name = "TestJob" };
 
         // Act
-        var result = await _jobStore.Add(job, _cancellationToken);
+        var result = await _jobStore.CreateJob(job, _cancellationToken);
 
         // Assert
         Assert.False(result.IsSuccess);
@@ -60,44 +60,44 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task Add_WithDuplicateJobId_Fails()
+    public async Task CreateJob_WithDuplicateJobId_Fails()
     {
         // Arrange
         var job = new Job { Id = Guid.NewGuid(), Name = "TestJob" };
-        await _jobStore.Add(job, _cancellationToken);
 
         // Act
-        var duplicateResult = await _jobStore.Add(job, _cancellationToken);
+        await _jobStore.CreateJob(job, _cancellationToken);
+        var duplicateResult = await _jobStore.CreateJob(job, _cancellationToken);
 
         // Assert
         Assert.False(duplicateResult.IsSuccess);
         Assert.NotNull(duplicateResult.Error);
-        Assert.Equal("JOB_ADD_FAILED", duplicateResult.Error!.Code);
+        Assert.Equal("JOB_CREATE_FAILED", duplicateResult.Error!.Code);
     }
 
     [Fact]
-    public async Task Get_WithValidId_ReturnsJob()
+    public async Task GetJobById_WithValidId_ReturnsJob()
     {
         // Arrange
         var jobId = Guid.NewGuid();
         var job = new Job { Id = jobId, Name = "TestJob" };
-        await _jobStore.Add(job, _cancellationToken);
+        await _jobStore.CreateJob(job, _cancellationToken);
 
         // Act
-        var result = await _jobStore.Get(jobId, _cancellationToken);
+        var result = await _jobStore.GetJobById(jobId, _cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.Equal(jobId, result.Data!.Id);
-        Assert.Equal("TestJob", result.Data.Name);
+        Assert.Equal("TestJob", result.Data!.Name);
     }
 
     [Fact]
-    public async Task Get_WithEmptyId_Fails()
+    public async Task GetJobById_WithEmptyId_Fails()
     {
         // Act
-        var result = await _jobStore.Get(Guid.Empty, _cancellationToken);
+        var result = await _jobStore.GetJobById(Guid.Empty, _cancellationToken);
 
         // Assert
         Assert.False(result.IsSuccess);
@@ -106,13 +106,13 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task Get_WithNonExistentId_ReturnsNull()
+    public async Task GetJobById_WithNonExistentId_ReturnsNull()
     {
         // Arrange
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _jobStore.Get(nonExistentId, _cancellationToken);
+        var result = await _jobStore.GetJobById(nonExistentId, _cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess); // Success means operation completed, but data is null
@@ -120,7 +120,7 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task GetQueuedJobs_ReturnsAvailableJobs()
+    public async Task ClaimJobsForWorker_ReturnsAvailableJobs()
     {
         // Arrange
         var workerId = Guid.NewGuid();
@@ -128,12 +128,12 @@ public class InMemoryJobStoreTests
         var job2 = new Job { Id = Guid.NewGuid(), Name = "Job2", Status = JobStatus.Scheduled, RetryDelayUntil = DateTime.UtcNow.AddMinutes(-1) };
         var job3 = new Job { Id = Guid.NewGuid(), Name = "Job3", Status = JobStatus.InProgress }; // Should not be returned
 
-        await _jobStore.Add(job1, _cancellationToken);
-        await _jobStore.Add(job2, _cancellationToken);
-        await _jobStore.Add(job3, _cancellationToken);
+        await _jobStore.CreateJob(job1, _cancellationToken);
+        await _jobStore.CreateJob(job2, _cancellationToken);
+        await _jobStore.CreateJob(job3, _cancellationToken);
 
         // Act
-        var result = await _jobStore.GetQueuedJobs(workerId, 10, _cancellationToken);
+        var result = await _jobStore.ClaimJobsForWorker(workerId, 10, _cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -152,29 +152,29 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task GetQueuedJobs_WithScheduledJobsInFuture_DoesNotReturnFutureScheduledJobs()
+    public async Task ClaimJobsForWorker_WithScheduledJobsInFuture_DoesNotReturnFutureScheduledJobs()
     {
         // Arrange
         var workerId = Guid.NewGuid();
         var job1 = new Job { Id = Guid.NewGuid(), Name = "Job1", Status = JobStatus.Queued };
         var job2 = new Job { Id = Guid.NewGuid(), Name = "Job2", Status = JobStatus.Scheduled, RetryDelayUntil = DateTime.UtcNow.AddMinutes(10) }; // Future scheduled job
 
-        await _jobStore.Add(job1, _cancellationToken);
-        await _jobStore.Add(job2, _cancellationToken);
+        await _jobStore.CreateJob(job1, _cancellationToken);
+        await _jobStore.CreateJob(job2, _cancellationToken);
 
         // Act
-        var result = await _jobStore.GetQueuedJobs(workerId, 10, _cancellationToken);
+        var result = await _jobStore.ClaimJobsForWorker(workerId, 10, _cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
-        Assert.Single(result.Data); // Only job1 should be returned
+        Assert.Single(result.Data);
         Assert.Contains(job1.Id, result.Data.Select(j => j.Id));
         Assert.DoesNotContain(job2.Id, result.Data.Select(j => j.Id));
     }
 
     [Fact]
-    public async Task GetQueuedJobs_WithMaxSize_RespectsLimit()
+    public async Task ClaimJobsForWorker_WithMaxSize_RespectsLimit()
     {
         // Arrange
         var workerId = Guid.NewGuid();
@@ -182,12 +182,12 @@ public class InMemoryJobStoreTests
         for (int i = 0; i < 5; i++)
         {
             var job = new Job { Id = Guid.NewGuid(), Name = $"Job{i}", Status = JobStatus.Queued };
-            await _jobStore.Add(job, _cancellationToken);
+            await _jobStore.CreateJob(job, _cancellationToken);
             jobs.Add(job);
         }
 
         // Act
-        var result = await _jobStore.GetQueuedJobs(workerId, 3, _cancellationToken);
+        var result = await _jobStore.ClaimJobsForWorker(workerId, 3, _cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -196,250 +196,58 @@ public class InMemoryJobStoreTests
     }
 
     [Fact]
-    public async Task UpdateJobStatus_WithValidJob_UpdatesStatus()
+    public async Task UpdateJob_UpdatesCompleteJob()
     {
         // Arrange
         var jobId = Guid.NewGuid();
         var job = new Job { Id = jobId, Name = "TestJob", Status = JobStatus.Queued };
-        await _jobStore.Add(job, _cancellationToken);
+        await _jobStore.CreateJob(job, _cancellationToken);
 
         // Act
-        var result = await _jobStore.UpdateJobStatus(jobId, JobStatus.InProgress, _cancellationToken);
+        job.Name = "Updated Job Name";
+        job.Status = JobStatus.InProgress;
+        var result = await _jobStore.UpdateJob(job, _cancellationToken);
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Null(result.Error);
 
-        var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
+        var getJobResult = await _jobStore.GetJobById(jobId, _cancellationToken);
+        Assert.Equal("Updated Job Name", getJobResult.Data!.Name);
         Assert.Equal(JobStatus.InProgress, getJobResult.Data!.Status);
     }
 
     [Fact]
-    public async Task UpdateJobStatus_WithEmptyId_Fails()
-    {
-        // Act
-        var result = await _jobStore.UpdateJobStatus(Guid.Empty, JobStatus.Completed, _cancellationToken);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-        Assert.Equal("INVALID_JOB_ID", result.Error!.Code);
-    }
-
-    [Fact]
-    public async Task UpdateJobStatus_WithNonExistentJob_Fails()
-    {
-        // Arrange
-        var nonExistentId = Guid.NewGuid();
-
-        // Act
-        var result = await _jobStore.UpdateJobStatus(nonExistentId, JobStatus.Completed, _cancellationToken);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-        Assert.Equal("JOB_NOT_FOUND", result.Error!.Code);
-    }
-
-    [Fact]
-    public async Task UpdateJobResult_WithValidJob_UpdatesResult()
-    {
-        // Arrange
-        var jobId = Guid.NewGuid();
-        var job = new Job { Id = jobId, Name = "TestJob", Status = JobStatus.Queued };
-        await _jobStore.Add(job, _cancellationToken);
-        var expectedResult = "Job completed successfully";
-
-        // Act
-        var result = await _jobStore.UpdateJobResult(jobId, expectedResult, _cancellationToken);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Error);
-
-        var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
-        Assert.Equal(expectedResult, getJobResult.Data!.Result);
-        Assert.Equal(JobStatus.Completed, getJobResult.Data.Status);
-    }
-
-    [Fact]
-    public async Task UpdateJobResult_WithEmptyId_Fails()
-    {
-        // Act
-        var result = await _jobStore.UpdateJobResult(Guid.Empty, "result", _cancellationToken);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-        Assert.Equal("INVALID_JOB_ID", result.Error!.Code);
-    }
-
-    [Fact]
-    public async Task UpdateJobResult_WithNonExistentJob_Fails()
-    {
-        // Arrange
-        var nonExistentId = Guid.NewGuid();
-
-        // Act
-        var result = await _jobStore.UpdateJobResult(nonExistentId, "result", _cancellationToken);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-        Assert.Equal("JOB_NOT_FOUND", result.Error!.Code);
-    }
-
-    [Fact]
-    public async Task UpdateJobException_WithValidJob_UpdatesException()
-    {
-        // Arrange
-        var jobId = Guid.NewGuid();
-        var job = new Job { Id = jobId, Name = "TestJob", Status = JobStatus.Queued, RetryCount = 3, MaxRetries = 3 }; // At max retries already
-        await _jobStore.Add(job, _cancellationToken);
-        var expectedException = "An error occurred";
-
-        // Act
-        var result = await _jobStore.UpdateJobException(jobId, expectedException, _cancellationToken);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Error);
-
-        var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
-        Assert.Equal(expectedException, getJobResult.Data!.Exception);
-        Assert.Equal(JobStatus.Failed, getJobResult.Data.Status); // Should be failed since at max retries
-    }
-
-    [Fact]
-    public async Task UpdateJobException_WithRetryLogic_WhenRetriesLeft_SchedulesRetry()
-    {
-        // Arrange
-        var jobId = Guid.NewGuid();
-        var job = new Job { Id = jobId, Name = "TestJob", Status = JobStatus.Queued, MaxRetries = 3 };
-        await _jobStore.Add(job, _cancellationToken);
-        var expectedException = "An error occurred";
-
-        // Act
-        var result = await _jobStore.UpdateJobException(jobId, expectedException, _cancellationToken);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Error);
-
-        var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
-        Assert.Equal(expectedException, getJobResult.Data!.Exception);
-        Assert.Equal(1, getJobResult.Data.RetryCount); // First retry
-        Assert.Equal(JobStatus.Scheduled, getJobResult.Data.Status); // Should be scheduled for retry
-        Assert.Null(getJobResult.Data.WorkerId); // Worker should be reset
-    }
-
-    [Fact]
-    public async Task UpdateJobException_WhenMaxRetriesReached_MarksAsFailed()
-    {
-        // Arrange
-        var jobId = Guid.NewGuid();
-        var job = new Job { Id = jobId, Name = "TestJob", Status = JobStatus.Queued, RetryCount = 3, MaxRetries = 3 };
-        await _jobStore.Add(job, _cancellationToken);
-        var expectedException = "An error occurred";
-
-        // Act
-        var result = await _jobStore.UpdateJobException(jobId, expectedException, _cancellationToken);
-
-        // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Error);
-
-        var getJobResult = await _jobStore.Get(jobId, _cancellationToken);
-        Assert.Equal(expectedException, getJobResult.Data!.Exception);
-        Assert.Equal(3, getJobResult.Data.RetryCount); // No increment
-        Assert.Equal(JobStatus.Failed, getJobResult.Data.Status); // Should be marked as failed
-    }
-
-    [Fact]
-    public async Task UpdateJobException_WithEmptyId_Fails()
-    {
-        // Act
-        var result = await _jobStore.UpdateJobException(Guid.Empty, "exception", _cancellationToken);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-        Assert.Equal("INVALID_JOB_ID", result.Error!.Code);
-    }
-
-    [Fact]
-    public async Task UpdateJobException_WithNonExistentJob_Fails()
-    {
-        // Arrange
-        var nonExistentId = Guid.NewGuid();
-
-        // Act
-        var result = await _jobStore.UpdateJobException(nonExistentId, "exception", _cancellationToken);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-        Assert.Equal("JOB_NOT_FOUND", result.Error!.Code);
-    }
-
-    [Fact]
-    public async Task Add_WithCancelledToken_ReturnsCancelledTask()
+    public async Task CreateJob_WithCancelledToken_ReturnsCancelledTask()
     {
         // Arrange
         var job = new Job { Id = Guid.NewGuid(), Name = "TestJob" };
-        var cancellationToken = new CancellationToken(true); // Cancelled token
-
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        
         // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.Add(job, cancellationToken));
+        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.CreateJob(job, cts.Token));
     }
 
     [Fact]
-    public async Task Get_WithCancelledToken_ReturnsCancelledTask()
+    public async Task GetJobById_WithCancelledToken_ReturnsCancelledTask()
     {
         // Arrange
-        var cancellationToken = new CancellationToken(true); // Cancelled token
-
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        
         // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.Get(Guid.NewGuid(), cancellationToken));
+        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.GetJobById(Guid.NewGuid(), cts.Token));
     }
 
     [Fact]
-    public async Task GetQueuedJobs_WithCancelledToken_ReturnsCancelledTask()
+    public async Task ClaimJobsForWorker_WithCancelledToken_ReturnsCancelledTask()
     {
         // Arrange
-        var cancellationToken = new CancellationToken(true); // Cancelled token
-
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        
         // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.GetQueuedJobs(Guid.NewGuid(), 10, cancellationToken));
-    }
-
-    [Fact]
-    public async Task UpdateJobStatus_WithCancelledToken_ReturnsCancelledTask()
-    {
-        // Arrange
-        var cancellationToken = new CancellationToken(true); // Cancelled token
-
-        // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.UpdateJobStatus(Guid.NewGuid(), JobStatus.Completed, cancellationToken));
-    }
-
-    [Fact]
-    public async Task UpdateJobResult_WithCancelledToken_ReturnsCancelledTask()
-    {
-        // Arrange
-        var cancellationToken = new CancellationToken(true); // Cancelled token
-
-        // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.UpdateJobResult(Guid.NewGuid(), "result", cancellationToken));
-    }
-
-    [Fact]
-    public async Task UpdateJobException_WithCancelledToken_ReturnsCancelledTask()
-    {
-        // Arrange
-        var cancellationToken = new CancellationToken(true); // Cancelled token
-
-        // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.UpdateJobException(Guid.NewGuid(), "exception", cancellationToken));
+        await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.ClaimJobsForWorker(Guid.NewGuid(), 10, cts.Token));
     }
 }

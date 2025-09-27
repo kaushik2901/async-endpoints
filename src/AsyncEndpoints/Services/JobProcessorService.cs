@@ -14,44 +14,37 @@ namespace AsyncEndpoints.Services;
 /// <summary>
 /// Implements the IJobProcessorService interface to process individual jobs.
 /// Handles the execution of job payloads, serialization/deserialization of requests and responses,
-/// and updates job status and results in the job store.
+/// and updates job status and results in the job manager.
 /// </summary>
-public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore jobStore, IHandlerExecutionService handlerExecutionService, IOptions<JsonOptions> jsonOptions) : IJobProcessorService
+public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManager jobManager, IHandlerExecutionService handlerExecutionService, IOptions<JsonOptions> jsonOptions) : IJobProcessorService
 {
     private readonly ILogger<JobProcessorService> _logger = logger;
-    private readonly IJobStore _jobStore = jobStore;
+    private readonly IJobManager _jobManager = jobManager;
     private readonly IHandlerExecutionService _handlerExecutionService = handlerExecutionService;
     private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
 
     public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
     {
-        var updateJobStatusResult = await _jobStore.UpdateJobStatus(job.Id, JobStatus.InProgress, cancellationToken);
-        if (!updateJobStatusResult.IsSuccess)
-        {
-            _logger.LogError("Failed to update job {JobId} status to InProgress", job.Id);
-            return;
-        }
-
         try
         {
             var result = await ProcessJobPayloadAsync(job, cancellationToken);
 
             if (result.IsSuccess)
+            {
                 _logger.LogInformation("Successfully processed job {JobId}", job.Id);
+                await _jobManager.ProcessJobSuccess(job.Id, result.Data ?? string.Empty, cancellationToken);
+            }
             else
+            {
                 _logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
-
-            var jobUpdateResult = await UpdateJob(job, result, cancellationToken);
-
-            if (jobUpdateResult.IsSuccess)
-                _logger.LogInformation("Successfully updated job {JobId}", job.Id);
-            else
-                _logger.LogError("Failed to update job {JobId}: {Error}", job.Id, result.Error?.Message);
+                var serializedError = result.Error?.ToString() ?? "Unknown error occurred";
+                await _jobManager.ProcessJobFailure(job.Id, serializedError, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
             var serializedException = ExceptionSerializer.Serialize(ex);
-            await _jobStore.UpdateJobException(job.Id, serializedException, cancellationToken);
+            await _jobManager.ProcessJobFailure(job.Id, serializedException, cancellationToken);
         }
     }
 
@@ -87,15 +80,5 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobStore 
         {
             return MethodResult<string>.Failure(ex);
         }
-    }
-
-    private async Task<MethodResult> UpdateJob(Job job, MethodResult<string> processJobResult, CancellationToken cancellationToken)
-    {
-        if (processJobResult.IsSuccess)
-        {
-            return await _jobStore.UpdateJobResult(job.Id, processJobResult.Data ?? string.Empty, cancellationToken);
-        }
-
-        return await _jobStore.UpdateJobException(job.Id, processJobResult.Error?.ToString() ?? string.Empty, cancellationToken);
     }
 }
