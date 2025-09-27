@@ -1,10 +1,11 @@
+using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.UnitTests;
 
 public class HttpContextExtensionsTests
 {
-    [Theory, AutoMoqData]
+    [Fact]
     public void GetOrCreateJobId_ReturnsJobIdFromHeader_WhenJobIdHeaderExists()
     {
         // Arrange
@@ -19,7 +20,7 @@ public class HttpContextExtensionsTests
         Assert.Equal(expectedJobId, result);
     }
 
-    [Theory, AutoMoqData]
+    [Fact]
     public void GetOrCreateJobId_CreatesNewJobId_WhenJobIdHeaderDoesNotExist()
     {
         // Arrange

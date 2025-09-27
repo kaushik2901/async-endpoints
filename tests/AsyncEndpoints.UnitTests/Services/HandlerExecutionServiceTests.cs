@@ -2,8 +2,9 @@ using AsyncEndpoints.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using AsyncEndpoints.UnitTests.TestSupport;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Services;
 
 public class HandlerExecutionServiceTests
 {

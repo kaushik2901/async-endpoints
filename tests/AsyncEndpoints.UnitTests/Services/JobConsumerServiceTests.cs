@@ -1,12 +1,13 @@
 using System.Threading.Channels;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Services;
+using AsyncEndpoints.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Services;
 
 public class JobConsumerServiceTests
 {

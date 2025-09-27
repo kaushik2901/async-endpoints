@@ -1,10 +1,11 @@
 using AsyncEndpoints.BackgroundWorker;
 using AsyncEndpoints.Services;
+using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.BackgroundWorker;
 
 public class AsyncEndpointsBackgroundServiceTests
 {

@@ -1,6 +1,6 @@
 using AsyncEndpoints.Entities;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Entities;
 
 public class JobTests
 {

@@ -1,7 +1,8 @@
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Utilities;
 
 public class AsyncContextBuilderTests
 {

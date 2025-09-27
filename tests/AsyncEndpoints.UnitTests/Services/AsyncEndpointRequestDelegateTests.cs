@@ -1,5 +1,6 @@
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Services;
+using AsyncEndpoints.UnitTests.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Services;
 
 public class AsyncEndpointRequestDelegateTests
 {

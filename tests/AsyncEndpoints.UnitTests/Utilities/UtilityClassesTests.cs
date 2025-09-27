@@ -1,7 +1,8 @@
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Utilities;
 
 public class ErrorClassifierTests
 {
@@ -86,7 +87,7 @@ public class ExceptionSerializerTests
         Assert.Contains(nameof(ArgumentException), result);
     }
 
-    [Theory, AutoMoqData]
+    [Fact]
     public void Serialize_HandlesNullException()
     {
         // Act

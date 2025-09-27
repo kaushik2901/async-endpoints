@@ -1,6 +1,7 @@
+using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Utilities;
 
 public class AsyncEndpointErrorTests
 {
@@ -106,7 +107,7 @@ public class AsyncEndpointErrorTests
         Assert.Same(exception, error.Exception);
     }
 
-    [Theory, AutoMoqData]
+    [Fact]
     public void FromException_WithNullException_ThrowsArgumentNullException()
     {
         // Act & Assert

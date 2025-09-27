@@ -1,10 +1,11 @@
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.InMemoryStore;
+using AsyncEndpoints.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.InMemoryStore;
 
 public class InMemoryJobStoreTests
 {

@@ -7,8 +7,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AutoFixture.Xunit2;
 using Moq;
+using AsyncEndpoints.UnitTests.TestSupport;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Services;
 
 public class JobProcessorServiceTests
 {

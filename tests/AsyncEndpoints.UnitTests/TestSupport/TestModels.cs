@@ -1,7 +1,8 @@
 using AsyncEndpoints.Contracts;
+using AsyncEndpoints.UnitTests.Utilities;
 using AsyncEndpoints.Utilities;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.TestSupport;
 
 public class TestResponse
 {

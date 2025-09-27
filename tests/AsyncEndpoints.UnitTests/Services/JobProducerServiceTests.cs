@@ -8,8 +8,9 @@ using System.Threading.Channels;
 using AutoFixture.Xunit2;
 using Moq;
 using Microsoft.Extensions.DependencyInjection;
+using AsyncEndpoints.UnitTests.TestSupport;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Services;
 
 public class JobProducerServiceTests
 {

@@ -1,8 +1,9 @@
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.UnitTests.Utilities;
 
 public class HandlerRegistrationTrackerTests
 {
@@ -15,7 +16,7 @@ public class HandlerRegistrationTrackerTests
             (provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result" }));
 
         // Act
-        HandlerRegistrationTracker.Register<TestRequest, TestResponse>(jobName, handlerFunc);
+        HandlerRegistrationTracker.Register(jobName, handlerFunc);
 
         // Assert
         var registration = HandlerRegistrationTracker.GetHandlerRegistration(jobName);
@@ -48,7 +49,7 @@ public class HandlerRegistrationTrackerTests
             (provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result" }));
 
         // Act
-        HandlerRegistrationTracker.Register<TestRequest, TestResponse>(jobName, handlerFunc);
+        HandlerRegistrationTracker.Register(jobName, handlerFunc);
         var invoker = HandlerRegistrationTracker.GetInvoker(jobName);
 
         // Assert
@@ -84,8 +85,8 @@ public class HandlerRegistrationTrackerTests
             (provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result2" }));
 
         // Act
-        HandlerRegistrationTracker.Register<TestRequest, TestResponse>(jobName1, handlerFunc1);
-        HandlerRegistrationTracker.Register<TestRequest, TestResponse>(jobName2, handlerFunc2);
+        HandlerRegistrationTracker.Register(jobName1, handlerFunc1);
+        HandlerRegistrationTracker.Register(jobName2, handlerFunc2);
 
         // Assert
         var registration1 = HandlerRegistrationTracker.GetHandlerRegistration(jobName1);
