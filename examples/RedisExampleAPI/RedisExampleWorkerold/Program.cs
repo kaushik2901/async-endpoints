@@ -1,6 +1,5 @@
 using AsyncEndpoints;
 using AsyncEndpoints.Redis;
-using Microsoft.AspNetCore.Builder;
 using RedisExampleCore;
 using RedisExampleWorker;
 
@@ -12,7 +11,6 @@ builder.Services
     .AddAsyncEndpoints()
     .AddAsyncEndpointsWorker()
     .AddAsyncEndpointsRedisStore(redisConnectionString)
-    .AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default)
     .AddAsyncEndpointHandler<ExampleJobHandler, ExampleJobRequest, ExampleJobResponse>("ExampleJob");
 
 var app = builder.Build();

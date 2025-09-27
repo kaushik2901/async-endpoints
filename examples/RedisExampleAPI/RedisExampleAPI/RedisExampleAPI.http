@@ -1,11 +1,22 @@
-@RedisExampleAPI_HostAddress = http://localhost:5137
+@RedisExampleAPI_HostAddress = http://localhost:3001
 
-GET {{RedisExampleAPI_HostAddress}}/todos/
+POST {{RedisExampleAPI_HostAddress}}/jobs/submit
+Content-Type: application/json
 Accept: application/json
+
+{
+    "message": "Hello from AsyncEndpoints!",
+    "delayInSeconds": 2
+}
 
 ###
 
-GET {{RedisExampleAPI_HostAddress}}/todos/1
+POST {{RedisExampleAPI_HostAddress}}/jobs/submit
+Content-Type: application/json
 Accept: application/json
+Async-Job-Id: e827fa2f-1882-45e3-b6b7-97c0d45b122f
 
-###
+{
+    "message": "Hello from AsyncEndpoints!",
+    "delayInSeconds": 2
+}
