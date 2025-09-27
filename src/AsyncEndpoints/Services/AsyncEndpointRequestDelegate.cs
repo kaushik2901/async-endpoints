@@ -50,7 +50,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
         _logger.LogDebug("Serialized request payload for job: {JobName}", jobName);
 
         var submitJobResult = await _jobManager.SubmitJob(jobName, payload, httpContext, cancellationToken);
-        if (submitJobResult.IsSuccess)
+        if (!submitJobResult.IsSuccess)
         {
             // TODO: Handler error properly
             return Results.Problem(submitJobResult.Error!.Message);

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using AsyncEndpoints.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Services;
@@ -11,10 +12,10 @@ namespace AsyncEndpoints.Services;
 /// Implements the IJobConsumerService interface to consume jobs from a channel and process them.
 /// Uses a semaphore to control the level of concurrency for job processing.
 /// </summary>
-public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcessorService jobProcessorService) : IJobConsumerService
+public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScopeFactory serviceScopeFactory) : IJobConsumerService
 {
     private readonly ILogger<JobConsumerService> _logger = logger;
-    private readonly IJobProcessorService _jobProcessorService = jobProcessorService;
+    private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
     /// <summary>
     /// Consumes jobs from the provided channel and processes them asynchronously.
@@ -36,7 +37,9 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcesso
 
                 try
                 {
-                    await _jobProcessorService.ProcessAsync(job, stoppingToken);
+                    await using var scope = _serviceScopeFactory.CreateAsyncScope();
+                    var jobProcessorService = scope.ServiceProvider.GetRequiredService<IJobProcessorService>();
+                    await jobProcessorService.ProcessAsync(job, stoppingToken);
                 }
                 catch (Exception ex)
                 {

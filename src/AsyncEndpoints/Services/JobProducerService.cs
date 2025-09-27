@@ -4,6 +4,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -14,10 +15,10 @@ namespace AsyncEndpoints.Services;
 /// Polls the job manager for queued jobs and writes them to the channel for consumption.
 /// Implements adaptive polling based on job availability and channel capacity.
 /// </summary>
-public class JobProducerService(ILogger<JobProducerService> logger, IJobManager jobManager, IOptions<AsyncEndpointsConfigurations> configurations) : IJobProducerService
+public class JobProducerService(ILogger<JobProducerService> logger, IServiceScopeFactory serviceScopeFactory, IOptions<AsyncEndpointsConfigurations> configurations) : IJobProducerService
 {
     private readonly ILogger<JobProducerService> _logger = logger;
-    private readonly IJobManager _jobManager = jobManager;
+    private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
     private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations = configurations.Value.WorkerConfigurations;
 
     /// <summary>
@@ -38,7 +39,10 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobManager 
 
                 try
                 {
-                    var queuedJobsResult = await _jobManager.ClaimJobsForProcessing(_workerConfigurations.WorkerId, _workerConfigurations.BatchSize, stoppingToken);
+                    await using var scope = _serviceScopeFactory.CreateAsyncScope();
+                    var jobManager = scope.ServiceProvider.GetRequiredService<IJobManager>();
+
+                    var queuedJobsResult = await jobManager.ClaimJobsForProcessing(_workerConfigurations.WorkerId, _workerConfigurations.BatchSize, stoppingToken);
                     if (queuedJobsResult.IsFailure)
                     {
                         _logger.LogError("Failed to claim jobs for processing: {Error}", queuedJobsResult.Error?.Message);

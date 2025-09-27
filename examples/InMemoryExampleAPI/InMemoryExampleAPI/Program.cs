@@ -6,7 +6,7 @@ using InMemoryExampleAPI.Services;
 var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services
-    .AddAsyncEndpoints(options => options.MaximumRetries = 5)
+    .AddAsyncEndpoints()
     .AddAsyncEndpointsInMemoryStore()
     .AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default)
     .AddAsyncEndpointHandler<SampleRequestHandler, SampleRequest, SampleResponse>("async-operation")
