@@ -46,7 +46,7 @@ public class RedisJobStoreTests
     public async Task CreateJob_NullJob_ReturnsFailure()
     {
         // Act
-        var result = await _redisJobStore.CreateJob(null, default);
+        var result = await _redisJobStore.CreateJob(default!, default);
 
         // Assert
         Assert.False(result.IsSuccess);
@@ -82,7 +82,7 @@ public class RedisJobStoreTests
 
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.Equal(jobId, result.Data.Id);
+        Assert.Equal(jobId, result.Data!.Id);
         Assert.Equal("TestJob", result.Data.Name);
     }
 
