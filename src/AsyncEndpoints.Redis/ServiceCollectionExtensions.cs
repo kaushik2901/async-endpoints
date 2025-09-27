@@ -1,6 +1,8 @@
 using AsyncEndpoints.Contracts;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace AsyncEndpoints.Redis;
@@ -25,7 +27,8 @@ public static class RedisServiceCollectionExtensions
         services.AddSingleton<IJobStore>(provider =>
         {
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-            return new RedisJobStore(logger, connectionString);
+            var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
+            return new RedisJobStore(logger, jsonOptions, connectionString);
         });
 
         return services;
@@ -46,8 +49,9 @@ public static class RedisServiceCollectionExtensions
         services.AddSingleton<IJobStore>(provider =>
         {
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
+            var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
             var database = connectionMultiplexer.GetDatabase();
-            return new RedisJobStore(logger, database);
+            return new RedisJobStore(logger, jsonOptions, database);
         });
 
         return services;
@@ -71,7 +75,8 @@ public static class RedisServiceCollectionExtensions
         services.AddSingleton<IJobStore>(provider =>
         {
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-            return new RedisJobStore(logger, config.ConnectionString);
+            var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
+            return new RedisJobStore(logger, jsonOptions, config.ConnectionString);
         });
 
         return services;
