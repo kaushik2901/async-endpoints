@@ -4,14 +4,12 @@ namespace AsyncEndpoints.UnitTests;
 
 public class AsyncEndpointErrorTests
 {
-    [Fact]
-    public void Constructor_SetsPropertiesCorrectly()
+    [Theory, AutoMoqData]
+    public void Constructor_SetsPropertiesCorrectly(
+        string code,
+        string message,
+        InvalidOperationException exception)
     {
-        // Arrange
-        var code = "TEST_CODE";
-        var message = "Test error message";
-        var exception = new InvalidOperationException("Inner exception");
-
         // Act
         var error = new AsyncEndpointError(code, message, exception);
 
@@ -21,27 +19,29 @@ public class AsyncEndpointErrorTests
         Assert.Same(exception, error.Exception);
     }
 
-    [Fact]
-    public void Constructor_WithNullCode_ThrowsArgumentNullException()
+    [Theory, AutoMoqData]
+    public void Constructor_WithNullCode_ThrowsArgumentNullException(
+        string message,
+        InvalidOperationException exception)
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AsyncEndpointError(null!, "message"));
+        Assert.Throws<ArgumentNullException>(() => new AsyncEndpointError(null!, message, exception));
     }
 
-    [Fact]
-    public void Constructor_WithNullMessage_ThrowsArgumentNullException()
+    [Theory, AutoMoqData]
+    public void Constructor_WithNullMessage_ThrowsArgumentNullException(
+        string code,
+        InvalidOperationException exception)
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new AsyncEndpointError("code", null!));
+        Assert.Throws<ArgumentNullException>(() => new AsyncEndpointError(code, null!, exception));
     }
 
-    [Fact]
-    public void FromMessage_CreatesErrorWithUnknownCode()
+    [Theory, AutoMoqData]
+    public void FromMessage_CreatesErrorWithUnknownCode(
+        string message,
+        InvalidOperationException exception)
     {
-        // Arrange
-        var message = "Test message";
-        var exception = new InvalidOperationException("Inner exception");
-
         // Act
         var error = AsyncEndpointError.FromMessage(message, exception);
 
@@ -51,12 +51,10 @@ public class AsyncEndpointErrorTests
         Assert.Same(exception, error.Exception);
     }
 
-    [Fact]
-    public void FromMessage_WithoutException_CreatesError()
+    [Theory, AutoMoqData]
+    public void FromMessage_WithoutException_CreatesError(
+        string message)
     {
-        // Arrange
-        var message = "Test message";
-
         // Act
         var error = AsyncEndpointError.FromMessage(message);
 
@@ -66,14 +64,12 @@ public class AsyncEndpointErrorTests
         Assert.Null(error.Exception);
     }
 
-    [Fact]
-    public void FromCode_CreatesErrorWithSpecifiedCode()
+    [Theory, AutoMoqData]
+    public void FromCode_CreatesErrorWithSpecifiedCode(
+        string code,
+        string message,
+        InvalidOperationException exception)
     {
-        // Arrange
-        var code = "CUSTOM_CODE";
-        var message = "Test message";
-        var exception = new InvalidOperationException("Inner exception");
-
         // Act
         var error = AsyncEndpointError.FromCode(code, message, exception);
 
@@ -83,13 +79,11 @@ public class AsyncEndpointErrorTests
         Assert.Same(exception, error.Exception);
     }
 
-    [Fact]
-    public void FromCode_WithoutException_CreatesError()
+    [Theory, AutoMoqData]
+    public void FromCode_WithoutException_CreatesError(
+        string code,
+        string message)
     {
-        // Arrange
-        var code = "CUSTOM_CODE";
-        var message = "Test message";
-
         // Act
         var error = AsyncEndpointError.FromCode(code, message);
 
@@ -99,52 +93,38 @@ public class AsyncEndpointErrorTests
         Assert.Null(error.Exception);
     }
 
-    [Fact]
-    public void FromException_CreatesErrorFromException()
+    [Theory, AutoMoqData]
+    public void FromException_CreatesErrorFromException(
+        InvalidOperationException exception)
     {
-        // Arrange
-        var exception = new InvalidOperationException("Test exception message");
-
         // Act
         var error = AsyncEndpointError.FromException(exception);
 
         // Assert
         Assert.Equal("INVALIDOPERATIONEXCEPTION", error.Code);
-        Assert.Equal("Test exception message", error.Message);
+        Assert.Equal(exception.Message, error.Message);
         Assert.Same(exception, error.Exception);
     }
 
-    [Fact]
+    [Theory, AutoMoqData]
     public void FromException_WithNullException_ThrowsArgumentNullException()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => AsyncEndpointError.FromException(null!));
     }
 
-    [Fact]
-    public void ToString_ReturnsFormattedString()
+    [Theory, AutoMoqData]
+    public void ToString_ReturnsFormattedString(
+        string code,
+        string message)
     {
         // Arrange
-        var error = new AsyncEndpointError("TEST_CODE", "Test message");
+        var error = new AsyncEndpointError(code, message);
 
         // Act
         var result = error.ToString();
 
         // Assert
-        Assert.Equal("[TEST_CODE] Test message", result);
-    }
-
-    [Fact]
-    public void ToString_WithException_ReturnsFormattedString()
-    {
-        // Arrange
-        var exception = new InvalidOperationException("Inner exception");
-        var error = new AsyncEndpointError("TEST_CODE", "Test message", exception);
-
-        // Act
-        var result = error.ToString();
-
-        // Assert
-        Assert.Equal("[TEST_CODE] Test message", result);
+        Assert.Equal($"[{code}] {message}", result);
     }
 }

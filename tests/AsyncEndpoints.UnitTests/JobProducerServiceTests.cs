@@ -1,0 +1,73 @@
+using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Entities;
+using AsyncEndpoints.Services;
+using AsyncEndpoints.Utilities;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Threading.Channels;
+using AutoFixture.Xunit2;
+using Moq;
+
+namespace AsyncEndpoints.UnitTests;
+
+public class JobProducerServiceTests
+{
+    [Theory, AutoMoqData]
+    public void Constructor_Succeeds_WithValidDependencies(
+        Mock<ILogger<JobProducerService>> mockLogger,
+        Mock<IJobManager> mockJobManager)
+    {
+        // Arrange
+        var configurations = Options.Create(new AsyncEndpointsConfigurations());
+
+        // Act
+        var service = new JobProducerService(mockLogger.Object, mockJobManager.Object, configurations);
+
+        // Assert
+        Assert.NotNull(service);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task ProduceJobsAsync_CompletesChannel_WhenCancellationRequested(
+        [Frozen] Mock<ILogger<JobProducerService>> mockLogger,
+        [Frozen] Mock<IJobManager> mockJobManager)
+    {
+        // Arrange
+        var configurations = Options.Create(new AsyncEndpointsConfigurations());
+        var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
+        var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
+        
+        var jobProducerService = new JobProducerService(mockLogger.Object, mockJobManager.Object, configurations);
+
+        // Act
+        await jobProducerService.ProduceJobsAsync(channel.Writer, cancellationTokenSource.Token);
+
+        // Assert
+        Assert.True(channel.Reader.Completion.IsCompleted);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task ProduceJobsAsync_ClaimsJobsFromJobManager(
+        [Frozen] Mock<ILogger<JobProducerService>> mockLogger,
+        [Frozen] Mock<IJobManager> mockJobManager)
+    {
+        // Arrange
+        var configurations = Options.Create(new AsyncEndpointsConfigurations());
+        var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
+        var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(10)); // Short timeout to avoid hanging
+        var emptyJobs = new List<Job>();
+
+        mockJobManager
+            .Setup(x => x.ClaimJobsForProcessing(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MethodResult<List<Job>>.Success(emptyJobs));
+
+        var jobProducerService = new JobProducerService(mockLogger.Object, mockJobManager.Object, configurations);
+
+        // Act & Assert - Should not throw
+        var exception = await Record.ExceptionAsync(() => 
+            jobProducerService.ProduceJobsAsync(channel.Writer, cancellationTokenSource.Token));
+
+        Assert.Null(exception);
+    }
+}

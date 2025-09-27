@@ -75,6 +75,7 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging();  // Add logging to resolve ILogger dependencies
         services.AddAsyncEndpointsInMemoryStore(); // Add job store as it's required by worker services
+        services.AddAsyncEndpoints(); // Add the main services including IJobManager
 
         // Act
         services.AddAsyncEndpointsWorker();
@@ -86,12 +87,14 @@ public class ServiceCollectionExtensionsTests
         Assert.NotNull(provider.GetService<IJobProducerService>());
         Assert.NotNull(provider.GetService<IJobProcessorService>());
         Assert.NotNull(provider.GetService<IHandlerExecutionService>());
+        Assert.NotNull(provider.GetService<IJobManager>()); // Add this check
 
         // Verify the correct implementations are registered
         Assert.IsType<JobConsumerService>(provider.GetService<IJobConsumerService>());
         Assert.IsType<JobProducerService>(provider.GetService<IJobProducerService>());
         Assert.IsType<JobProcessorService>(provider.GetService<IJobProcessorService>());
         Assert.IsType<HandlerExecutionService>(provider.GetService<IHandlerExecutionService>());
+        Assert.IsType<JobManager>(provider.GetService<IJobManager>()); // Add this verification
 
         // Verify background service is registered
         var hostedServices = provider.GetServices<IHostedService>();

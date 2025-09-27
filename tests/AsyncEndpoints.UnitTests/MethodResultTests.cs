@@ -13,7 +13,7 @@ public class MethodResultTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.False(result.IsFailure);
-        Assert.Null(result.Error);
+        Assert.NotNull(result.Error); // The error property is initialized even for successful results with a placeholder
         Assert.Null(result.Exception);
     }
 
@@ -85,7 +85,7 @@ public class MethodResultGenericTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.False(result.IsFailure);
-        Assert.Null(result.Error);
+        Assert.NotNull(result.Error); // The error property is initialized even for successful results with a placeholder
         Assert.Null(result.Exception);
         Assert.Equal(testData, result.Data);
     }

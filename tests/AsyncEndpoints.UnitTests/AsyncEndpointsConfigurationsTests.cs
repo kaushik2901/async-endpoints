@@ -2,45 +2,37 @@ namespace AsyncEndpoints.UnitTests;
 
 public class AsyncEndpointsConfigurationsTests
 {
-    [Fact]
-    public void DefaultValues_AreCorrect()
+    [Theory, AutoMoqData]
+    public void DefaultValues_AreCorrect(
+        AsyncEndpointsConfigurations config)
     {
-        // Act
-        var config = new AsyncEndpointsConfigurations();
-
         // Assert
         Assert.NotNull(config.WorkerConfigurations);
         Assert.NotNull(config.JobManagerConfiguration);
     }
 
-    [Fact]
-    public void WorkerConfigurations_CanBeSet()
+    [Theory, AutoMoqData]
+    public void WorkerConfigurations_CanBeSet(
+        AsyncEndpointsConfigurations config,
+        AsyncEndpointsWorkerConfigurations newWorkerConfig)
     {
-        // Arrange
-        var config = new AsyncEndpointsConfigurations();
-        var newWorkerConfig = new AsyncEndpointsWorkerConfigurations { MaximumConcurrency = 8 };
-
         // Act
         config.WorkerConfigurations = newWorkerConfig;
 
         // Assert
         Assert.Same(newWorkerConfig, config.WorkerConfigurations);
-        Assert.Equal(8, config.WorkerConfigurations.MaximumConcurrency);
     }
 
-    [Fact]
-    public void JobManagerConfiguration_CanBeSet()
+    [Theory, AutoMoqData]
+    public void JobManagerConfiguration_CanBeSet(
+        AsyncEndpointsConfigurations config,
+        AsyncEndpointsJobManagerConfiguration newJobManagerConfiguration)
     {
-        // Arrange
-        var config = new AsyncEndpointsConfigurations();
-        var newJobManagerConfiguration = new AsyncEndpointsJobManagerConfiguration { DefaultMaxRetries = 8 };
-
         // Act
         config.JobManagerConfiguration = newJobManagerConfiguration;
 
         // Assert
         Assert.Same(newJobManagerConfiguration, config.JobManagerConfiguration);
-        Assert.Equal(8, config.JobManagerConfiguration.DefaultMaxRetries);
     }
 }
 
@@ -61,40 +53,43 @@ public class AsyncEndpointsWorkerConfigurationsTests
         Assert.Equal(AsyncEndpointsConstants.DefaultMaximumQueueSize, config.MaximumQueueSize);
     }
 
-    [Fact]
-    public void WorkerId_IsGeneratedOnConstruction()
+    [Theory, AutoMoqData]
+    public void WorkerId_IsGeneratedOnConstruction(
+        AsyncEndpointsWorkerConfigurations config1,
+        AsyncEndpointsWorkerConfigurations config2)
     {
-        // Act
-        var config1 = new AsyncEndpointsWorkerConfigurations();
-        var config2 = new AsyncEndpointsWorkerConfigurations();
-
         // Assert
         Assert.NotEqual(Guid.Empty, config1.WorkerId);
         Assert.NotEqual(Guid.Empty, config2.WorkerId);
         Assert.NotEqual(config1.WorkerId, config2.WorkerId);
     }
 
-    [Fact]
-    public void Properties_CanBeSetAndRetrieved()
+    [Theory, AutoMoqData]
+    public void Properties_CanBeSetAndRetrieved(
+        Guid testWorkerId,
+        int maximumConcurrency,
+        int pollingIntervalMs,
+        int jobTimeoutMinutes,
+        int batchSize,
+        int maximumQueueSize)
     {
         // Arrange
         var config = new AsyncEndpointsWorkerConfigurations();
-        var testWorkerId = Guid.NewGuid();
 
         // Act
         config.WorkerId = testWorkerId;
-        config.MaximumConcurrency = 10;
-        config.PollingIntervalMs = 2000;
-        config.JobTimeoutMinutes = 60;
-        config.BatchSize = 10;
-        config.MaximumQueueSize = 100;
+        config.MaximumConcurrency = maximumConcurrency;
+        config.PollingIntervalMs = pollingIntervalMs;
+        config.JobTimeoutMinutes = jobTimeoutMinutes;
+        config.BatchSize = batchSize;
+        config.MaximumQueueSize = maximumQueueSize;
 
         // Assert
         Assert.Equal(testWorkerId, config.WorkerId);
-        Assert.Equal(10, config.MaximumConcurrency);
-        Assert.Equal(2000, config.PollingIntervalMs);
-        Assert.Equal(60, config.JobTimeoutMinutes);
-        Assert.Equal(10, config.BatchSize);
-        Assert.Equal(100, config.MaximumQueueSize);
+        Assert.Equal(maximumConcurrency, config.MaximumConcurrency);
+        Assert.Equal(pollingIntervalMs, config.PollingIntervalMs);
+        Assert.Equal(jobTimeoutMinutes, config.JobTimeoutMinutes);
+        Assert.Equal(batchSize, config.BatchSize);
+        Assert.Equal(maximumQueueSize, config.MaximumQueueSize);
     }
 }
