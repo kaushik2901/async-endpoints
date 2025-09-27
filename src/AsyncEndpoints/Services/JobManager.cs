@@ -49,17 +49,6 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
     public async Task<MethodResult<List<Job>>> ClaimJobsForProcessing(Guid workerId, int maxClaimCount, CancellationToken cancellationToken)
     {
         var availableJobs = await _jobStore.ClaimJobsForWorker(workerId, maxClaimCount, cancellationToken);
-
-        if (availableJobs.IsSuccess && availableJobs.Data?.Count == 0)
-        {
-            foreach (var job in availableJobs.Data)
-            {
-                job.UpdateStatus(JobStatus.InProgress);
-                job.WorkerId = workerId;
-                await _jobStore.UpdateJob(job, cancellationToken);
-            }
-        }
-
         return availableJobs;
     }
 

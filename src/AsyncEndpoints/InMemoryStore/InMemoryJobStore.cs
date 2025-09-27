@@ -194,6 +194,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
             foreach (var job in availableJobs)
             {
                 job.WorkerId = workerId;
+                job.Status = JobStatus.InProgress;
             }
 
             _logger.LogInformation("Claimed {Count} jobs for worker {WorkerId}", availableJobs.Count, workerId);
