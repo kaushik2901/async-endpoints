@@ -16,6 +16,13 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IJobProcesso
     private readonly ILogger<JobConsumerService> _logger = logger;
     private readonly IJobProcessorService _jobProcessorService = jobProcessorService;
 
+    /// <summary>
+    /// Consumes jobs from the provided channel and processes them asynchronously.
+    /// </summary>
+    /// <param name="readerJobChannel">The channel reader to read jobs from.</param>
+    /// <param name="semaphoreSlim">The semaphore to control concurrency.</param>
+    /// <param name="stoppingToken">A cancellation token to stop the consumption process.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task ConsumeJobsAsync(ChannelReader<Job> readerJobChannel, SemaphoreSlim semaphoreSlim, CancellationToken stoppingToken)
     {
         try

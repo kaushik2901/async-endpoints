@@ -23,6 +23,12 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
     private readonly IHandlerExecutionService _handlerExecutionService = handlerExecutionService;
     private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
 
+    /// <summary>
+    /// Processes a single job asynchronously.
+    /// </summary>
+    /// <param name="job">The job to process.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
     {
         try
@@ -48,6 +54,12 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
         }
     }
 
+    /// <summary>
+    /// Processes the payload of a job by deserializing the request, executing the handler, and serializing the result.
+    /// </summary>
+    /// <param name="job">The job containing the payload to process.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A <see cref="MethodResult{T}"/> containing the serialized result of the operation.</returns>
     private async Task<MethodResult<string>> ProcessJobPayloadAsync(Job job, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Processing job {JobId} with name {JobName}", job.Id, job.Name);

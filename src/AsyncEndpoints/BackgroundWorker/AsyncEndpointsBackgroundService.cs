@@ -56,6 +56,9 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         );
     }
 
+    /// <summary>
+    /// Disposes of the resources used by the background service.
+    /// </summary>
     public override void Dispose()
     {
         Dispose(true);
@@ -63,6 +66,10 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Asynchronously disposes of the resources used by the background service.
+    /// </summary>
+    /// <returns>A task representing the asynchronous disposal operation.</returns>
     public async ValueTask DisposeAsync()
     {
         await DisposeAsyncCore().ConfigureAwait(false);
@@ -70,6 +77,10 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Disposes of the resources used by the background service.
+    /// </summary>
+    /// <param name="disposing">True if disposing resources, false if finalizing.</param>
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed && disposing)
@@ -94,6 +105,10 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         }
     }
 
+    /// <summary>
+    /// Asynchronously disposes of the resources used by the background service.
+    /// </summary>
+    /// <returns>A task representing the asynchronous disposal operation.</returns>
     protected virtual async ValueTask DisposeAsyncCore()
     {
         if (_disposed)
@@ -126,6 +141,11 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         }
     }
 
+    /// <summary>
+    /// Executes the background service asynchronously.
+    /// </summary>
+    /// <param name="stoppingToken">A cancellation token that signals when the service should stop.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("AsyncEndpoints Background Service is starting");
@@ -140,6 +160,11 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
         _logger.LogInformation("AsyncEndpoints Background Service is stopping");
     }
 
+    /// <summary>
+    /// Waits for all processing work to complete during shutdown.
+    /// </summary>
+    /// <param name="timeout">The maximum time to wait for work to complete.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task WaitForWorkCompletionAsync(TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow.Add(timeout);

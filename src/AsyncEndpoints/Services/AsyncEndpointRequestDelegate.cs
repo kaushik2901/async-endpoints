@@ -11,12 +11,25 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Services;
 
+/// <summary>
+/// Handles asynchronous endpoint requests by creating background jobs for processing.
+/// </summary>
 public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, IOptions<JsonOptions> jsonOptions) : IAsyncEndpointRequestDelegate
 {
     private readonly ILogger<AsyncEndpointRequestDelegate> _logger = logger;
     private readonly IJobManager _jobManager = jobManager;
     private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
 
+    /// <summary>
+    /// Handles an asynchronous request by creating a job and returning an immediate response.
+    /// </summary>
+    /// <typeparam name="TRequest">The type of the request object.</typeparam>
+    /// <param name="jobName">The unique name of the job, used to identify the specific handler.</param>
+    /// <param name="httpContext">The HTTP context containing the request information.</param>
+    /// <param name="request">The request object to process asynchronously.</param>
+    /// <param name="handler">Optional custom handler function to process the request.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>An <see cref="IResult"/> representing the HTTP response.</returns>
     public async Task<IResult> HandleAsync<TRequest>(
         string jobName,
         HttpContext httpContext,

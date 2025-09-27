@@ -20,6 +20,12 @@ public class JobProducerService(ILogger<JobProducerService> logger, IJobManager 
     private readonly IJobManager _jobManager = jobManager;
     private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations = configurations.Value.WorkerConfigurations;
 
+    /// <summary>
+    /// Produces jobs and writes them to the provided channel asynchronously.
+    /// </summary>
+    /// <param name="writerJobChannel">The channel writer to write jobs to.</param>
+    /// <param name="stoppingToken">A cancellation token to stop the production process.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task ProduceJobsAsync(ChannelWriter<Job> writerJobChannel, CancellationToken stoppingToken)
     {
         var basePollingInterval = TimeSpan.FromMilliseconds(_workerConfigurations.PollingIntervalMs);

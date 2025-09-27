@@ -20,6 +20,12 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
     private readonly ILogger<InMemoryJobStore> _logger = logger;
     private readonly ConcurrentDictionary<Guid, Job> jobs = new();
 
+    /// <summary>
+    /// Creates a new job in the store.
+    /// </summary>
+    /// <param name="job">The job to create.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A <see cref="MethodResult"/> indicating the result of the operation.</returns>
     public Task<MethodResult> CreateJob(Job job, CancellationToken cancellationToken)
     {
         try
@@ -62,6 +68,12 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
         }
     }
 
+    /// <summary>
+    /// Retrieves a job by its unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the job to retrieve.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A <see cref="MethodResult{T}"/> containing the job if found, or an error if not found.</returns>
     public Task<MethodResult<Job>> GetJobById(Guid id, CancellationToken cancellationToken)
     {
         try
@@ -98,6 +110,12 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
         }
     }
 
+    /// <summary>
+    /// Updates the complete job entity.
+    /// </summary>
+    /// <param name="job">The updated job entity.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A <see cref="MethodResult"/> indicating the result of the operation.</returns>
     public Task<MethodResult> UpdateJob(Job job, CancellationToken cancellationToken)
     {
         try
@@ -144,6 +162,13 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
         }
     }
 
+    /// <summary>
+    /// Atomically claims available jobs for a specific worker.
+    /// </summary>
+    /// <param name="workerId">The unique identifier of the worker claiming the jobs.</param>
+    /// <param name="maxClaimCount">The maximum number of jobs to claim.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A <see cref="MethodResult{T}"/> containing the list of claimed jobs.</returns>
     public Task<MethodResult<List<Job>>> ClaimJobsForWorker(Guid workerId, int maxClaimCount, CancellationToken cancellationToken)
     {
         try

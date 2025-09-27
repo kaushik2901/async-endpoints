@@ -72,7 +72,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
         var job = jobResult.Data;
 
         job.SetResult(result);
-        
+
         return await _jobStore.UpdateJob(job, cancellationToken);
     }
 

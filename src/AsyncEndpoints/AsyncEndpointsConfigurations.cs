@@ -54,13 +54,43 @@ public sealed class AsyncEndpointsWorkerConfigurations
     public int MaximumQueueSize { get; set; } = AsyncEndpointsConstants.DefaultMaximumQueueSize;
 }
 
+/// <summary>
+/// Configuration settings for the AsyncEndpoints job manager.
+/// </summary>
 public sealed class AsyncEndpointsJobManagerConfiguration
 {
+    /// <summary>
+    /// Gets or sets the default maximum number of retries for failed jobs.
+    /// </summary>
     public int DefaultMaxRetries { get; set; } = AsyncEndpointsConstants.MaximumRetries;
+
+    /// <summary>
+    /// Gets or sets the base delay in seconds for job retry exponential backoff.
+    /// </summary>
     public double RetryDelayBaseSeconds { get; set; } = 2.0;
+
+    /// <summary>
+    /// Gets or sets the timeout for job claims.
+    /// </summary>
     public TimeSpan JobClaimTimeout { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Gets or sets the maximum number of concurrent jobs that can be processed.
+    /// </summary>
     public int MaxConcurrentJobs { get; set; } = 10;
+
+    /// <summary>
+    /// Gets or sets the polling interval in milliseconds for job polling.
+    /// </summary>
     public int JobPollingIntervalMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Gets or sets the maximum number of jobs to claim in a single batch.
+    /// </summary>
     public int MaxClaimBatchSize { get; set; } = 10;
+
+    /// <summary>
+    /// Gets or sets the interval for checking for stale job claims.
+    /// </summary>
     public TimeSpan StaleJobClaimCheckInterval { get; set; } = TimeSpan.FromMinutes(1);
 }

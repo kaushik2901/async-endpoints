@@ -17,17 +17,17 @@ public interface IJobStore
     /// Creates a new job in the store
     /// </summary>
     Task<MethodResult> CreateJob(Job job, CancellationToken cancellationToken);
-    
+
     /// <summary>
     /// Retrieves a job by its unique identifier
     /// </summary>
     Task<MethodResult<Job>> GetJobById(Guid id, CancellationToken cancellationToken);
-    
+
     /// <summary>
     /// Updates the complete job entity
     /// </summary>
     Task<MethodResult> UpdateJob(Job job, CancellationToken cancellationToken);
-    
+
     /// <summary>
     /// Atomically claims available jobs for a specific worker
     /// </summary>

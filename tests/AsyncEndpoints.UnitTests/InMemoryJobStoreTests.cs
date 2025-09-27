@@ -224,7 +224,7 @@ public class InMemoryJobStoreTests
         var job = new Job { Id = Guid.NewGuid(), Name = "TestJob" };
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        
+
         // Act & Assert
         await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.CreateJob(job, cts.Token));
     }
@@ -235,7 +235,7 @@ public class InMemoryJobStoreTests
         // Arrange
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        
+
         // Act & Assert
         await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.GetJobById(Guid.NewGuid(), cts.Token));
     }
@@ -246,7 +246,7 @@ public class InMemoryJobStoreTests
         // Arrange
         using var cts = new CancellationTokenSource();
         cts.Cancel();
-        
+
         // Act & Assert
         await Assert.ThrowsAsync<TaskCanceledException>(() => _jobStore.ClaimJobsForWorker(Guid.NewGuid(), 10, cts.Token));
     }
