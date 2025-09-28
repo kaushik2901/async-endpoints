@@ -6,18 +6,23 @@ AsyncEndpoints is a .NET library that enables developers to easily build asynchr
 
 - **Asynchronous Processing**: Long-running operations are processed in the background without blocking the client
 - **Job Status Tracking**: Monitor the status of your asynchronous jobs through dedicated endpoints
-- **Idempotency Support**: Use request IDs to ensure operations are not duplicated
 - **Retry Logic**: Failed jobs are retried automatically based on configured settings
-- **Multiple Storage Options**: Support for in-memory, Redis, and Entity Framework Core storage backends
+- **Multiple Storage Options**: Support for in-memory and Redis storage backends
 - **Background Workers**: Built-in background service for processing queued jobs
-- **Cancellation Support**: Ability to cancel jobs in progress (planned feature)
+- **Cancellation Support**: Ability to cancel jobs in progress
 
 ## Installation
 
-Install the AsyncEndpoints NuGet package (Yet to be published in public):
+Install the core AsyncEndpoints NuGet package (Yet to be published in public):
 
 ```bash
 dotnet add package AsyncEndpoints
+```
+
+For Redis support, also install the Redis extension package:
+
+```bash
+dotnet add package AsyncEndpoints.Redis
 ```
 
 ## Quick Start
@@ -124,10 +129,18 @@ You can customize AsyncEndpoints behavior by configuring options:
 ```csharp
 builder.Services.AddAsyncEndpoints(options =>
 {
-    options.MaximumRetries = 5; // Set maximum retry attempts
+    // Job Manager Configuration
+    options.JobManagerConfiguration.DefaultMaxRetries = 5; // Set default maximum retry attempts
+    options.JobManagerConfiguration.RetryDelayBaseSeconds = 3.0; // Set base delay for retry exponential backoff
+    options.JobManagerConfiguration.MaxConcurrentJobs = 20; // Set maximum number of concurrent jobs
+    options.JobManagerConfiguration.JobPollingIntervalMs = 2000; // Set polling interval for job polling
+    
+    // Worker Configuration
     options.WorkerConfigurations.MaximumConcurrency = 10; // Set max concurrent jobs
     options.WorkerConfigurations.PollingIntervalMs = 500; // Set polling interval
     options.WorkerConfigurations.JobTimeoutMinutes = 60; // Set job timeout
+    options.WorkerConfigurations.BatchSize = 10; // Set maximum number of jobs to process in a single batch
+    options.WorkerConfigurations.MaximumQueueSize = 100; // Set maximum size of the job queue
 });
 ```
 
@@ -142,6 +155,34 @@ builder.Services.AddAsyncEndpointsInMemoryStore();
 ```
 
 > Note: In-memory store is only suitable for development or single-instance deployments.
+
+### Redis Store (Production)
+
+For production applications that require persistence and distributed processing, add the Redis store:
+
+```csharp
+// Option 1: Using connection string
+builder.Services.AddAsyncEndpointsRedisStore("localhost:6379");
+
+// Option 2: Using IConnectionMultiplexer
+var connectionMultiplexer = ConnectionMultiplexer.Connect("localhost:6379");
+builder.Services.AddAsyncEndpointsRedisStore(connectionMultiplexer);
+
+// Option 3: Using configuration action
+builder.Services.AddAsyncEndpointsRedisStore(config =>
+{
+    config.ConnectionString = "localhost:6379";
+    config.ConfigurationOptions = new ConfigurationOptions
+    {
+        AbortOnConnectFail = false,
+        ConnectRetry = 3,
+        ConnectTimeout = 5000,
+        SyncTimeout = 5000
+    };
+});
+```
+
+> Note: To use Redis store, you need to install the `AsyncEndpoints.Redis` package separately.
 
 ### Job Status
 
@@ -164,10 +205,11 @@ The response includes these properties:
 ### Possible Job States
 
 - `Queued`: Job is waiting to be processed
-- `Processing`: Job is currently being executed
+- `Scheduled`: Job is scheduled for delayed execution
+- `InProgress`: Job is currently being executed
 - `Completed`: Job completed successfully
 - `Failed`: Job failed after all retry attempts
-- `Cancelled`: Job was cancelled before completion
+- `Canceled`: Job was canceled before completion
 
 ## Middleware Support
 
@@ -191,11 +233,18 @@ app.MapAsyncPost<Request>("MyJobName", "/api/async-operation",
 
 ## Best Practices
 
-1. **Use Appropriate Storage**: For production applications, use Redis or Entity Framework Core storage instead of the in-memory store
+1. **Use Appropriate Storage**: For production applications, use Redis storage instead of the in-memory store
 2. **Handle Errors Gracefully**: Implement proper error handling in your handlers
 3. **Validate Requests**: Use middleware to validate requests before queuing
 4. **Set Appropriate Timeouts**: Configure job timeouts based on your expected processing times
 5. **Monitor and Log**: Use structured logging to track job processing
+
+## Project Structure
+
+The library is organized into two main projects:
+
+- **AsyncEndpoints**: Core functionality including job management, background workers, and in-memory storage
+- **AsyncEndpoints.Redis**: Redis-based job storage implementation for distributed environments
 
 ## Architecture
 
@@ -203,9 +252,9 @@ AsyncEndpoints is built with the following components:
 
 - **Job Producer**: Queues requests to be processed asynchronously
 - **Background Workers**: Process queued jobs in the background
-- **Job Store**: Persists job information and state
+- **Job Store**: Persists job information and state (with implementations for in-memory and Redis)
 - **Handlers**: Business logic for processing requests
-- **Endpoints**: API endpoints for submitting and monitoring jobs
+- **Endpoints**: API endpoints for submitting jobs
 
 ## Contributing
 
