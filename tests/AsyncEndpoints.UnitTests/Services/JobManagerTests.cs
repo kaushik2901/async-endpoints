@@ -17,13 +17,14 @@ public class JobManagerTests
     [Theory, AutoMoqData]
     public void Constructor_Succeeds_WithValidDependencies(
         Mock<IJobStore> mockJobStore,
-        Mock<ILogger<JobManager>> mockLogger)
+        Mock<ILogger<JobManager>> mockLogger,
+        Mock<IDateTimeProvider> mockDateTimeProvider)
     {
         // Arrange
         var options = Options.Create(new AsyncEndpointsConfigurations());
 
         // Act
-        var manager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var manager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Assert
         Assert.NotNull(manager);
@@ -33,6 +34,7 @@ public class JobManagerTests
     public async Task SubmitJob_CreatesNewJob_WhenJobDoesNotExist(
         [Frozen] Mock<IJobStore> mockJobStore,
         [Frozen] Mock<ILogger<JobManager>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         string jobName,
         string payload,
         Job newJob)
@@ -48,7 +50,7 @@ public class JobManagerTests
             .Setup(x => x.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Success(newJob));
 
-        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Act
         var result = await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
@@ -63,6 +65,7 @@ public class JobManagerTests
     public async Task SubmitJob_ReturnsExistingJob_WhenJobAlreadyExists(
         [Frozen] Mock<IJobStore> mockJobStore,
         [Frozen] Mock<ILogger<JobManager>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         string jobName,
         string payload,
         Job existingJob)
@@ -78,7 +81,7 @@ public class JobManagerTests
             .Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Success(existingJob));
 
-        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Act
         var result = await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
@@ -93,6 +96,7 @@ public class JobManagerTests
     public async Task ClaimJobsForProcessing_ReturnsJobs_WhenJobsAvailable(
         [Frozen] Mock<IJobStore> mockJobStore,
         [Frozen] Mock<ILogger<JobManager>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         Guid workerId,
         int maxClaimCount,
         List<Job> jobs)
@@ -104,7 +108,7 @@ public class JobManagerTests
             .Setup(x => x.ClaimJobsForWorker(workerId, maxClaimCount, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<List<Job>>.Success(jobs));
 
-        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Act
         var result = await jobManager.ClaimJobsForProcessing(workerId, maxClaimCount, CancellationToken.None);
@@ -118,6 +122,7 @@ public class JobManagerTests
     public async Task ProcessJobSuccess_UpdatesJobWithResult_WhenJobExists(
         [Frozen] Mock<IJobStore> mockJobStore,
         [Frozen] Mock<ILogger<JobManager>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         Guid jobId,
         string resultData)
     {
@@ -132,7 +137,7 @@ public class JobManagerTests
             .Setup(x => x.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult.Success());
 
-        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Act
         var result = await jobManager.ProcessJobSuccess(jobId, resultData, CancellationToken.None);
@@ -147,6 +152,7 @@ public class JobManagerTests
     public async Task ProcessJobSuccess_ReturnsFailure_WhenJobDoesNotExist(
         [Frozen] Mock<IJobStore> mockJobStore,
         [Frozen] Mock<ILogger<JobManager>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         Guid jobId,
         string resultData)
     {
@@ -157,7 +163,7 @@ public class JobManagerTests
             .Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Failure("Job not found"));
 
-        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Act
         var result = await jobManager.ProcessJobSuccess(jobId, resultData, CancellationToken.None);
@@ -170,6 +176,7 @@ public class JobManagerTests
     public async Task ProcessJobFailure_SetsException_WhenMaxRetriesReached(
         [Frozen] Mock<IJobStore> mockJobStore,
         [Frozen] Mock<ILogger<JobManager>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         Guid jobId,
         string exception)
     {
@@ -185,7 +192,7 @@ public class JobManagerTests
             .Setup(x => x.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult.Success());
 
-        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Act
         var result = await jobManager.ProcessJobFailure(jobId, exception, CancellationToken.None);
@@ -200,6 +207,7 @@ public class JobManagerTests
     public async Task ProcessJobFailure_SchedulesRetry_WhenRetriesAvailable(
         [Frozen] Mock<IJobStore> mockJobStore,
         [Frozen] Mock<ILogger<JobManager>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         Guid jobId,
         string exception)
     {
@@ -216,7 +224,7 @@ public class JobManagerTests
             .Setup(x => x.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult.Success());
 
-        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options);
+        var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
         // Act
         var result = await jobManager.ProcessJobFailure(jobId, exception, CancellationToken.None);

@@ -15,9 +15,10 @@ namespace AsyncEndpoints.InMemoryStore;
 /// An in-memory implementation of the IJobStore interface.
 /// This implementation stores jobs in a thread-safe concurrent dictionary and is suitable for development or single-instance deployments.
 /// </summary>
-public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
+public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvider dateTimeProvider) : IJobStore
 {
     private readonly ILogger<InMemoryJobStore> _logger = logger;
+    private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
     private readonly ConcurrentDictionary<Guid, Job> jobs = new();
 
     /// <summary>
@@ -149,7 +150,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
 
             // Update the job in the store
             jobs[job.Id] = job;
-            job.LastUpdatedAt = DateTimeOffset.UtcNow;
+            job.LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow;
 
             _logger.LogDebug("Updated job {JobId}", job.Id);
             return Task.FromResult(MethodResult.Success());
@@ -179,7 +180,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger) : IJobStore
                 return Task.FromCanceled<MethodResult<List<Job>>>(cancellationToken);
             }
 
-            var now = DateTime.UtcNow;
+            var now = _dateTimeProvider.UtcNow;
 
             var availableJobs = jobs.Values
                 .Where(job => job.WorkerId == null)

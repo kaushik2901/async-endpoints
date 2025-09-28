@@ -1,3 +1,4 @@
+using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,8 @@ public class RedisJobStoreTests
     _mockJsonOptions = new Mock<IOptions<JsonOptions>>();
     _mockJsonOptions.Setup(x => x.Value).Returns(new JsonOptions());
     _mockLogger = new Mock<ILogger<RedisJobStore>>();
-    _redisJobStore = new RedisJobStore(_mockLogger.Object, _mockJsonOptions.Object, _mockDatabase.Object);
+    var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+    _redisJobStore = new RedisJobStore(_mockLogger.Object, _mockJsonOptions.Object, _mockDatabase.Object, mockDateTimeProvider.Object);
 }
 
     [Fact]

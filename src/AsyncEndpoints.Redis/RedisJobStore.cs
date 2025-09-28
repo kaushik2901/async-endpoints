@@ -18,6 +18,7 @@ public class RedisJobStore : IJobStore
     private readonly ILogger<RedisJobStore> _logger;
     private readonly IDatabase _database;
     private readonly IOptions<JsonOptions> _jsonOptions;
+    private readonly IDateTimeProvider _dateTimeProvider;
     private readonly string? _connectionString;
 
     /// <summary>
@@ -26,10 +27,12 @@ public class RedisJobStore : IJobStore
     /// <param name="logger">The logger instance.</param>
     /// <param name="jsonOptions">The json options.</param>
     /// <param name="connectionString">The Redis connection string.</param>
-    public RedisJobStore(ILogger<RedisJobStore> logger, IOptions<JsonOptions> jsonOptions, string connectionString)
+    /// <param name="dateTimeProvider">Provider for current date and time.</param>
+    public RedisJobStore(ILogger<RedisJobStore> logger, IOptions<JsonOptions> jsonOptions, string connectionString, IDateTimeProvider dateTimeProvider)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _jsonOptions = jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions));
+        _dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
 
         var redis = ConnectionMultiplexer.Connect(_connectionString);
@@ -42,10 +45,12 @@ public class RedisJobStore : IJobStore
     /// <param name="logger">The logger instance.</param>
     /// <param name="jsonOptions">The json options.</param>
     /// <param name="database">The Redis database instance.</param>
-    public RedisJobStore(ILogger<RedisJobStore> logger, IOptions<JsonOptions> jsonOptions, IDatabase database)
+    /// <param name="dateTimeProvider">Provider for current date and time.</param>
+    public RedisJobStore(ILogger<RedisJobStore> logger, IOptions<JsonOptions> jsonOptions, IDatabase database, IDateTimeProvider dateTimeProvider)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _jsonOptions = jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions));
+        _dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _database = database ?? throw new ArgumentNullException(nameof(database));
     }
 
@@ -210,7 +215,7 @@ public class RedisJobStore : IJobStore
             }
 
             // Update the last updated timestamp
-            job.LastUpdatedAt = DateTimeOffset.UtcNow;
+            job.LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow;
             var jobJson = JsonSerializer.Serialize(job, _jsonOptions.Value.SerializerOptions);
 
             var updated = await _database.StringSetAsync(jobKey, jobJson);
@@ -227,7 +232,7 @@ public class RedisJobStore : IJobStore
             
             // Only add back to queue if it's queued or scheduled for retry
             if (job.Status == JobStatus.Queued || 
-                (job.Status == JobStatus.Scheduled && (job.RetryDelayUntil == null || job.RetryDelayUntil <= DateTime.UtcNow)))
+                (job.Status == JobStatus.Scheduled && (job.RetryDelayUntil == null || job.RetryDelayUntil <= _dateTimeProvider.UtcNow)))
             {
                 await _database.SortedSetAddAsync(queueKey, job.Id.ToString(), GetJobScore(job));
             }
@@ -266,7 +271,7 @@ public class RedisJobStore : IJobStore
             var availableJobIds = await _database.SortedSetRangeByScoreAsync(
                 queueKey, 
                 start: double.NegativeInfinity, 
-                stop: GetScoreForTime(DateTime.UtcNow),
+                stop: GetScoreForTime(_dateTimeProvider.UtcNow),
                 exclude: Exclude.None,
                 skip: 0,
                 take: maxClaimCount
@@ -320,7 +325,7 @@ public class RedisJobStore : IJobStore
         }
 
         // Check if job can be claimed
-        var now = DateTime.UtcNow;
+        var now = _dateTimeProvider.UtcNow;
         if (job.WorkerId != null || 
             (job.Status != JobStatus.Queued && job.Status != JobStatus.Scheduled) ||
             (job.RetryDelayUntil != null && job.RetryDelayUntil > now))
@@ -347,9 +352,9 @@ public class RedisJobStore : IJobStore
             RetryDelayUntil = job.RetryDelayUntil,
             WorkerId = workerId, // Set the worker ID
             CreatedAt = job.CreatedAt,
-            StartedAt = DateTimeOffset.UtcNow, // Set started time
+            StartedAt = _dateTimeProvider.DateTimeOffsetNow, // Set started time
             CompletedAt = job.CompletedAt,
-            LastUpdatedAt = DateTimeOffset.UtcNow, // Update last updated time
+            LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow, // Update last updated time
         };
 
         try 

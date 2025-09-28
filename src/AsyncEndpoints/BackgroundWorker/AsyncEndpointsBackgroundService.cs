@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Services;
 using Microsoft.Extensions.Hosting;
@@ -27,18 +28,21 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
     private readonly SemaphoreSlim _semaphoreSlim;
     private readonly CancellationTokenSource _shutdownTokenSource = new();
     private readonly SemaphoreSlim _shutdownSemaphore = new(1, 1);
+    private readonly IDateTimeProvider DateTimeProvider;
     private bool _disposed = false;
 
     public AsyncEndpointsBackgroundService(
         ILogger<AsyncEndpointsBackgroundService> logger,
         IOptions<AsyncEndpointsConfigurations> configurations,
         IJobProducerService jobProducerService,
-        IJobConsumerService jobConsumerService)
+        IJobConsumerService jobConsumerService,
+        IDateTimeProvider dateTimeProvider)
     {
         _logger = logger;
         _workerConfigurations = configurations.Value.WorkerConfigurations;
         _jobProducerService = jobProducerService;
         _jobConsumerService = jobConsumerService;
+        DateTimeProvider = dateTimeProvider;
 
         var channelOptions = new BoundedChannelOptions(_workerConfigurations.MaximumQueueSize)
         {
@@ -167,11 +171,11 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
     /// <returns>A task representing the asynchronous operation.</returns>
     private async Task WaitForWorkCompletionAsync(TimeSpan timeout)
     {
-        var deadline = DateTime.UtcNow.Add(timeout);
+        var deadline = DateTimeProvider.UtcNow.Add(timeout);
 
         // Wait for semaphore to indicate all work is done
         // (All permits available means no work in progress)
-        while (DateTime.UtcNow < deadline)
+        while (DateTimeProvider.UtcNow < deadline)
         {
             if (_semaphoreSlim.CurrentCount == _workerConfigurations.MaximumConcurrency)
             {

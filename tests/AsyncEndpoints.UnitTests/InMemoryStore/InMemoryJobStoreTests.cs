@@ -1,3 +1,4 @@
+using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.InMemoryStore;
 using AsyncEndpoints.UnitTests.TestSupport;
@@ -11,10 +12,11 @@ public class InMemoryJobStoreTests
 {
     [Theory, AutoMoqData]
     public void Constructor_Succeeds_WithValidDependencies(
-        Mock<ILogger<InMemoryJobStore>> mockLogger)
+        Mock<ILogger<InMemoryJobStore>> mockLogger,
+        Mock<IDateTimeProvider> mockDateTimeProvider)
     {
         // Act
-        var store = new InMemoryJobStore(mockLogger.Object);
+        var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
 
         // Assert
         Assert.NotNull(store);
@@ -85,12 +87,20 @@ public class InMemoryJobStoreTests
 
     [Theory, AutoMoqData]
     public async Task UpdateJob_Succeeds_WhenJobExists(
-        [Frozen] InMemoryJobStore store,
+        [Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         Job job)
     {
+        // Create store manually with the required dependencies
+        var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+        
+        // Setup datetime mock
+        var expectedTime = DateTimeOffset.UtcNow;
+        mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+
         // Arrange
         await store.CreateJob(job, CancellationToken.None);
-        job.UpdateStatus(JobStatus.InProgress);
+        job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
 
         // Act
         var result = await store.UpdateJob(job, CancellationToken.None);
@@ -114,15 +124,23 @@ public class InMemoryJobStoreTests
 
     [Theory, AutoMoqData]
     public async Task ClaimJobsForWorker_ReturnsAvailableJobs_WhenJobsExist(
-        [Frozen] InMemoryJobStore store,
+        [Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+        [Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
         Job job1,
         Job job2,
         Guid workerId,
         int maxClaimCount)
     {
+        // Create store manually with the required dependencies
+        var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+        
+        // Setup datetime mock
+        var expectedTime = DateTimeOffset.UtcNow;
+        mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+
         // Arrange
-        job1.UpdateStatus(JobStatus.Queued);
-        job2.UpdateStatus(JobStatus.Queued);
+        job1.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
+        job2.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
         await store.CreateJob(job1, CancellationToken.None);
         await store.CreateJob(job2, CancellationToken.None);
 

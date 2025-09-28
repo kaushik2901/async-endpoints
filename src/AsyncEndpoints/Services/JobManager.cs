@@ -11,10 +11,11 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Services;
 
-public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions<AsyncEndpointsConfigurations> options) : IJobManager
+public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions<AsyncEndpointsConfigurations> options, IDateTimeProvider dateTimeProvider) : IJobManager
 {
     private readonly ILogger<JobManager> _logger = logger;
     private readonly IJobStore _jobStore = jobStore;
+    private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
     private readonly AsyncEndpointsJobManagerConfiguration _jobManagerConfiguration = options.Value.JobManagerConfiguration;
 
     public async Task<MethodResult<Job>> SubmitJob(string jobName, string payload, HttpContext httpContext, CancellationToken cancellationToken)
@@ -34,7 +35,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
         var routeParams = httpContext.GetRouteParamsFromContext();
         var queryParams = httpContext.GetQueryParamsFromContext();
 
-        var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams);
+        var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _dateTimeProvider);
         _logger.LogDebug("Creating new job {JobId} for job: {JobName}", id, jobName);
 
         var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
@@ -60,7 +61,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 
         var job = jobResult.Data;
 
-        job.SetResult(result);
+        job.SetResult(result, _dateTimeProvider);
 
         return await _jobStore.UpdateJob(job, cancellationToken);
     }
@@ -78,14 +79,14 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
         {
             job.IncrementRetryCount();
             var retryDelay = CalculateRetryDelay(job.RetryCount);
-            job.SetRetryTime(DateTime.UtcNow.Add(retryDelay));
-            job.UpdateStatus(JobStatus.Scheduled);
+            job.SetRetryTime(_dateTimeProvider.UtcNow.Add(retryDelay));
+            job.UpdateStatus(JobStatus.Scheduled, _dateTimeProvider);
             job.WorkerId = null; // Release from current worker
             job.Exception = exception;
         }
         else
         {
-            job.SetException(exception);
+            job.SetException(exception, _dateTimeProvider);
         }
 
         return await _jobStore.UpdateJob(job, cancellationToken);

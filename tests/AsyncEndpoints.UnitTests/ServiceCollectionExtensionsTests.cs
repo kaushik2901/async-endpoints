@@ -18,6 +18,7 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();  // Add logging to resolve ILogger dependencies
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
         services.AddAsyncEndpointsInMemoryStore(); // Add job store as it's required by the request delegate
 
         // Act
@@ -41,6 +42,7 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
         services.AddAsyncEndpointsInMemoryStore();
 
         // Act - Add configuration as a separate step after AddAsyncEndpoints
@@ -58,6 +60,7 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();  // Add logging to resolve ILogger dependencies
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
 
         // Act
         services.AddAsyncEndpointsInMemoryStore();
@@ -76,6 +79,7 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();  // Add logging to resolve ILogger dependencies
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
         services.AddAsyncEndpointsInMemoryStore(); // Add job store as it's required by worker services
         services.AddAsyncEndpoints(); // Add the main services including IJobManager
 
@@ -110,6 +114,7 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
         services.AddAsyncEndpointsInMemoryStore(); // Required for the request delegate
 
         // Act

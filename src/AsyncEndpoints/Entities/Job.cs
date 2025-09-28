@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AsyncEndpoints.Contracts;
 
 namespace AsyncEndpoints.Entities;
 
@@ -44,6 +45,23 @@ public sealed class Job
     public string Payload { get; init; } = string.Empty;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="Job"/> class with the current time.
+    /// </summary>
+    public Job() : this(DateTimeOffset.UtcNow)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Job"/> class with a specific time.
+    /// </summary>
+    /// <param name="currentTime">The current time to use for timestamps.</param>
+    public Job(DateTimeOffset currentTime)
+    {
+        CreatedAt = currentTime;
+        LastUpdatedAt = currentTime;
+    }
+
+    /// <summary>
     /// Gets or sets the result of the job execution, if successful.
     /// </summary>
     public string? Result { get; set; } = null;
@@ -76,7 +94,7 @@ public sealed class Job
     /// <summary>
     /// Gets or sets the date and time when the job was created.
     /// </summary>
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time when the job processing started, if applicable.
@@ -91,7 +109,7 @@ public sealed class Job
     /// <summary>
     /// Gets or sets the date and time when the job was last updated.
     /// </summary>
-    public DateTimeOffset LastUpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset LastUpdatedAt { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether the job has been canceled.
@@ -101,17 +119,21 @@ public sealed class Job
     /// <summary>
     /// Creates a new job with the specified parameters.
     /// </summary>
-    /// <param name="id">The unique identifier for the job.</param>
-    /// <param name="name">The name of the job.</param>
-    /// <param name="payload">The payload data for the job.</param>
-    /// <returns>A new <see cref="Job"/> instance.</returns>
-    public static Job Create(Guid id, string name, string payload)
+    /// <param name=\"id\">The unique identifier for the job.</param>
+    /// <param name=\"name\">The name of the job.</param>
+    /// <param name=\"payload\">The payload data for the job.</param>
+    /// <param name=\"dateTimeProvider\">Provider for current date and time.</param>
+    /// <returns>A new <see cref=\"Job\"/> instance.</returns>
+    public static Job Create(Guid id, string name, string payload, IDateTimeProvider dateTimeProvider)
     {
+        var now = dateTimeProvider.DateTimeOffsetNow;
         return new Job
         {
             Id = id,
             Name = name,
-            Payload = payload
+            Payload = payload,
+            CreatedAt = now,
+            LastUpdatedAt = now
         };
     }
 
@@ -124,9 +146,11 @@ public sealed class Job
     /// <param name="headers">The HTTP headers associated with the original request.</param>
     /// <param name="routeParams">The route parameters associated with the original request.</param>
     /// <param name="queryParams">The query parameters associated with the original request.</param>
+    /// <param name="dateTimeProvider">Provider for current date and time.</param>
     /// <returns>A new <see cref="Job"/> instance.</returns>
-    public static Job Create(Guid id, string name, string payload, Dictionary<string, List<string?>> headers, Dictionary<string, object?> routeParams, List<KeyValuePair<string, List<string?>>> queryParams)
+    public static Job Create(Guid id, string name, string payload, Dictionary<string, List<string?>> headers, Dictionary<string, object?> routeParams, List<KeyValuePair<string, List<string?>>> queryParams, IDateTimeProvider dateTimeProvider)
     {
+        var now = dateTimeProvider.DateTimeOffsetNow;
         return new Job
         {
             Id = id,
@@ -134,7 +158,9 @@ public sealed class Job
             Payload = payload,
             Headers = headers,
             RouteParams = routeParams,
-            QueryParams = queryParams
+            QueryParams = queryParams,
+            CreatedAt = now,
+            LastUpdatedAt = now
         };
     }
 
@@ -142,20 +168,22 @@ public sealed class Job
     /// Updates the status of the job and updates the last updated timestamp.
     /// </summary>
     /// <param name="status">The new status to set for the job.</param>
-    public void UpdateStatus(JobStatus status)
+    /// <param name="dateTimeProvider">Provider for current date and time.</param>
+    public void UpdateStatus(JobStatus status, IDateTimeProvider dateTimeProvider)
     {
         Status = status;
-        LastUpdatedAt = DateTimeOffset.UtcNow;
+        var now = dateTimeProvider.DateTimeOffsetNow;
+        LastUpdatedAt = now;
 
         switch (status)
         {
             case JobStatus.InProgress:
-                StartedAt = DateTimeOffset.UtcNow;
+                StartedAt = now;
                 break;
             case JobStatus.Completed:
             case JobStatus.Failed:
             case JobStatus.Canceled:
-                CompletedAt = DateTimeOffset.UtcNow;
+                CompletedAt = now;
                 break;
         }
     }
@@ -164,20 +192,22 @@ public sealed class Job
     /// Sets the result of the job and updates the status to completed.
     /// </summary>
     /// <param name="result">The result of the job execution.</param>
-    public void SetResult(string result)
+    /// <param name="dateTimeProvider">Provider for current date and time.</param>
+    public void SetResult(string result, IDateTimeProvider dateTimeProvider)
     {
         Result = result;
-        UpdateStatus(JobStatus.Completed);
+        UpdateStatus(JobStatus.Completed, dateTimeProvider);
     }
 
     /// <summary>
     /// Sets the exception details for the job and updates the status to failed.
     /// </summary>
     /// <param name="exception">The exception that occurred during job execution.</param>
-    public void SetException(string exception)
+    /// <param name="dateTimeProvider">Provider for current date and time.</param>
+    public void SetException(string exception, IDateTimeProvider dateTimeProvider)
     {
         Exception = exception;
-        UpdateStatus(JobStatus.Failed);
+        UpdateStatus(JobStatus.Failed, dateTimeProvider);
     }
 
     /// <summary>

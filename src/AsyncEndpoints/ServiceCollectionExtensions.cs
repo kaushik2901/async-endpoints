@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AsyncEndpointsConfigurations>();
         services.AddScoped<IJobManager, JobManager>();
         services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsJsonSerializationContext.Default);
 
         return services;

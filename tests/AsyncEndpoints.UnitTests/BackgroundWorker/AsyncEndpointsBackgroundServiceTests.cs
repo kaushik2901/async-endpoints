@@ -1,4 +1,5 @@
 using AsyncEndpoints.BackgroundWorker;
+using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Services;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,8 @@ public class AsyncEndpointsBackgroundServiceTests
     public void Constructor_Succeeds_WithValidDependencies(
         Mock<ILogger<AsyncEndpointsBackgroundService>> mockLogger,
         Mock<IJobProducerService> mockJobProducerService,
-        Mock<IJobConsumerService> mockJobConsumerService)
+        Mock<IJobConsumerService> mockJobConsumerService,
+        Mock<IDateTimeProvider> mockDateTimeProvider)
     {
         // Arrange
         var configurations = Options.Create(new AsyncEndpointsConfigurations());
@@ -23,7 +25,8 @@ public class AsyncEndpointsBackgroundServiceTests
             mockLogger.Object, 
             configurations, 
             mockJobProducerService.Object, 
-            mockJobConsumerService.Object);
+            mockJobConsumerService.Object,
+            mockDateTimeProvider.Object);
 
         // Assert
         Assert.NotNull(service);
