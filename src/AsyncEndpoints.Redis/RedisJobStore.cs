@@ -89,7 +89,7 @@ public class RedisJobStore : IJobStore
             }
 
             var jobKey = GetJobKey(job.Id);
-            
+
             // Check if job already exists to avoid overwriting
             var existingJob = await _database.StringGetAsync(jobKey);
             if (!existingJob.IsNull)
@@ -233,9 +233,9 @@ public class RedisJobStore : IJobStore
             // Update queue if job status has changed
             var queueKey = GetQueueKey();
             await _database.SortedSetRemoveAsync(queueKey, job.Id.ToString());
-            
+
             // Only add back to queue if it's queued or scheduled for retry
-            if (job.Status == JobStatus.Queued || 
+            if (job.Status == JobStatus.Queued ||
                 (job.Status == JobStatus.Scheduled && (job.RetryDelayUntil == null || job.RetryDelayUntil <= _dateTimeProvider.UtcNow)))
             {
                 await _database.SortedSetAddAsync(queueKey, job.Id.ToString(), GetJobScore(job));
@@ -270,11 +270,11 @@ public class RedisJobStore : IJobStore
             }
 
             var queueKey = GetQueueKey();
-            
+
             // Get available jobs from the queue, considering retry delays
             var availableJobIds = await _database.SortedSetRangeByScoreAsync(
-                queueKey, 
-                start: double.NegativeInfinity, 
+                queueKey,
+                start: double.NegativeInfinity,
                 stop: GetScoreForTime(_dateTimeProvider.UtcNow),
                 exclude: Exclude.None,
                 skip: 0,
@@ -314,7 +314,7 @@ public class RedisJobStore : IJobStore
     private async Task<MethodResult<Job>> ClaimSingleJob(Guid jobId, Guid workerId, CancellationToken cancellationToken)
     {
         var jobKey = GetJobKey(jobId);
-        
+
         // Get current job
         var jobJson = await _database.StringGetAsync(jobKey);
         if (jobJson.IsNull)
@@ -330,7 +330,7 @@ public class RedisJobStore : IJobStore
 
         // Check if job can be claimed
         var now = _dateTimeProvider.UtcNow;
-        if (job.WorkerId != null || 
+        if (job.WorkerId != null ||
             (job.Status != JobStatus.Queued && job.Status != JobStatus.Scheduled) ||
             (job.RetryDelayUntil != null && job.RetryDelayUntil > now))
         {
@@ -361,7 +361,7 @@ public class RedisJobStore : IJobStore
             LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow, // Update last updated time
         };
 
-        try 
+        try
         {
             // Use optimistic locking with a Lua script
             var luaScript = @"

@@ -93,7 +93,7 @@ public class InMemoryJobStoreTests
     {
         // Create store manually with the required dependencies
         var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
-        
+
         // Setup datetime mock
         var expectedTime = DateTimeOffset.UtcNow;
         mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
@@ -133,7 +133,7 @@ public class InMemoryJobStoreTests
     {
         // Create store manually with the required dependencies
         var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
-        
+
         // Setup datetime mock
         var expectedTime = DateTimeOffset.UtcNow;
         mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);

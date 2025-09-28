@@ -22,9 +22,9 @@ public class AsyncEndpointsBackgroundServiceTests
 
         // Act
         var service = new AsyncEndpointsBackgroundService(
-            mockLogger.Object, 
-            configurations, 
-            mockJobProducerService.Object, 
+            mockLogger.Object,
+            configurations,
+            mockJobProducerService.Object,
             mockJobConsumerService.Object,
             mockDateTimeProvider.Object);
 

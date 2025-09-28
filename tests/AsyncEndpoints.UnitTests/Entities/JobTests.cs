@@ -242,7 +242,7 @@ public class JobTests
     {
         // Arrange
         var currentTime = DateTimeOffset.UtcNow;
-        
+
         // Act
         var job = new Job(currentTime);
 
@@ -255,8 +255,8 @@ public class JobTests
         Assert.Null(job.Exception);
         Assert.Equal(0, job.RetryCount);
         Assert.Equal(AsyncEndpointsConstants.MaximumRetries, job.MaxRetries);
-        Assert.Equal(currentTime, job.CreatedAt);  
-        Assert.Equal(currentTime, job.LastUpdatedAt);  
+        Assert.Equal(currentTime, job.CreatedAt);
+        Assert.Equal(currentTime, job.LastUpdatedAt);
         Assert.Null(job.RetryDelayUntil);
         Assert.Null(job.WorkerId);
         Assert.Null(job.StartedAt);

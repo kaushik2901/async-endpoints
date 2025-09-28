@@ -1,14 +1,14 @@
+using System.Threading.Channels;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Services;
+using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
+using AutoFixture.Xunit2;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Threading.Channels;
-using AutoFixture.Xunit2;
 using Moq;
-using Microsoft.Extensions.DependencyInjection;
-using AsyncEndpoints.UnitTests.TestSupport;
 
 namespace AsyncEndpoints.UnitTests.Services;
 
@@ -59,7 +59,7 @@ public class JobProducerServiceTests
         var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
         var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
-        
+
         var jobProducerService = new JobProducerService(mockLogger.Object, mockServiceScopeFactory.Object, configurations);
 
         // Act
@@ -97,7 +97,7 @@ public class JobProducerServiceTests
         var jobProducerService = new JobProducerService(mockLogger.Object, mockServiceScopeFactory.Object, configurations);
 
         // Act & Assert - Should not throw
-        var exception = await Record.ExceptionAsync(() => 
+        var exception = await Record.ExceptionAsync(() =>
             jobProducerService.ProduceJobsAsync(channel.Writer, cancellationTokenSource.Token));
 
         Assert.Null(exception);

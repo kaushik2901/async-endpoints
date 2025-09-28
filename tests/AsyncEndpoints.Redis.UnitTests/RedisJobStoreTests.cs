@@ -17,15 +17,15 @@ public class RedisJobStoreTests
     private readonly RedisJobStore _redisJobStore;
 
     public RedisJobStoreTests()
-{
-    _mockDatabase = new Mock<IDatabase>();
-    _mockJsonOptions = new Mock<IOptions<JsonOptions>>();
-    _mockJsonOptions.Setup(x => x.Value).Returns(new JsonOptions());
-    _mockLogger = new Mock<ILogger<RedisJobStore>>();
-    _mockSerializer = new Mock<ISerializer>();
-    var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-    _redisJobStore = new RedisJobStore(_mockLogger.Object, _mockJsonOptions.Object, _mockDatabase.Object, mockDateTimeProvider.Object, _mockSerializer.Object);
-}
+    {
+        _mockDatabase = new Mock<IDatabase>();
+        _mockJsonOptions = new Mock<IOptions<JsonOptions>>();
+        _mockJsonOptions.Setup(x => x.Value).Returns(new JsonOptions());
+        _mockLogger = new Mock<ILogger<RedisJobStore>>();
+        _mockSerializer = new Mock<ISerializer>();
+        var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+        _redisJobStore = new RedisJobStore(_mockLogger.Object, _mockJsonOptions.Object, _mockDatabase.Object, mockDateTimeProvider.Object, _mockSerializer.Object);
+    }
 
     [Fact]
     public async Task CreateJob_ValidJob_ReturnsSuccess()
@@ -36,10 +36,10 @@ public class RedisJobStoreTests
         _mockSerializer.Setup(s => s.Serialize(job, It.IsAny<System.Text.Json.JsonSerializerOptions>())).Returns(expectedJson);
         _mockDatabase.Setup(db => db.StringGetAsync($"ae:job:{job.Id}", It.IsAny<CommandFlags>()))
                      .ReturnsAsync(RedisValue.Null);
-        _mockDatabase.Setup(db => db.StringSetAsync($"ae:job:{job.Id}", It.Is<RedisValue>(rv => rv.ToString() == expectedJson), 
+        _mockDatabase.Setup(db => db.StringSetAsync($"ae:job:{job.Id}", It.Is<RedisValue>(rv => rv.ToString() == expectedJson),
                      It.IsAny<TimeSpan?>(), It.IsAny<bool>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
                      .ReturnsAsync(true);
-        _mockDatabase.Setup(db => db.SortedSetAddAsync("ae:jobs:queue", job.Id.ToString(), 
+        _mockDatabase.Setup(db => db.SortedSetAddAsync("ae:jobs:queue", job.Id.ToString(),
                      It.IsAny<double>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
                      .ReturnsAsync(true);
 
@@ -48,7 +48,7 @@ public class RedisJobStoreTests
 
         // Assert
         Assert.True(result.IsSuccess);
-        _mockDatabase.Verify(db => db.StringSetAsync($"ae:job:{job.Id}", It.Is<RedisValue>(rv => rv.ToString() == expectedJson), 
+        _mockDatabase.Verify(db => db.StringSetAsync($"ae:job:{job.Id}", It.Is<RedisValue>(rv => rv.ToString() == expectedJson),
                      It.IsAny<TimeSpan?>(), It.IsAny<bool>(), It.IsAny<When>(), It.IsAny<CommandFlags>()), Times.Once);
     }
 
@@ -120,14 +120,14 @@ public class RedisJobStoreTests
         // Arrange
         var job = new Job { Id = Guid.NewGuid(), Name = "TestJob", Payload = "{}" };
         var jobJson = "serializedJob";
-        
+
         _mockDatabase.Setup(db => db.KeyExistsAsync($"ae:job:{job.Id}", It.IsAny<CommandFlags>()))
                      .ReturnsAsync(true);
         _mockDatabase.Setup(db => db.StringGetAsync($"ae:job:{job.Id}", It.IsAny<CommandFlags>()))
                      .ReturnsAsync(jobJson);
         _mockSerializer.Setup(s => s.Serialize(job, It.IsAny<System.Text.Json.JsonSerializerOptions>()))
                        .Returns(jobJson);
-        _mockDatabase.Setup(db => db.StringSetAsync($"ae:job:{job.Id}", It.IsAny<RedisValue>(), 
+        _mockDatabase.Setup(db => db.StringSetAsync($"ae:job:{job.Id}", It.IsAny<RedisValue>(),
                      null, It.IsAny<bool>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
                      .ReturnsAsync(true);
         _mockDatabase.Setup(db => db.SortedSetRemoveAsync("ae:jobs:queue", job.Id.ToString(), It.IsAny<CommandFlags>()))
@@ -139,7 +139,7 @@ public class RedisJobStoreTests
         // Assert
         Assert.True(result.IsSuccess);
         // Verify that StringSetAsync was called once with any RedisValue (the exact serialized string doesn't matter)
-        _mockDatabase.Verify(db => db.StringSetAsync($"ae:job:{job.Id}", It.IsAny<RedisValue>(), 
+        _mockDatabase.Verify(db => db.StringSetAsync($"ae:job:{job.Id}", It.IsAny<RedisValue>(),
                      null, It.IsAny<bool>(), It.IsAny<When>(), It.IsAny<CommandFlags>()), Times.Once);
     }
 

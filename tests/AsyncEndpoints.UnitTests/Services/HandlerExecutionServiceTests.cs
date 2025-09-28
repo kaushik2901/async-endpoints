@@ -1,8 +1,8 @@
 using AsyncEndpoints.Services;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using AsyncEndpoints.UnitTests.TestSupport;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace AsyncEndpoints.UnitTests.Services;
 

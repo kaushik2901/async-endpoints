@@ -25,7 +25,7 @@ public class HttpContextExtensionsTests
     {
         // Arrange
         var httpContext = new DefaultHttpContext();
-        
+
         // Act
         var result = httpContext.GetOrCreateJobId();
 

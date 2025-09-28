@@ -1,14 +1,14 @@
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Services;
+using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
+using AutoFixture;
+using AutoFixture.Xunit2;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using AutoFixture.Xunit2;
-using AutoFixture;
 using Moq;
-using AsyncEndpoints.UnitTests.TestSupport;
 
 namespace AsyncEndpoints.UnitTests.Services;
 
@@ -42,7 +42,7 @@ public class JobManagerTests
         // Arrange
         var httpContext = new DefaultHttpContext();
         var options = Options.Create(new AsyncEndpointsConfigurations());
-        
+
         mockJobStore
             .Setup(x => x.GetJobById(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Failure("Job not found"));
@@ -74,9 +74,9 @@ public class JobManagerTests
         var jobId = Guid.NewGuid();
         var httpContext = new DefaultHttpContext();
         var options = Options.Create(new AsyncEndpointsConfigurations());
-        
+
         httpContext.Request.Headers[AsyncEndpointsConstants.JobIdHeaderName] = jobId.ToString();
-        
+
         mockJobStore
             .Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Success(existingJob));
@@ -103,7 +103,7 @@ public class JobManagerTests
     {
         // Arrange
         var options = Options.Create(new AsyncEndpointsConfigurations());
-        
+
         mockJobStore
             .Setup(x => x.ClaimJobsForWorker(workerId, maxClaimCount, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<List<Job>>.Success(jobs));
@@ -129,7 +129,7 @@ public class JobManagerTests
         // Arrange
         var options = Options.Create(new AsyncEndpointsConfigurations());
         var job = new Fixture().Create<Job>();
-        
+
         mockJobStore
             .Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Success(job));
@@ -158,7 +158,7 @@ public class JobManagerTests
     {
         // Arrange
         var options = Options.Create(new AsyncEndpointsConfigurations());
-        
+
         mockJobStore
             .Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Failure("Job not found"));
@@ -183,7 +183,7 @@ public class JobManagerTests
         // Arrange
         var options = Options.Create(new AsyncEndpointsConfigurations());
         var job = new Fixture().Create<Job>();
-        
+
         job.MaxRetries = 0; // Force max retries to be reached
         mockJobStore
             .Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
@@ -214,7 +214,7 @@ public class JobManagerTests
         // Arrange
         var options = Options.Create(new AsyncEndpointsConfigurations());
         var job = new Fixture().Create<Job>();
-        
+
         job.MaxRetries = 3;
         job.RetryCount = 0;
         mockJobStore
