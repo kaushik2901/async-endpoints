@@ -4,9 +4,7 @@ using AsyncEndpoints.Services;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 using AutoFixture.Xunit2;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 
 namespace AsyncEndpoints.UnitTests.Services;
@@ -20,11 +18,8 @@ public class JobProcessorServiceTests
         Mock<IHandlerExecutionService> mockHandlerExecutionService,
         Mock<ISerializer> mockSerializer)
     {
-        // Arrange
-        var jsonOptions = Options.Create(new JsonOptions());
-
         // Act
-        var service = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, jsonOptions, mockSerializer.Object);
+        var service = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, mockSerializer.Object);
 
         // Assert
         Assert.NotNull(service);
@@ -65,14 +60,13 @@ public class JobProcessorServiceTests
         Job job)
     {
         // Arrange
-        var jsonOptions = Options.Create(new JsonOptions());
         var handlerResult = MethodResult<object>.Failure("Handler error");
 
         mockHandlerExecutionService
             .Setup(x => x.ExecuteHandlerAsync(job.Name, It.IsAny<object>(), job, It.IsAny<CancellationToken>()))
             .ReturnsAsync(handlerResult);
 
-        var jobProcessorService = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, jsonOptions, new Mock<ISerializer>().Object);
+        var jobProcessorService = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, new Mock<ISerializer>().Object);
 
         // Act & Assert - Should not throw exception
         var exception = await Record.ExceptionAsync(() =>

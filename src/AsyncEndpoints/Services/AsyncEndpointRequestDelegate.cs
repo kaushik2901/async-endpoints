@@ -4,20 +4,17 @@ using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Services;
 
 /// <summary>
 /// Handles asynchronous endpoint requests by creating background jobs for processing.
 /// </summary>
-public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, IOptions<JsonOptions> jsonOptions, ISerializer serializer) : IAsyncEndpointRequestDelegate
+public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer) : IAsyncEndpointRequestDelegate
 {
     private readonly ILogger<AsyncEndpointRequestDelegate> _logger = logger;
     private readonly IJobManager _jobManager = jobManager;
-    private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
     private readonly ISerializer _serializer = serializer;
 
     /// <summary>
@@ -46,7 +43,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
             return handlerResponse;
         }
 
-        var payload = _serializer.Serialize(request, _jsonOptions.Value.SerializerOptions);
+        var payload = _serializer.Serialize(request);
         _logger.LogDebug("Serialized request payload for job: {JobName}", jobName);
 
         var submitJobResult = await _jobManager.SubmitJob(jobName, payload, httpContext, cancellationToken);

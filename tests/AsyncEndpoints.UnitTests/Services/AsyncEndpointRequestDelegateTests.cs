@@ -2,10 +2,8 @@ using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Services;
 using AsyncEndpoints.UnitTests.Utilities;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 
 namespace AsyncEndpoints.UnitTests.Services;
@@ -15,21 +13,19 @@ public class AsyncEndpointRequestDelegateTests
     private readonly Mock<ILogger<AsyncEndpointRequestDelegate>> _mockLogger;
     private readonly Mock<IJobManager> _mockJobManager;
     private readonly Mock<ISerializer> _mockSerializer;
-    private readonly IOptions<JsonOptions> _jsonOptions;
 
     public AsyncEndpointRequestDelegateTests()
     {
         _mockLogger = new Mock<ILogger<AsyncEndpointRequestDelegate>>();
         _mockJobManager = new Mock<IJobManager>();
         _mockSerializer = new Mock<ISerializer>();
-        _jsonOptions = Options.Create(new JsonOptions());
     }
 
     [Fact]
     public void Constructor_CreatesInstance()
     {
         // Act
-        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _jsonOptions, _mockSerializer.Object);
+        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object);
 
         // Assert
         Assert.NotNull(requestDelegate);
@@ -39,7 +35,7 @@ public class AsyncEndpointRequestDelegateTests
     public async Task HandleAsync_WithCustomHandler_CanBeCalledWithoutError()
     {
         // Arrange
-        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _jsonOptions, _mockSerializer.Object);
+        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object);
         var httpContext = CreateHttpContext;
         var request = new TestRequest { Value = "test" };
         var expectedResponse = Results.Ok("Custom Response");

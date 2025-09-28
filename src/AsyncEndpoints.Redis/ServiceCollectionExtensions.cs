@@ -1,8 +1,6 @@
 using AsyncEndpoints.Contracts;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace AsyncEndpoints.Redis;
@@ -27,10 +25,9 @@ public static class RedisServiceCollectionExtensions
         services.AddSingleton<IJobStore>(provider =>
         {
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-            var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
             var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
             var serializer = provider.GetRequiredService<ISerializer>();
-            return new RedisJobStore(logger, jsonOptions, connectionString, dateTimeProvider, serializer);
+            return new RedisJobStore(logger, connectionString, dateTimeProvider, serializer);
         });
 
         return services;
@@ -51,11 +48,10 @@ public static class RedisServiceCollectionExtensions
         services.AddSingleton<IJobStore>(provider =>
         {
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-            var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
             var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
             var serializer = provider.GetRequiredService<ISerializer>();
             var database = connectionMultiplexer.GetDatabase();
-            return new RedisJobStore(logger, jsonOptions, database, dateTimeProvider, serializer);
+            return new RedisJobStore(logger, database, dateTimeProvider, serializer);
         });
 
         return services;
@@ -79,10 +75,9 @@ public static class RedisServiceCollectionExtensions
         services.AddSingleton<IJobStore>(provider =>
         {
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-            var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
             var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
             var serializer = provider.GetRequiredService<ISerializer>();
-            return new RedisJobStore(logger, jsonOptions, config.ConnectionString, dateTimeProvider, serializer);
+            return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, serializer);
         });
 
         return services;

@@ -1,9 +1,7 @@
 ﻿using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Utilities;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace AsyncEndpoints.Redis;
@@ -16,7 +14,6 @@ public class RedisJobStore : IJobStore
 {
     private readonly ILogger<RedisJobStore> _logger;
     private readonly IDatabase _database;
-    private readonly IOptions<JsonOptions> _jsonOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ISerializer _serializer;
     private readonly string? _connectionString;
@@ -25,14 +22,12 @@ public class RedisJobStore : IJobStore
     /// Initializes a new instance of the <see cref="RedisJobStore"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
-    /// <param name="jsonOptions">The json options.</param>
     /// <param name="connectionString">The Redis connection string.</param>
     /// <param name="dateTimeProvider">Provider for current date and time.</param>
     /// <param name="serializer">The serializer service.</param>
-    public RedisJobStore(ILogger<RedisJobStore> logger, IOptions<JsonOptions> jsonOptions, string connectionString, IDateTimeProvider dateTimeProvider, ISerializer serializer)
+    public RedisJobStore(ILogger<RedisJobStore> logger, string connectionString, IDateTimeProvider dateTimeProvider, ISerializer serializer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _jsonOptions = jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions));
         _dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
@@ -45,14 +40,12 @@ public class RedisJobStore : IJobStore
     /// Initializes a new instance of the <see cref="RedisJobStore"/> class with a pre-configured database.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
-    /// <param name="jsonOptions">The json options.</param>
     /// <param name="database">The Redis database instance.</param>
     /// <param name="dateTimeProvider">Provider for current date and time.</param>
     /// <param name="serializer">The serializer service.</param>
-    public RedisJobStore(ILogger<RedisJobStore> logger, IOptions<JsonOptions> jsonOptions, IDatabase database, IDateTimeProvider dateTimeProvider, ISerializer serializer)
+    public RedisJobStore(ILogger<RedisJobStore> logger, IDatabase database, IDateTimeProvider dateTimeProvider, ISerializer serializer)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _jsonOptions = jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions));
         _dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         _database = database ?? throw new ArgumentNullException(nameof(database));
@@ -99,7 +92,7 @@ public class RedisJobStore : IJobStore
                     AsyncEndpointError.FromCode("JOB_CREATE_FAILED", $"Job with ID {job.Id} already exists"));
             }
 
-            var jobJson = _serializer.Serialize(job, _jsonOptions.Value.SerializerOptions);
+            var jobJson = _serializer.Serialize(job);
             var created = await _database.StringSetAsync(jobKey, jobJson, when: When.NotExists);
 
             if (!created)
@@ -160,7 +153,7 @@ public class RedisJobStore : IJobStore
                     AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found"));
             }
 
-            var job = _serializer.Deserialize<Job>(jobJson.ToString(), _jsonOptions.Value.SerializerOptions);
+            var job = _serializer.Deserialize<Job>(jobJson.ToString());
             if (job == null)
             {
                 _logger.LogError("Deserialization failed for job with ID {JobId}", id);
@@ -220,7 +213,7 @@ public class RedisJobStore : IJobStore
 
             // Update the last updated timestamp
             job.LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow;
-            var jobJson = _serializer.Serialize(job, _jsonOptions.Value.SerializerOptions);
+            var jobJson = _serializer.Serialize(job);
 
             var updated = await _database.StringSetAsync(jobKey, jobJson);
             if (!updated)
@@ -322,7 +315,7 @@ public class RedisJobStore : IJobStore
             return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_FOUND", "Job not found"));
         }
 
-        var job = _serializer.Deserialize<Job>(jobJson.ToString(), _jsonOptions.Value.SerializerOptions);
+        var job = _serializer.Deserialize<Job>(jobJson.ToString());
         if (job == null)
         {
             return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("DESERIALIZATION_ERROR", "Failed to deserialize job"));
@@ -382,7 +375,7 @@ public class RedisJobStore : IJobStore
                 end
             ";
 
-            var updatedJobJson = _serializer.Serialize(updatedJob, _jsonOptions.Value.SerializerOptions);
+            var updatedJobJson = _serializer.Serialize(updatedJob);
             var result = await _database.ScriptEvaluateAsync(
                 luaScript,
                 values:
