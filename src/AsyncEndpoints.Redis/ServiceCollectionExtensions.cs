@@ -29,7 +29,8 @@ public static class RedisServiceCollectionExtensions
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
             var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
             var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
-            return new RedisJobStore(logger, jsonOptions, connectionString, dateTimeProvider);
+            var serializer = provider.GetRequiredService<ISerializer>();
+            return new RedisJobStore(logger, jsonOptions, connectionString, dateTimeProvider, serializer);
         });
 
         return services;
@@ -52,8 +53,9 @@ public static class RedisServiceCollectionExtensions
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
             var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
             var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
+            var serializer = provider.GetRequiredService<ISerializer>();
             var database = connectionMultiplexer.GetDatabase();
-            return new RedisJobStore(logger, jsonOptions, database, dateTimeProvider);
+            return new RedisJobStore(logger, jsonOptions, database, dateTimeProvider, serializer);
         });
 
         return services;
@@ -79,7 +81,8 @@ public static class RedisServiceCollectionExtensions
             var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
             var jsonOptions = provider.GetRequiredService<IOptions<JsonOptions>>();
             var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
-            return new RedisJobStore(logger, jsonOptions, config.ConnectionString, dateTimeProvider);
+            var serializer = provider.GetRequiredService<ISerializer>();
+            return new RedisJobStore(logger, jsonOptions, config.ConnectionString, dateTimeProvider, serializer);
         });
 
         return services;

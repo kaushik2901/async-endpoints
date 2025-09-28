@@ -17,13 +17,14 @@ public class JobProcessorServiceTests
     public void Constructor_Succeeds_WithValidDependencies(
         Mock<ILogger<JobProcessorService>> mockLogger,
         Mock<IJobManager> mockJobManager,
-        Mock<IHandlerExecutionService> mockHandlerExecutionService)
+        Mock<IHandlerExecutionService> mockHandlerExecutionService,
+        Mock<ISerializer> mockSerializer)
     {
         // Arrange
         var jsonOptions = Options.Create(new JsonOptions());
 
         // Act
-        var service = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, jsonOptions);
+        var service = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, jsonOptions, mockSerializer.Object);
 
         // Assert
         Assert.NotNull(service);
@@ -71,7 +72,7 @@ public class JobProcessorServiceTests
             .Setup(x => x.ExecuteHandlerAsync(job.Name, It.IsAny<object>(), job, It.IsAny<CancellationToken>()))
             .ReturnsAsync(handlerResult);
 
-        var jobProcessorService = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, jsonOptions);
+        var jobProcessorService = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, jsonOptions, new Mock<ISerializer>().Object);
 
         // Act & Assert - Should not throw exception
         var exception = await Record.ExceptionAsync(() => 

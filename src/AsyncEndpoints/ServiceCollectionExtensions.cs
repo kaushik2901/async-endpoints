@@ -3,6 +3,7 @@ using System.Text.Json.Serialization.Metadata;
 using AsyncEndpoints.BackgroundWorker;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.InMemoryStore;
+using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Services;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IJobManager, JobManager>();
         services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+        services.AddSingleton<ISerializer, Serializer>();
         services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsJsonSerializationContext.Default);
 
         return services;

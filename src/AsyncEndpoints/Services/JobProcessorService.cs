@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
@@ -16,12 +15,13 @@ namespace AsyncEndpoints.Services;
 /// Handles the execution of job payloads, serialization/deserialization of requests and responses,
 /// and updates job status and results in the job manager.
 /// </summary>
-public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManager jobManager, IHandlerExecutionService handlerExecutionService, IOptions<JsonOptions> jsonOptions) : IJobProcessorService
+public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManager jobManager, IHandlerExecutionService handlerExecutionService, IOptions<JsonOptions> jsonOptions, ISerializer serializer) : IJobProcessorService
 {
     private readonly ILogger<JobProcessorService> _logger = logger;
     private readonly IJobManager _jobManager = jobManager;
     private readonly IHandlerExecutionService _handlerExecutionService = handlerExecutionService;
     private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
+    private readonly ISerializer _serializer = serializer;
 
     /// <summary>
     /// Processes a single job asynchronously.
@@ -72,7 +72,7 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
                 return MethodResult<string>.Failure(new InvalidOperationException($"Handler registration not found for job name: {job.Name}"));
             }
 
-            var request = JsonSerializer.Deserialize(job.Payload, handlerRegistration.RequestType, _jsonOptions.Value.SerializerOptions);
+            var request = _serializer.Deserialize(job.Payload, handlerRegistration.RequestType, _jsonOptions.Value.SerializerOptions);
             if (request == null)
             {
                 return MethodResult<string>.Failure(new InvalidOperationException($"Failed to deserialize request payload for job: {job.Name}"));
@@ -84,7 +84,7 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
                 return MethodResult<string>.Failure(result.Error!);
             }
 
-            var serializedResult = JsonSerializer.Serialize(result.Data, handlerRegistration.ResponseType, _jsonOptions.Value.SerializerOptions);
+            var serializedResult = _serializer.Serialize(result.Data, handlerRegistration.ResponseType, _jsonOptions.Value.SerializerOptions);
 
             return MethodResult<string>.Success(serializedResult);
         }

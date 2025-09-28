@@ -14,12 +14,14 @@ public class AsyncEndpointRequestDelegateTests
 {
     private readonly Mock<ILogger<AsyncEndpointRequestDelegate>> _mockLogger;
     private readonly Mock<IJobManager> _mockJobManager;
+    private readonly Mock<ISerializer> _mockSerializer;
     private readonly IOptions<JsonOptions> _jsonOptions;
 
     public AsyncEndpointRequestDelegateTests()
     {
         _mockLogger = new Mock<ILogger<AsyncEndpointRequestDelegate>>();
         _mockJobManager = new Mock<IJobManager>();
+        _mockSerializer = new Mock<ISerializer>();
         _jsonOptions = Options.Create(new JsonOptions());
     }
 
@@ -27,7 +29,7 @@ public class AsyncEndpointRequestDelegateTests
     public void Constructor_CreatesInstance()
     {
         // Act
-        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _jsonOptions);
+        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _jsonOptions, _mockSerializer.Object);
 
         // Assert
         Assert.NotNull(requestDelegate);
@@ -37,7 +39,7 @@ public class AsyncEndpointRequestDelegateTests
     public async Task HandleAsync_WithCustomHandler_CanBeCalledWithoutError()
     {
         // Arrange
-        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _jsonOptions);
+        var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _jsonOptions, _mockSerializer.Object);
         var httpContext = CreateHttpContext;
         var request = new TestRequest { Value = "test" };
         var expectedResponse = Results.Ok("Custom Response");
