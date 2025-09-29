@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Services;
@@ -25,6 +26,8 @@ public static class RouteBuilderExtensions
     /// <param name="handler">Optional custom handler function to process the request. 
     /// If not provided, the default handler will be used based on registered IAsyncEndpointRequestHandler services.</param>
     /// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+    [RequiresUnreferencedCode("The delegate passed to MapPost may use reflection")]
+    [RequiresDynamicCode("The delegate passed to MapPost may use reflection")]
     public static IEndpointConventionBuilder MapAsyncPost<TRequest>(
         this IEndpointRouteBuilder endpoints,
         string name,

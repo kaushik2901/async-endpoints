@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization.Metadata;
 using AsyncEndpoints.BackgroundWorker;
 using AsyncEndpoints.Contracts;
@@ -94,7 +95,7 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
     /// <param name="jobName">The unique name of the job, used to identify the specific handler.</param>
     /// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
-    public static IServiceCollection AddAsyncEndpointHandler<TAsyncEndpointRequestHandler, TRequest, TResponse>(this IServiceCollection services, string jobName)
+    public static IServiceCollection AddAsyncEndpointHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TAsyncEndpointRequestHandler, TRequest, TResponse>(this IServiceCollection services, string jobName)
         where TAsyncEndpointRequestHandler : class, IAsyncEndpointRequestHandler<TRequest, TResponse>
     {
         services.AddKeyedScoped<IAsyncEndpointRequestHandler<TRequest, TResponse>, TAsyncEndpointRequestHandler>(jobName);

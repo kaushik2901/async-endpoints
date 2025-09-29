@@ -14,7 +14,7 @@ Accept: application/json
 POST {{RedisExampleAPI_HostAddress}}/jobs/submit
 Content-Type: application/json
 Accept: application/json
-Async-Job-Id: 582981f1-2e09-4f78-97cf-c6179b4ec024
+Async-Job-Id: 442fab03-75db-4855-8ec7-b09e9538af02
 
 {
     "message": "Hello from AsyncEndpoints!",

@@ -21,27 +21,43 @@ public class Serializer(IOptions<JsonOptions> jsonOptions) : ISerializer
     public string Serialize<T>(T value, JsonSerializerOptions? options = null)
     {
         var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
         return JsonSerializer.Serialize(value, serializerOptions);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
     }
 
     /// <inheritdoc />
     public string Serialize(object value, Type type, JsonSerializerOptions? options = null)
     {
         var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
         return JsonSerializer.Serialize(value, type, serializerOptions);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
     }
 
     /// <inheritdoc />
     public T? Deserialize<T>(string json, JsonSerializerOptions? options = null)
     {
         var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
         return JsonSerializer.Deserialize<T>(json, serializerOptions);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
     }
 
     /// <inheritdoc />
     public object? Deserialize(string json, Type type, JsonSerializerOptions? options = null)
     {
         var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
         return JsonSerializer.Deserialize(json, type, serializerOptions);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
     }
 }

@@ -31,7 +31,6 @@ namespace AsyncEndpoints.Utilities
             sb.AppendLine($"{indent}Exception Type: {exception.GetType().FullName}");
             sb.AppendLine($"{indent}Message: {exception.Message}");
             sb.AppendLine($"{indent}Source: {exception.Source}");
-            sb.AppendLine($"{indent}Target Site: {exception.TargetSite?.Name ?? "N/A"}");
 
             if (!string.IsNullOrEmpty(exception.StackTrace))
             {
