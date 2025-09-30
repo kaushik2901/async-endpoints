@@ -13,6 +13,7 @@ builder.Services
 
 var app = builder.Build();
 
+app.MapAsyncGetJobDetails();
 app.MapAsyncPost<ExampleJobRequest>("ExampleJob", "/jobs/submit");
 
 await app.RunAsync();

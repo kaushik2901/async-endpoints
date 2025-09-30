@@ -14,6 +14,7 @@ builder.Services
 
 var app = builder.Build();
 
+app.MapAsyncGetJobDetails();
 app.MapAsyncPost<SampleRequest>("async-operation", "/async-operation");
 
 app.Run();

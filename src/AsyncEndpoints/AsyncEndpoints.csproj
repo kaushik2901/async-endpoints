@@ -17,6 +17,8 @@
 		<TrimmerRemoveIsolatedAssemblyAttributes>false</TrimmerRemoveIsolatedAssemblyAttributes>
 		<PackageIcon>async-endpoints.png</PackageIcon>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
+		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.AspNetCore.Http.Generated</InterceptorsPreviewNamespaces>
 	</PropertyGroup>
 
 	<ItemGroup>
