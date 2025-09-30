@@ -27,7 +27,7 @@ public sealed class JobResponseService(ILogger<JobResponseService> logger, IJobS
         _logger.LogInformation("Retrieving job response for job ID: {JobId}", jobId);
 
         var result = await _jobStore.GetJobById(jobId, cancellationToken);
-        
+
         if (!result.IsSuccess || result.Data == null)
         {
             _logger.LogWarning("Job with ID {JobId} not found", jobId);
@@ -38,7 +38,7 @@ public sealed class JobResponseService(ILogger<JobResponseService> logger, IJobS
         var jobResponse = JobResponseMapper.ToResponse(job);
 
         _logger.LogInformation("Successfully retrieved job response for job ID: {JobId}", jobId);
-        
+
         return Results.Ok(jobResponse);
     }
 }

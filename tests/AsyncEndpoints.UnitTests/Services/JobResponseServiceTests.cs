@@ -45,7 +45,7 @@ public class JobResponseServiceTests
 
         // Assert
         Assert.NotNull(result);
-        
+
         // Check that result is not null (basic verification without execution)
         // The actual HTTP result type can be tested using reflection or specific type checking
         Assert.Contains("Ok", result.GetType().Name);
@@ -66,7 +66,7 @@ public class JobResponseServiceTests
 
         // Assert
         Assert.NotNull(result);
-        
+
         // Check that result is not null (basic verification without execution)
         Assert.Contains("NotFound", result.GetType().Name);
     }
@@ -85,7 +85,7 @@ public class JobResponseServiceTests
 
         // Assert
         Assert.NotNull(result);
-        
+
         // Check that result is not null (basic verification without execution)
         Assert.Contains("NotFound", result.GetType().Name);
     }
