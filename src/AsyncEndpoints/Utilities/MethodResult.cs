@@ -74,11 +74,11 @@ public class MethodResult
 /// <typeparam name="T">The type of the data returned by the operation.</typeparam>
 public class MethodResult<T> : MethodResult
 {
+	private T? PrivateDataField { get; } = default;
+
 	/// <summary>
 	/// Gets the data returned by the operation if it was successful.
 	/// </summary>
-	private T? PrivateDataField { get; } = default;
-
 	public T Data => PrivateDataField ?? throw new InvalidOperationException("Data is null.");
 
 	private MethodResult(T data) : base()
