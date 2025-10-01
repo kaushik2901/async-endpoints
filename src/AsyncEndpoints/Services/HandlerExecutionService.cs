@@ -32,18 +32,26 @@ public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IS
 
 		_logger.LogDebug("Found handler invoker for job: {JobName}, starting execution", jobName);
 
-		var result = await invoker(scope.ServiceProvider, request, job, cancellationToken);
-
-		if (result.IsSuccess)
+		try
 		{
-			_logger.LogDebug("Handler execution successful for job: {JobName}, JobId: {JobId}", jobName, job.Id);
-		}
-		else
-		{
-			_logger.LogError("Handler execution failed for job: {JobName}, JobId: {JobId}, Error: {Error}",
-				jobName, job.Id, result.Error?.Message);
-		}
+			var result = await invoker(scope.ServiceProvider, request, job, cancellationToken);
 
-		return result;
+			if (result.IsSuccess)
+			{
+				_logger.LogDebug("Handler execution successful for job: {JobName}, JobId: {JobId}", jobName, job.Id);
+			}
+			else
+			{
+				_logger.LogError("Handler execution failed for job: {JobName}, JobId: {JobId}, Error: {Error}",
+					jobName, job.Id, result.Error?.Message);
+			}
+
+			return result;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Exception occurred during handler execution for job: {JobName}, JobId: {JobId}", jobName, job.Id);
+			return MethodResult<object>.Failure(new InvalidOperationException($"Handler execution failed: {ex.Message}", ex));
+		}
 	}
 }

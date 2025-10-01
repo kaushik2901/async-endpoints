@@ -90,6 +90,22 @@ public class JobProducerService(ILogger<JobProducerService> logger, IServiceScop
 									_logger.LogDebug("Channel write timeout - channel likely full");
 									break;
 								}
+								catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+								{
+									_logger.LogDebug("Job producer was cancelled while writing to channel");
+									break;
+								}
+								catch (ObjectDisposedException)
+								{
+									_logger.LogWarning("Channel was disposed while trying to write job {JobId}", job.Id);
+									break; // Channel was disposed, likely service shutting down
+								}
+								catch (Exception ex)
+								{
+									_logger.LogError(ex, "Unexpected error writing job {JobId} to channel", job.Id);
+									// Consider whether to continue or break based on error type
+									break; // Break to prevent continuous errors
+								}
 							}
 						}
 
