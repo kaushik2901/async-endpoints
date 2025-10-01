@@ -50,8 +50,18 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 		var submitJobResult = await _jobManager.SubmitJob(jobName, payload, httpContext, cancellationToken);
 		if (!submitJobResult.IsSuccess)
 		{
-			// TODO: Handler error properly
-			return Results.Problem(submitJobResult.Error!.Message);
+			_logger.LogError("Failed to submit job {JobName}: {ErrorMessage}", jobName, submitJobResult.Error?.Message);
+
+			if (submitJobResult.Error?.Exception != null)
+			{
+				_logger.LogCritical(submitJobResult.Error.Exception, "Exception occurred while submitting job {JobName}", jobName);
+			}
+
+			return Results.Problem(
+				detail: submitJobResult.Error?.Message ?? "An unknown error occurred while submitting the job",
+				title: "Job Submission Failed",
+				statusCode: 500
+			);
 		}
 
 		var job = submitJobResult.Data!;
