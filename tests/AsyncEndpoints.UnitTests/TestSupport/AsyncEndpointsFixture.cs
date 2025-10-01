@@ -5,8 +5,8 @@ namespace AsyncEndpoints.UnitTests.TestSupport;
 
 public class AsyncEndpointsFixture : Fixture
 {
-    public AsyncEndpointsFixture()
-    {
-        Customize(new AutoMoqCustomization());
-    }
+	public AsyncEndpointsFixture()
+	{
+		Customize(new AutoMoqCustomization());
+	}
 }

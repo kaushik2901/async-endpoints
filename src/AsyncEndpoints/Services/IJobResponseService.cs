@@ -10,11 +10,11 @@ namespace AsyncEndpoints.Services;
 /// </summary>
 public interface IJobResponseService
 {
-    /// <summary>
-    /// Retrieves a job response by its ID.
-    /// </summary>
-    /// <param name="jobId">The unique identifier of the job.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>An <see cref="IResult"/> representing the HTTP response containing the job information.</returns>
-    Task<IResult> GetJobResponseAsync(Guid jobId, CancellationToken cancellationToken);
+	/// <summary>
+	/// Retrieves a job response by its ID.
+	/// </summary>
+	/// <param name="jobId">The unique identifier of the job.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>An <see cref="IResult"/> representing the HTTP response containing the job information.</returns>
+	Task<IResult> GetJobResponseAsync(Guid jobId, CancellationToken cancellationToken);
 }

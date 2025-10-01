@@ -4,6 +4,6 @@ namespace AsyncEndpoints.Contracts;
 
 public interface IDateTimeProvider
 {
-    DateTime UtcNow { get; }
-    DateTimeOffset DateTimeOffsetNow { get; }
+	DateTime UtcNow { get; }
+	DateTimeOffset DateTimeOffsetNow { get; }
 }

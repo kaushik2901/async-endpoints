@@ -9,11 +9,11 @@ namespace AsyncEndpoints.Services;
 /// </summary>
 public interface IJobProcessorService
 {
-    /// <summary>
-    /// Processes a single job asynchronously.
-    /// </summary>
-    /// <param name="job">The job to process.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    Task ProcessAsync(Job job, CancellationToken cancellationToken);
+	/// <summary>
+	/// Processes a single job asynchronously.
+	/// </summary>
+	/// <param name="job">The job to process.</param>
+	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+	/// <returns>A task representing the asynchronous operation.</returns>
+	Task ProcessAsync(Job job, CancellationToken cancellationToken);
 }
