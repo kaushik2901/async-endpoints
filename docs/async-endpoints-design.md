@@ -24,8 +24,8 @@ builder.Services
 
 var app = builder.Build();
 
-app.MapAsyncPost<Request, Response>("Job Name", "/async-endpoints/resources/");
-app.MapAsyncPost<Request, Response>("Job Name", "/async-endpoints/resources/{resourceId}", async (httpContext, request, token) => {
+app.MapAsyncPost<Request>("Job Name", "/async-endpoints/resources/");
+app.MapAsyncPost<Request>("Job Name", "/async-endpoints/resources/{resourceId}", async (httpContext, request, token) => {
     // Optional Handler:
     // For synchronous tasks, for example, request validation.
     // All will be running before storing the task in queue.
@@ -40,7 +40,7 @@ await app.RunAsync();
 ## AsyncEndpointHandler.cs
 
 ```cs
-public class AsyncEndpointHandler<Request, Response>(ILogger<AsyncEndpointHandler<Request, Response>> logger) : IAsyncEndpointRequestHandler<Request, Response>
+public class AsyncEndpointHandler(ILogger<AsyncEndpointHandler> logger) : IAsyncEndpointRequestHandler<Request, Response>
 {
     public async Task<MethodResult<Response>> HandleAsync(AsyncContext<Request> context, CancellationToken token)
     {

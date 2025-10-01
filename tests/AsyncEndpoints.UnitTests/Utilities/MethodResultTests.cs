@@ -14,7 +14,6 @@ public class MethodResultTests
 		Assert.True(result.IsSuccess);
 		Assert.False(result.IsFailure);
 		Assert.NotNull(result.Error); // The error property is initialized even for successful results with a placeholder
-		Assert.Null(result.Exception);
 	}
 
 	[Fact]
@@ -32,7 +31,6 @@ public class MethodResultTests
 		Assert.NotNull(result.Error);
 		Assert.Equal("UNKNOWN", result.Error!.Code);
 		Assert.Equal(errorMessage, result.Error.Message);
-		Assert.Null(result.Exception);
 	}
 
 	[Fact]
@@ -67,7 +65,6 @@ public class MethodResultTests
 		Assert.NotNull(result.Error);
 		Assert.Equal("INVALIDOPERATIONEXCEPTION", result.Error!.Code);
 		Assert.Equal("Test exception", result.Error.Message);
-		Assert.Same(exception, result.Exception);
 	}
 }
 
@@ -86,7 +83,6 @@ public class MethodResultGenericTests
 		Assert.True(result.IsSuccess);
 		Assert.False(result.IsFailure);
 		Assert.NotNull(result.Error); // The error property is initialized even for successful results with a placeholder
-		Assert.Null(result.Exception);
 		Assert.Equal(testData, result.Data);
 	}
 
@@ -105,7 +101,6 @@ public class MethodResultGenericTests
 		Assert.NotNull(result.Error);
 		Assert.Equal("UNKNOWN", result.Error!.Code);
 		Assert.Equal(errorMessage, result.Error.Message);
-		Assert.Null(result.Data);
 	}
 
 	[Fact]
@@ -123,7 +118,6 @@ public class MethodResultGenericTests
 		Assert.Same(error, result.Error);
 		Assert.Equal("TEST_CODE", result.Error!.Code);
 		Assert.Equal("Test error message", result.Error.Message);
-		Assert.Null(result.Data);
 	}
 
 	[Fact]
@@ -141,7 +135,5 @@ public class MethodResultGenericTests
 		Assert.NotNull(result.Error);
 		Assert.Equal("INVALIDOPERATIONEXCEPTION", result.Error!.Code);
 		Assert.Equal("Test exception", result.Error.Message);
-		Assert.Same(exception, result.Exception);
-		Assert.Null(result.Data);
 	}
 }

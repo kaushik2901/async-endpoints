@@ -21,7 +21,7 @@ public class JsonBodyParserService : IJsonBodyParserService
 		{
 			if (httpContext.Request.Body is null || httpContext.Request.ContentLength == 0)
 			{
-				return MethodResult<T?>.Success(default);
+				return MethodResult<T?>.Failure("Request has not body");
 			}
 
 			// Check content type

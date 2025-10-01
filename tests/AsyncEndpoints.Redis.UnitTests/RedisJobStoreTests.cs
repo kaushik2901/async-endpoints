@@ -90,7 +90,7 @@ public class RedisJobStoreTests
 
 		// Assert
 		Assert.True(result.IsSuccess);
-		Assert.Equal(jobId, result.Data!.Id);
+		Assert.Equal(jobId, result.Data.Id);
 		Assert.Equal("TestJob", result.Data.Name);
 	}
 

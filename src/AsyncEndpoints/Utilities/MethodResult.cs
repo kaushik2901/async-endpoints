@@ -33,11 +33,10 @@ public class MethodResult
 		Error = AsyncEndpointError.FromCode("PLACEHOLDER_ERROR", string.Empty);
 	}
 
-	protected MethodResult(AsyncEndpointError error, Exception? exception = null)
+	protected MethodResult(AsyncEndpointError error)
 	{
 		IsSuccess = false;
 		Error = error ?? throw new ArgumentNullException(nameof(error));
-		Exception = exception;
 	}
 
 	/// <summary>
@@ -65,7 +64,7 @@ public class MethodResult
 	/// </summary>
 	/// <param name="exception">The exception that occurred.</param>
 	/// <returns>A failed <see cref="MethodResult"/>.</returns>
-	public static MethodResult Failure(Exception exception) => new(AsyncEndpointError.FromException(exception), exception);
+	public static MethodResult Failure(Exception exception) => new(AsyncEndpointError.FromException(exception));
 }
 
 /// <summary>
@@ -78,15 +77,17 @@ public class MethodResult<T> : MethodResult
 	/// <summary>
 	/// Gets the data returned by the operation if it was successful.
 	/// </summary>
-	public T? Data { get; }
+	private T? PrivateDataField { get; } = default;
+
+	public T Data => PrivateDataField ?? throw new InvalidOperationException("Data is null.");
 
 	private MethodResult(T data) : base()
 	{
-		Data = data;
+		PrivateDataField = data;
 	}
 
-	private MethodResult(AsyncEndpointError error, Exception? exception = null)
-		: base(error, exception)
+	private MethodResult(AsyncEndpointError error)
+		: base(error)
 	{
 	}
 
@@ -116,5 +117,5 @@ public class MethodResult<T> : MethodResult
 	/// </summary>
 	/// <param name="exception">The exception that occurred.</param>
 	/// <returns>A failed <see cref="MethodResult{T}"/>.</returns>
-	public new static MethodResult<T> Failure(Exception exception) => new(AsyncEndpointError.FromException(exception), exception);
+	public new static MethodResult<T> Failure(Exception exception) => new(AsyncEndpointError.FromException(exception));
 }

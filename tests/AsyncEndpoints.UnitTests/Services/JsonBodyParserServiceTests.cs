@@ -40,7 +40,7 @@ public class JsonBodyParserServiceTests
 	}
 
 	[Fact]
-	public async Task ParseAsync_WithEmptyBody_ReturnsDefault()
+	public async Task ParseAsync_WithEmptyBody_ReturnsFailure()
 	{
 		// Arrange
 		var httpContext = CreateHttpContextWithJsonBody("", "application/json");
@@ -50,8 +50,8 @@ public class JsonBodyParserServiceTests
 		var result = await _jsonBodyParserService.ParseAsync<TestData>(httpContext);
 
 		// Assert
-		Assert.True(result.IsSuccess);
-		Assert.Null(result.Data);
+		Assert.True(result.IsFailure);
+		Assert.NotNull(result.Error);
 	}
 
 	[Fact]
@@ -69,7 +69,7 @@ public class JsonBodyParserServiceTests
 	}
 
 	[Fact]
-	public async Task ParseAsync_WithNullBody_ReturnsDefault()
+	public async Task ParseAsync_WithNullBody_ReturnsFailure()
 	{
 		// Arrange
 		var httpContext = CreateHttpContextWithJsonBody("", "application/json");
@@ -79,8 +79,8 @@ public class JsonBodyParserServiceTests
 		var result = await _jsonBodyParserService.ParseAsync<TestData>(httpContext);
 
 		// Assert
-		Assert.True(result.IsSuccess);
-		Assert.Null(result.Data);
+		Assert.True(result.IsFailure);
+		Assert.NotNull(result.Error);
 	}
 
 	private static DefaultHttpContext CreateHttpContextWithJsonBody(string json, string contentType)

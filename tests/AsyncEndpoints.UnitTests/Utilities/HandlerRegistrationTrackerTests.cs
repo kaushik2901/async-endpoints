@@ -58,7 +58,7 @@ public class HandlerRegistrationTrackerTests
 		var result = await invoker(serviceProvider, testRequest, testJob, CancellationToken.None);
 		Assert.True(result.IsSuccess);
 		Assert.NotNull(result.Data);
-		Assert.Equal("result", ((TestResponse)result.Data!).Value);
+		Assert.Equal("result", ((TestResponse)result.Data).Value);
 	}
 
 	[Fact]

@@ -289,7 +289,7 @@ public class RedisJobStore : IJobStore
 					var result = await ClaimSingleJob(jobId, workerId, cancellationToken);
 					if (result.IsSuccess)
 					{
-						claimedJobs.Add(result.Data!);
+						claimedJobs.Add(result.Data);
 					}
 				}
 			}
