@@ -33,8 +33,22 @@ public class RedisJobStore : IJobStore
 		_serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
 		_connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
 
-		var redis = ConnectionMultiplexer.Connect(_connectionString);
-		_database = redis.GetDatabase();
+		try
+		{
+			var redis = ConnectionMultiplexer.Connect(_connectionString);
+			_database = redis.GetDatabase();
+
+			// Register for connection events to handle reconnection
+			redis.ConnectionFailed += (sender, e) =>
+				_logger.LogError(e.Exception, "Redis connection failed: {ErrorMessage}", e.Exception?.Message);
+			redis.ConnectionRestored += (sender, e) =>
+				_logger.LogInformation("Redis connection restored");
+		}
+		catch (Exception ex)
+		{
+			_logger.LogCritical(ex, "Failed to connect to Redis with connection string: {ConnectionString}", _connectionString);
+			throw;
+		}
 	}
 
 	/// <summary>
