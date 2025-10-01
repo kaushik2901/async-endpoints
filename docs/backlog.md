@@ -2,6 +2,7 @@
 
 ## Pending
 
+- Fix all the issues from exception-handling-analysis.md
 - AsyncEndpoints must not return serialized result as part of job response
 - AsyncEndpoints should return proper Result.Problem in case of error
 - AsyncEndpoints should support both AOT and JIT compilation
