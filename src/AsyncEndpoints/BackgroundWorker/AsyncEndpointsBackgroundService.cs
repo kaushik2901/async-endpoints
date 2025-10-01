@@ -159,7 +159,29 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 			.Select(_ => _jobConsumerService.ConsumeJobsAsync(_readerJobChannel, _semaphoreSlim, stoppingToken))
 			.ToArray();
 
-		await Task.WhenAll([producerTask, .. consumerTasks]);
+		try
+		{
+			await Task.WhenAll([producerTask, .. consumerTasks]);
+		}
+		catch (Exception ex)
+		{
+			// Log which components failed
+			if (producerTask.IsFaulted)
+			{
+				_logger.LogError(producerTask.Exception, "Job producer task failed");
+			}
+
+			for (int i = 0; i < consumerTasks.Length; i++)
+			{
+				if (consumerTasks[i].IsFaulted)
+				{
+					_logger.LogError(consumerTasks[i].Exception, "Job consumer task {Index} failed", i);
+				}
+			}
+
+			_logger.LogError(ex, "AsyncEndpoints Background Service encountered an unrecoverable error");
+			throw;
+		}
 
 		_logger.LogInformation("AsyncEndpoints Background Service is stopping");
 	}
