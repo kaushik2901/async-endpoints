@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;

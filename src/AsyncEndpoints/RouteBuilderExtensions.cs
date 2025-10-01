@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -20,19 +21,28 @@ public static class RouteBuilderExtensions
 	/// </summary>
 	/// <typeparam name="TRequest">The type of the request object.</typeparam>
 	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
-	/// <param name="name">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
 	/// <param name="pattern">The URL pattern for the endpoint.</param>
 	/// <param name="handler">Optional custom handler function to process the request. 
 	/// If not provided, the default handler will be used based on registered IAsyncEndpointRequestHandler services.</param>
 	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
 	public static IEndpointConventionBuilder MapAsyncPost<TRequest>(
 		this IEndpointRouteBuilder endpoints,
-		string name,
+		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null)
 	{
 		return endpoints
-			.MapPost(pattern, Handle(name, handler))
+			.MapPost(pattern, async (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, CancellationToken cancellationToken) =>
+			{
+				var result = await jsonBodyParserService.ParseAsync<TRequest>(httpContext, cancellationToken);
+				if (!result.IsSuccess)
+				{
+					return Results.Problem(result.Error.Message);
+				}
+
+				return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, result.Data!, handler, cancellationToken);
+			})
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 	}
 
@@ -47,23 +57,10 @@ public static class RouteBuilderExtensions
 		string pattern = "/jobs/{jobId:guid}")
 	{
 		return endpoints
-			.MapGet(pattern, GetJobResponse)
+			.MapGet(pattern, ([FromRoute] Guid jobId, [FromServices] IJobResponseService jobResponseService, CancellationToken cancellationToken) =>
+			{
+				return jobResponseService.GetJobResponseAsync(jobId, cancellationToken);
+			})
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
-	}
-
-	private static async Task<IResult> GetJobResponse(
-		[FromRoute] Guid jobId,
-		[FromServices] IJobResponseService jobResponseService,
-		CancellationToken cancellationToken)
-	{
-		return await jobResponseService.GetJobResponseAsync(jobId, cancellationToken);
-	}
-
-	private static Func<HttpContext, TRequest, IAsyncEndpointRequestDelegate, CancellationToken, Task<IResult>> Handle<TRequest>(
-		string name,
-		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null)
-	{
-		return (httpContext, request, [FromServices] asyncEndpointRequestDelegate, token) =>
-			asyncEndpointRequestDelegate.HandleAsync(name, httpContext, request, handler, token);
 	}
 }

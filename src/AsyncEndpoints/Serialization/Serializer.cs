@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using System.Text.Json;
-using AsyncEndpoints.Contracts;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Options;
 
@@ -57,6 +59,50 @@ public class Serializer(IOptions<JsonOptions> jsonOptions) : ISerializer
 #pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 #pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 		return JsonSerializer.Deserialize(json, type, serializerOptions);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+	}
+
+	/// <inheritdoc />
+	public T? Deserialize<T>(Stream stream, JsonSerializerOptions? options = null)
+	{
+		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+		return JsonSerializer.Deserialize<T>(stream, serializerOptions);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+	}
+
+	/// <inheritdoc />
+	public object? Deserialize(Stream stream, Type type, JsonSerializerOptions? options = null)
+	{
+		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+		return JsonSerializer.Deserialize(stream, type, serializerOptions);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+	}
+
+	/// <inheritdoc />
+	public async Task<T?> DeserializeAsync<T>(Stream stream, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
+	{
+		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+		return await JsonSerializer.DeserializeAsync<T>(stream, serializerOptions, cancellationToken);
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+	}
+
+	/// <inheritdoc />
+	public async Task<object?> DeserializeAsync(Stream stream, Type type, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
+	{
+		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+		return await JsonSerializer.DeserializeAsync(stream, type, serializerOptions, cancellationToken);
 #pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 	}

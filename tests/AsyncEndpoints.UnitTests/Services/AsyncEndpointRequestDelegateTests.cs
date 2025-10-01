@@ -1,4 +1,5 @@
 using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Services;
 using AsyncEndpoints.UnitTests.Utilities;
 using Microsoft.AspNetCore.Http;

@@ -1,4 +1,5 @@
 using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;

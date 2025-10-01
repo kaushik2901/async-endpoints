@@ -1,5 +1,6 @@
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.Serialization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using StackExchange.Redis;

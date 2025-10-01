@@ -1,6 +1,6 @@
 @RedisExampleAPI_HostAddress = http://localhost:3001
 
-GET {{RedisExampleAPI_HostAddress}}/jobs/442fab03-75db-4855-8ec7-b09e9538af02
+GET {{RedisExampleAPI_HostAddress}}/jobs/78d89343-ae3a-4bb7-ac1f-71c6e0d53cd3
 
 ###
 

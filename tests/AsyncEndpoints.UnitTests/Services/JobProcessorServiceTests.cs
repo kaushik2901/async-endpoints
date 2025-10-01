@@ -1,5 +1,6 @@
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Services;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;

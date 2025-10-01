@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
+using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 

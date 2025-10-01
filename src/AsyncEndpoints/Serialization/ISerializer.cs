@@ -1,7 +1,10 @@
 using System;
+using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace AsyncEndpoints.Contracts;
+namespace AsyncEndpoints.Serialization;
 
 /// <summary>
 /// Provides methods for serializing and deserializing objects to and from JSON.
@@ -43,4 +46,42 @@ public interface ISerializer
 	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
 	/// <returns>The deserialized object.</returns>
 	object? Deserialize(string json, Type type, JsonSerializerOptions? options = null);
+
+	/// <summary>
+	/// Deserializes a JSON stream to an object of type T.
+	/// </summary>
+	/// <typeparam name="T">The type of the object to deserialize.</typeparam>
+	/// <param name="stream">The stream containing JSON data.</param>
+	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
+	/// <returns>The deserialized object.</returns>
+	T? Deserialize<T>(Stream stream, JsonSerializerOptions? options = null);
+
+	/// <summary>
+	/// Deserializes a JSON stream to an object of the specified type.
+	/// </summary>
+	/// <param name="stream">The stream containing JSON data.</param>
+	/// <param name="type">The type of the object to deserialize.</param>
+	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
+	/// <returns>The deserialized object.</returns>
+	object? Deserialize(Stream stream, Type type, JsonSerializerOptions? options = null);
+
+	/// <summary>
+	/// Deserializes a JSON stream to an object of type T asynchronously.
+	/// </summary>
+	/// <typeparam name="T">The type of the object to deserialize.</typeparam>
+	/// <param name="stream">The stream containing JSON data.</param>
+	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>A task that represents the asynchronous operation. The task result contains the deserialized object.</returns>
+	Task<T?> DeserializeAsync<T>(Stream stream, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Deserializes a JSON stream to an object of the specified type asynchronously.
+	/// </summary>
+	/// <param name="stream">The stream containing JSON data.</param>
+	/// <param name="type">The type of the object to deserialize.</param>
+	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>A task that represents the asynchronous operation. The task result contains the deserialized object.</returns>
+	Task<object?> DeserializeAsync(Stream stream, Type type, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default);
 }
