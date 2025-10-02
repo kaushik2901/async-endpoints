@@ -39,8 +39,8 @@ public sealed class ExceptionInfo
 			Type = exception.GetType().Name,
 			Message = exception.Message ?? string.Empty,
 			StackTrace = exception.StackTrace,
-			InnerException = exception.InnerException != null ? new InnerExceptionInfo 
-			{ 
+			InnerException = exception.InnerException != null ? new InnerExceptionInfo
+			{
 				Type = exception.InnerException.GetType().Name,
 				Message = exception.InnerException.Message ?? string.Empty,
 				StackTrace = exception.InnerException.StackTrace

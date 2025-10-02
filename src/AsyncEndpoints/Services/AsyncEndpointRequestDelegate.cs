@@ -54,10 +54,10 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 
 			if (submitJobResult.Error?.Exception != null)
 			{
-				_logger.LogCritical("Exception occurred while submitting job {JobName}: Type={ExceptionType}, Message={ExceptionMessage}, StackTrace={StackTrace}", 
-					jobName, 
-					submitJobResult.Error.Exception.Type, 
-					submitJobResult.Error.Exception.Message, 
+				_logger.LogCritical("Exception occurred while submitting job {JobName}: Type={ExceptionType}, Message={ExceptionMessage}, StackTrace={StackTrace}",
+					jobName,
+					submitJobResult.Error.Exception.Type,
+					submitJobResult.Error.Exception.Message,
 					submitJobResult.Error.Exception.StackTrace);
 			}
 
