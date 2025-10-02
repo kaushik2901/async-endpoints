@@ -17,7 +17,9 @@ public class AsyncEndpointErrorTests
 		// Assert
 		Assert.Equal(code, error.Code);
 		Assert.Equal(message, error.Message);
-		Assert.Same(exception, error.Exception);
+		Assert.NotNull(error.Exception);
+		Assert.Equal(exception.GetType().Name, error.Exception.Type);
+		Assert.Equal(exception.Message, error.Exception.Message);
 	}
 
 	[Theory, AutoMoqData]
@@ -49,7 +51,9 @@ public class AsyncEndpointErrorTests
 		// Assert
 		Assert.Equal("UNKNOWN", error.Code);
 		Assert.Equal(message, error.Message);
-		Assert.Same(exception, error.Exception);
+		Assert.NotNull(error.Exception);
+		Assert.Equal(exception.GetType().Name, error.Exception.Type);
+		Assert.Equal(exception.Message, error.Exception.Message);
 	}
 
 	[Theory, AutoMoqData]
@@ -77,7 +81,9 @@ public class AsyncEndpointErrorTests
 		// Assert
 		Assert.Equal(code, error.Code);
 		Assert.Equal(message, error.Message);
-		Assert.Same(exception, error.Exception);
+		Assert.NotNull(error.Exception);
+		Assert.Equal(exception.GetType().Name, error.Exception.Type);
+		Assert.Equal(exception.Message, error.Exception.Message);
 	}
 
 	[Theory, AutoMoqData]
@@ -104,7 +110,9 @@ public class AsyncEndpointErrorTests
 		// Assert
 		Assert.Equal("INVALIDOPERATIONEXCEPTION", error.Code);
 		Assert.Equal(exception.Message, error.Message);
-		Assert.Same(exception, error.Exception);
+		Assert.NotNull(error.Exception);
+		Assert.Equal(exception.GetType().Name, error.Exception.Type);
+		Assert.Equal(exception.Message, error.Exception.Message);
 	}
 
 	[Fact]
@@ -112,20 +120,5 @@ public class AsyncEndpointErrorTests
 	{
 		// Act & Assert
 		Assert.Throws<ArgumentNullException>(() => AsyncEndpointError.FromException(null!));
-	}
-
-	[Theory, AutoMoqData]
-	public void ToString_ReturnsFormattedString(
-		string code,
-		string message)
-	{
-		// Arrange
-		var error = new AsyncEndpointError(code, message);
-
-		// Act
-		var result = error.ToString();
-
-		// Assert
-		Assert.Equal($"[{code}] {message}", result);
 	}
 }

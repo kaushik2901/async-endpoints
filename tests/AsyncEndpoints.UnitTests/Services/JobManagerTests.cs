@@ -195,12 +195,12 @@ public class JobManagerTests
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
 		// Act
-		var result = await jobManager.ProcessJobFailure(jobId, error, CancellationToken.None);
+		var result = await jobManager.ProcessJobFailure(jobId, AsyncEndpointError.FromMessage(error), CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Equal(JobStatus.Failed, job.Status);
-		Assert.Equal(error, job.Error);
+		Assert.Equal(error, job.Error?.Message);
 	}
 
 	[Theory, AutoMoqData]
@@ -227,12 +227,12 @@ public class JobManagerTests
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
 		// Act
-		var result = await jobManager.ProcessJobFailure(jobId, error, CancellationToken.None);
+		var result = await jobManager.ProcessJobFailure(jobId, AsyncEndpointError.FromMessage(error), CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Equal(JobStatus.Scheduled, job.Status);
 		Assert.Equal(1, job.RetryCount);
-		Assert.Equal(error, job.Error);
+		Assert.Equal(error, job.Error?.Message);
 	}
 }

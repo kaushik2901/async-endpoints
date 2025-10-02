@@ -46,6 +46,6 @@ public class JobResponseMapperTests
 		Assert.Equal(job.Id, result.Id);
 		Assert.Equal(job.Name, result.Name);
 		Assert.Equal(string.Empty, result.Result);
-		Assert.Equal(string.Empty, result.Error);
+		Assert.Null(result.Error);
 	}
 }

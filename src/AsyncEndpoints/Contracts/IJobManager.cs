@@ -31,5 +31,5 @@ public interface IJobManager
 	/// <summary>
 	/// Processes a failed job (with potential retry logic)
 	/// </summary>
-	Task<MethodResult> ProcessJobFailure(Guid jobId, string error, CancellationToken cancellationToken);
+	Task<MethodResult> ProcessJobFailure(Guid jobId, AsyncEndpointError error, CancellationToken cancellationToken);
 }

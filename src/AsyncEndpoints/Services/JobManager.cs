@@ -66,7 +66,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		return await _jobStore.UpdateJob(job, cancellationToken);
 	}
 
-	public async Task<MethodResult> ProcessJobFailure(Guid jobId, string error, CancellationToken cancellationToken)
+	public async Task<MethodResult> ProcessJobFailure(Guid jobId, AsyncEndpointError error, CancellationToken cancellationToken)
 	{
 		var jobResult = await _jobStore.GetJobById(jobId, cancellationToken);
 		if (!jobResult.IsSuccess || jobResult.Data == null)

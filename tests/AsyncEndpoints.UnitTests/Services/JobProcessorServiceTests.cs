@@ -74,6 +74,6 @@ public class JobProcessorServiceTests
 			jobProcessorService.ProcessAsync(job, CancellationToken.None));
 
 		Assert.Null(exception);
-		mockJobManager.Verify(x => x.ProcessJobFailure(job.Id, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+		mockJobManager.Verify(x => x.ProcessJobFailure(job.Id, It.IsAny<AsyncEndpointError>(), It.IsAny<CancellationToken>()), Times.Once);
 	}
 }

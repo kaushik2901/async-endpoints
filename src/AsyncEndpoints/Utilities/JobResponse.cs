@@ -60,5 +60,5 @@ public sealed class JobResponse
 	/// <summary>
 	/// Gets or sets the error details if the job failed.
 	/// </summary>
-	public string Error { get; set; } = string.Empty;
+	public AsyncEndpointError? Error { get; set; } = null;
 }

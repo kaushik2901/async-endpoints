@@ -1,4 +1,4 @@
-﻿using AsyncEndpoints;
+using AsyncEndpoints;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Utilities;
 using RedisExampleCore;
@@ -17,11 +17,11 @@ public class ExampleJobHandler : IAsyncEndpointRequestHandler<ExampleJobRequest,
             await Task.Delay(request.DelayInSeconds * 1000, token);
         }
 
-        var response = new ExampleJobResponse
+		var response = new ExampleJobResponse
         {
             Status = "Processed",
             ProcessedAt = DateTime.UtcNow,
-            OriginalMessage = request.Message
+            OriginalMessage = request.Message,
         };
 
         return MethodResult<ExampleJobResponse>.Success(response);

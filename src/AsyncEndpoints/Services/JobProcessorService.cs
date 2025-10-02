@@ -36,19 +36,19 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 			if (result.IsSuccess)
 			{
 				_logger.LogInformation("Successfully processed job {JobId}", job.Id);
-				await _jobManager.ProcessJobSuccess(job.Id, result.Data ?? string.Empty, cancellationToken);
+				await _jobManager.ProcessJobSuccess(job.Id, result.Data, cancellationToken);
 			}
 			else
 			{
 				_logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
-				var serializedError = result.Error?.ToString() ?? "Unknown error occurred";
-				await _jobManager.ProcessJobFailure(job.Id, serializedError, cancellationToken);
+				var error = result.Error ?? AsyncEndpointError.FromMessage("Unknown error occurred");
+				var d = await _jobManager.ProcessJobFailure(job.Id, error, cancellationToken);
 			}
 		}
 		catch (Exception ex)
 		{
-			var serializedException = ExceptionSerializer.Serialize(ex);
-			await _jobManager.ProcessJobFailure(job.Id, serializedException, cancellationToken);
+			var error = AsyncEndpointError.FromException(ex);
+			await _jobManager.ProcessJobFailure(job.Id, error, cancellationToken);
 		}
 	}
 
@@ -79,10 +79,10 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 			var result = await _handlerExecutionService.ExecuteHandlerAsync(job.Name, request, job, cancellationToken);
 			if (!result.IsSuccess)
 			{
-				return MethodResult<string>.Failure(result.Error!);
+				return MethodResult<string>.Failure(result.Error);
 			}
 
-			var serializedResult = _serializer.Serialize(result.Data!, handlerRegistration.ResponseType);
+			var serializedResult = _serializer.Serialize(result.Data, handlerRegistration.ResponseType);
 
 			return MethodResult<string>.Success(serializedResult);
 		}

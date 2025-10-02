@@ -170,7 +170,7 @@ public class JobTests
 		job.SetError(error, mockDateTimeProvider.Object);
 
 		// Assert
-		Assert.Equal(error, job.Error);
+		Assert.Equal(error, job.Error?.Message);
 		Assert.Equal(JobStatus.Failed, job.Status);
 		Assert.Equal(expectedTime, job.CompletedAt);
 	}

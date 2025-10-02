@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Utilities;
 
 namespace AsyncEndpoints.Entities;
 
@@ -63,7 +64,7 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// <summary>
 	/// Gets or sets the error details if the job failed.
 	/// </summary>
-	public string? Error { get; set; } = null;
+	public AsyncEndpointError? Error { get; set; } = null;
 
 	/// <summary>
 	/// Gets or sets the number of times the job has been retried.
@@ -205,9 +206,20 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// </summary>
 	/// <param name="error">The error that occurred during job execution.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	public void SetError(string error, IDateTimeProvider dateTimeProvider)
+	public void SetError(AsyncEndpointError error, IDateTimeProvider dateTimeProvider)
 	{
 		Error = error;
+		UpdateStatus(JobStatus.Failed, dateTimeProvider);
+	}
+
+	/// <summary>
+	/// Sets the error details for the job and updates the status to failed.
+	/// </summary>
+	/// <param name="error">The error message that occurred during job execution.</param>
+	/// <param name="dateTimeProvider">Provider for current date and time.</param>
+	public void SetError(string error, IDateTimeProvider dateTimeProvider)
+	{
+		Error = AsyncEndpointError.FromMessage(error);
 		UpdateStatus(JobStatus.Failed, dateTimeProvider);
 	}
 
