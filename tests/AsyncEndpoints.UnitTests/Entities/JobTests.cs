@@ -157,20 +157,20 @@ public class JobTests
 	}
 
 	[Fact]
-	public void SetException_UpdatesStatusAndException()
+	public void SetError_UpdatesStatusAndException()
 	{
 		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
-		var exception = "Error occurred";
+		var error = "Error occurred";
 
 		// Act
-		job.SetException(exception, mockDateTimeProvider.Object);
+		job.SetError(error, mockDateTimeProvider.Object);
 
 		// Assert
-		Assert.Equal(exception, job.Exception);
+		Assert.Equal(error, job.Error);
 		Assert.Equal(JobStatus.Failed, job.Status);
 		Assert.Equal(expectedTime, job.CompletedAt);
 	}
@@ -252,7 +252,7 @@ public class JobTests
 		Assert.Equal(JobStatus.Queued, job.Status);
 		Assert.Equal(string.Empty, job.Payload);
 		Assert.Null(job.Result);
-		Assert.Null(job.Exception);
+		Assert.Null(job.Error);
 		Assert.Equal(0, job.RetryCount);
 		Assert.Equal(AsyncEndpointsConstants.MaximumRetries, job.MaxRetries);
 		Assert.Equal(currentTime, job.CreatedAt);

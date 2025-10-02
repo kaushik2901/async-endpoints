@@ -22,11 +22,6 @@ public class MethodResult
 	/// </summary>
 	public AsyncEndpointError Error { get; }
 
-	/// <summary>
-	/// Gets the exception that occurred during the operation, if any.
-	/// </summary>
-	public Exception? Exception { get; }
-
 	protected MethodResult()
 	{
 		IsSuccess = true;

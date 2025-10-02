@@ -26,7 +26,7 @@ public static class JobResponseMapper
 			CompletedAt = job.CompletedAt,
 			LastUpdatedAt = job.LastUpdatedAt,
 			Result = job.Result ?? string.Empty,
-			Exception = job.Exception ?? string.Empty,
+			Error = job.Error ?? string.Empty,
 		};
 	}
 }

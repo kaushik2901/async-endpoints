@@ -19,7 +19,7 @@ public class JobResponseMapperTests
 		Assert.Equal(job.Name, result.Name);
 		Assert.Equal(job.Status.ToString(), result.Status);
 		Assert.Equal(job.Result, result.Result);
-		Assert.Equal(job.Exception, result.Exception);
+		Assert.Equal(job.Error, result.Error);
 		Assert.Equal(job.RetryCount, result.RetryCount);
 		Assert.Equal(job.MaxRetries, result.MaxRetries);
 		Assert.Equal(job.CreatedAt, result.CreatedAt);
@@ -34,7 +34,7 @@ public class JobResponseMapperTests
 	{
 		// Arrange
 		job.Result = null;
-		job.Exception = null;
+		job.Error = null;
 		job.StartedAt = null;
 		job.CompletedAt = null;
 
@@ -46,6 +46,6 @@ public class JobResponseMapperTests
 		Assert.Equal(job.Id, result.Id);
 		Assert.Equal(job.Name, result.Name);
 		Assert.Equal(string.Empty, result.Result);
-		Assert.Equal(string.Empty, result.Exception);
+		Assert.Equal(string.Empty, result.Error);
 	}
 }

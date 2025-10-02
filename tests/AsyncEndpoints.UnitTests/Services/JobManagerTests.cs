@@ -173,12 +173,12 @@ public class JobManagerTests
 	}
 
 	[Theory, AutoMoqData]
-	public async Task ProcessJobFailure_SetsException_WhenMaxRetriesReached(
+	public async Task ProcessJobFailure_SetsError_WhenMaxRetriesReached(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		Guid jobId,
-		string exception)
+		string error)
 	{
 		// Arrange
 		var options = Options.Create(new AsyncEndpointsConfigurations());
@@ -195,12 +195,12 @@ public class JobManagerTests
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
 		// Act
-		var result = await jobManager.ProcessJobFailure(jobId, exception, CancellationToken.None);
+		var result = await jobManager.ProcessJobFailure(jobId, error, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Equal(JobStatus.Failed, job.Status);
-		Assert.Equal(exception, job.Exception);
+		Assert.Equal(error, job.Error);
 	}
 
 	[Theory, AutoMoqData]
@@ -209,7 +209,7 @@ public class JobManagerTests
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		Guid jobId,
-		string exception)
+		string error)
 	{
 		// Arrange
 		var options = Options.Create(new AsyncEndpointsConfigurations());
@@ -227,12 +227,12 @@ public class JobManagerTests
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
 		// Act
-		var result = await jobManager.ProcessJobFailure(jobId, exception, CancellationToken.None);
+		var result = await jobManager.ProcessJobFailure(jobId, error, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Equal(JobStatus.Scheduled, job.Status);
 		Assert.Equal(1, job.RetryCount);
-		Assert.Equal(exception, job.Exception);
+		Assert.Equal(error, job.Error);
 	}
 }

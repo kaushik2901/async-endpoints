@@ -58,7 +58,7 @@ public sealed class JobResponse
 	public string Result { get; set; } = string.Empty;
 
 	/// <summary>
-	/// Gets or sets the exception details if the job failed.
+	/// Gets or sets the error details if the job failed.
 	/// </summary>
-	public string Exception { get; set; } = string.Empty;
+	public string Error { get; set; } = string.Empty;
 }

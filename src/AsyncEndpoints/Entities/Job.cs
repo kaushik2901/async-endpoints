@@ -61,9 +61,9 @@ public sealed class Job(DateTimeOffset currentTime)
 	public string? Result { get; set; } = null;
 
 	/// <summary>
-	/// Gets or sets the exception details if the job failed.
+	/// Gets or sets the error details if the job failed.
 	/// </summary>
-	public string? Exception { get; set; } = null;
+	public string? Error { get; set; } = null;
 
 	/// <summary>
 	/// Gets or sets the number of times the job has been retried.
@@ -201,13 +201,13 @@ public sealed class Job(DateTimeOffset currentTime)
 	}
 
 	/// <summary>
-	/// Sets the exception details for the job and updates the status to failed.
+	/// Sets the error details for the job and updates the status to failed.
 	/// </summary>
-	/// <param name="exception">The exception that occurred during job execution.</param>
+	/// <param name="error">The error that occurred during job execution.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	public void SetException(string exception, IDateTimeProvider dateTimeProvider)
+	public void SetError(string error, IDateTimeProvider dateTimeProvider)
 	{
-		Exception = exception;
+		Error = error;
 		UpdateStatus(JobStatus.Failed, dateTimeProvider);
 	}
 

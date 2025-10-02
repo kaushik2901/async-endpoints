@@ -358,7 +358,7 @@ public class RedisJobStore : IJobStore
 			QueryParams = job.QueryParams,
 			Payload = job.Payload,
 			Result = job.Result,
-			Exception = job.Exception,
+			Error = job.Error,
 			RetryCount = job.RetryCount,
 			MaxRetries = job.MaxRetries,
 			RetryDelayUntil = job.RetryDelayUntil,

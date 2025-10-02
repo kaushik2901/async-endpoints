@@ -66,7 +66,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		return await _jobStore.UpdateJob(job, cancellationToken);
 	}
 
-	public async Task<MethodResult> ProcessJobFailure(Guid jobId, string exception, CancellationToken cancellationToken)
+	public async Task<MethodResult> ProcessJobFailure(Guid jobId, string error, CancellationToken cancellationToken)
 	{
 		var jobResult = await _jobStore.GetJobById(jobId, cancellationToken);
 		if (!jobResult.IsSuccess || jobResult.Data == null)
@@ -82,11 +82,11 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 			job.SetRetryTime(_dateTimeProvider.UtcNow.Add(retryDelay));
 			job.UpdateStatus(JobStatus.Scheduled, _dateTimeProvider);
 			job.WorkerId = null; // Release from current worker
-			job.Exception = exception;
+			job.Error = error;
 		}
 		else
 		{
-			job.SetException(exception, _dateTimeProvider);
+			job.SetError(error, _dateTimeProvider);
 		}
 
 		return await _jobStore.UpdateJob(job, cancellationToken);
