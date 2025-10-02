@@ -32,4 +32,9 @@ public interface IJobManager
 	/// Processes a failed job (with potential retry logic)
 	/// </summary>
 	Task<MethodResult> ProcessJobFailure(Guid jobId, AsyncEndpointError error, CancellationToken cancellationToken);
+
+	/// <summary>
+	/// Gets a job by its ID
+	/// </summary>
+	Task<MethodResult<Job>> GetJobById(Guid jobId, CancellationToken cancellationToken);
 }

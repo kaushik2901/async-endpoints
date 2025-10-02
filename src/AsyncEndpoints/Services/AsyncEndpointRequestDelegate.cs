@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Serialization;
-using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -12,11 +11,12 @@ namespace AsyncEndpoints.Services;
 /// <summary>
 /// Handles asynchronous endpoint requests by creating background jobs for processing.
 /// </summary>
-public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer) : IAsyncEndpointRequestDelegate
+public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer, AsyncEndpointsConfigurations configurations) : IAsyncEndpointRequestDelegate
 {
 	private readonly ILogger<AsyncEndpointRequestDelegate> _logger = logger;
 	private readonly IJobManager _jobManager = jobManager;
 	private readonly ISerializer _serializer = serializer;
+	private readonly AsyncEndpointsConfigurations _configurations = configurations;
 
 	/// <summary>
 	/// Handles an asynchronous request by creating a job and returning an immediate response.
@@ -61,19 +61,16 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 					submitJobResult.Error.Exception.StackTrace);
 			}
 
-			return Results.Problem(
-				detail: submitJobResult.Error?.Message ?? "An unknown error occurred while submitting the job",
-				title: "Job Submission Failed",
-				statusCode: 500
-			);
+			return await _configurations.ResponseConfigurations.JobSubmissionErrorResponseFactory(
+				submitJobResult.Error,
+				httpContext);
 		}
 
 		var job = submitJobResult.Data!;
-		var jobResponse = JobResponseMapper.ToResponse(job);
 
 		_logger.LogInformation("Created job {JobId} for job: {JobName}", job.Id, jobName);
 
-		return Results.Accepted("", jobResponse);
+		return await _configurations.ResponseConfigurations.JobSubmittedResponseFactory(job, httpContext);
 	}
 
 	private static async Task<IResult?> HandleRequestDelegate<TRequest>(Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, TRequest request, CancellationToken token)

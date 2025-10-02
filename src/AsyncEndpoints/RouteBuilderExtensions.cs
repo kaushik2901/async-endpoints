@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Services;
 using Microsoft.AspNetCore.Builder;
@@ -57,9 +58,10 @@ public static class RouteBuilderExtensions
 		string pattern = "/jobs/{jobId:guid}")
 	{
 		return endpoints
-			.MapGet(pattern, ([FromRoute] Guid jobId, [FromServices] IJobResponseService jobResponseService, CancellationToken cancellationToken) =>
+			.MapGet(pattern, async (HttpContext httpContext, [FromRoute] Guid jobId, [FromServices] IJobManager jobManager, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
 			{
-				return jobResponseService.GetJobResponseAsync(jobId, cancellationToken);
+				var result = await jobManager.GetJobById(jobId, cancellationToken);
+				return await asyncEndpointsConfigurations.ResponseConfigurations.JobStatusResponseFactory(result, httpContext);
 			})
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 	}

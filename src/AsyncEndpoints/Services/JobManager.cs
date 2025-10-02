@@ -92,6 +92,11 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		return await _jobStore.UpdateJob(job, cancellationToken);
 	}
 
+	public async Task<MethodResult<Job>> GetJobById(Guid jobId, CancellationToken cancellationToken)
+	{
+		return await _jobStore.GetJobById(jobId, cancellationToken);
+	}
+
 	private TimeSpan CalculateRetryDelay(int retryCount)
 	{
 		// Exponential backoff: (2 ^ retryCount) * base delay

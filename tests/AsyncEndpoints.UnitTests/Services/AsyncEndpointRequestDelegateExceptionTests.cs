@@ -34,7 +34,8 @@ public class AsyncEndpointRequestDelegateExceptionTests
 			.Setup(x => x.Serialize(request, null))
 			.Returns("{}");
 
-		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object);
+		var configurations = new AsyncEndpointsConfigurations();
+		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, configurations);
 
 		// Act
 		var result = await requestDelegate.HandleAsync(jobName, httpContext, request, cancellationToken: default);
@@ -66,7 +67,8 @@ public class AsyncEndpointRequestDelegateExceptionTests
 			.Setup(x => x.Serialize(request, null))
 			.Returns("{}");
 
-		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object);
+		var configurations = new AsyncEndpointsConfigurations();
+		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, configurations);
 
 		// Act
 		var result = await requestDelegate.HandleAsync(jobName, httpContext, request, cancellationToken: default);

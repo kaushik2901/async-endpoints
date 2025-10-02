@@ -25,8 +25,11 @@ public class AsyncEndpointRequestDelegateTests
 	[Fact]
 	public void Constructor_CreatesInstance()
 	{
+		// Arrange
+		var configurations = new AsyncEndpointsConfigurations();
+
 		// Act
-		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object);
+		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object, configurations);
 
 		// Assert
 		Assert.NotNull(requestDelegate);
@@ -36,7 +39,8 @@ public class AsyncEndpointRequestDelegateTests
 	public async Task HandleAsync_WithCustomHandler_CanBeCalledWithoutError()
 	{
 		// Arrange
-		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object);
+		var configurations = new AsyncEndpointsConfigurations();
+		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object, configurations);
 		var httpContext = CreateHttpContext;
 		var request = new TestRequest { Value = "test" };
 		var expectedResponse = Results.Ok("Custom Response");
