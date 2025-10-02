@@ -12,7 +12,7 @@
 
 ## In progress
 
-- - Fix all the issues from exception-handling-analysis.md
+- Fix all the issues from exception-handling-analysis.md
 
 ## Completed
 
