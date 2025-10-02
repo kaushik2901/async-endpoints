@@ -1,4 +1,4 @@
-﻿using AsyncEndpoints.Entities;
+using AsyncEndpoints.Entities;
 
 namespace AsyncEndpoints.Utilities;
 

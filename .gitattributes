@@ -1,0 +1,14 @@
+# Set default behavior to automatically normalize line endings and handle encodings properly
+* text=auto
+
+# Ensure C# files are handled with UTF-8 encoding
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.sln text eol=crlf
+
+# Treat all text files as UTF-8
+*.txt text eol=crlf
+*.md text eol=lf
+*.json text eol=lf
+*.config text eol=lf
+*.editorconfig text eol=lf

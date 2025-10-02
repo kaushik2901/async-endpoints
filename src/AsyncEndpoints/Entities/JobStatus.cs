@@ -1,4 +1,4 @@
-﻿namespace AsyncEndpoints.Entities;
+namespace AsyncEndpoints.Entities;
 
 /// <summary>
 /// Represents the status of an asynchronous job in the system.

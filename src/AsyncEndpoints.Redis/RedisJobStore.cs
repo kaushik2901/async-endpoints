@@ -1,4 +1,4 @@
-﻿using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Contracts;
 using AsyncEndpoints.Entities;
 using AsyncEndpoints.Serialization;
 using AsyncEndpoints.Utilities;

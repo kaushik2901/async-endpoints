@@ -1,4 +1,4 @@
-﻿namespace AsyncEndpoints.Entities;
+namespace AsyncEndpoints.Entities;
 
 /// <summary>
 /// Represents the type of error that occurred during job processing.
