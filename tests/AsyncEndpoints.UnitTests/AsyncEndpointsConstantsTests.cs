@@ -1,3 +1,5 @@
+using AsyncEndpoints.Configuration;
+
 namespace AsyncEndpoints.UnitTests;
 
 public class AsyncEndpointsConstantsTests

@@ -1,5 +1,5 @@
-using AsyncEndpoints;
-using AsyncEndpoints.Redis;
+using AsyncEndpoints.Extensions;
+using AsyncEndpoints.Redis.Extensions;
 using RedisExampleCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);

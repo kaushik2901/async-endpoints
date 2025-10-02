@@ -1,5 +1,4 @@
-using AsyncEndpoints;
-using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Utilities;
 using RedisExampleCore;
 

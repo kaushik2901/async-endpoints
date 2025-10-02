@@ -1,4 +1,4 @@
-using AsyncEndpoints.Entities;
+using AsyncEndpoints.JobProcessing;
 
 namespace AsyncEndpoints.Utilities;
 

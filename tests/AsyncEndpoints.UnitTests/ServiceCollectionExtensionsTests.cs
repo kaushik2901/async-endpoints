@@ -1,7 +1,9 @@
-using AsyncEndpoints.BackgroundWorker;
-using AsyncEndpoints.Contracts;
-using AsyncEndpoints.InMemoryStore;
-using AsyncEndpoints.Services;
+using AsyncEndpoints.Background;
+using AsyncEndpoints.Configuration;
+using AsyncEndpoints.Extensions;
+using AsyncEndpoints.Handlers;
+using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.UnitTests.Utilities;
 using Microsoft.AspNetCore.Http;

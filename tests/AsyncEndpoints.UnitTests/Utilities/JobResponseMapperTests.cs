@@ -1,4 +1,4 @@
-using AsyncEndpoints.Entities;
+using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 
@@ -29,8 +29,7 @@ public class JobResponseMapperTests
 	}
 
 	[Theory, AutoMoqData]
-	public void ToResponse_HandlesNullValues(
-		Job job)
+	public void ToResponse_HandlesNullValues(Job job)
 	{
 		// Arrange
 		job.Result = null;

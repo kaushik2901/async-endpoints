@@ -1,5 +1,5 @@
-using AsyncEndpoints;
 using AsyncEndpoints.API;
+using AsyncEndpoints.Extensions;
 using InMemoryExampleAPI.Models;
 using InMemoryExampleAPI.Services;
 

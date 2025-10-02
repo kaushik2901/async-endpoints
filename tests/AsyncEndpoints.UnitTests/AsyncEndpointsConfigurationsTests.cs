@@ -1,3 +1,4 @@
+using AsyncEndpoints.Configuration;
 using AsyncEndpoints.UnitTests.TestSupport;
 
 namespace AsyncEndpoints.UnitTests;

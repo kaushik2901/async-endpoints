@@ -1,4 +1,4 @@
-using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Handlers;
 using AsyncEndpoints.UnitTests.Utilities;
 using AsyncEndpoints.Utilities;
 

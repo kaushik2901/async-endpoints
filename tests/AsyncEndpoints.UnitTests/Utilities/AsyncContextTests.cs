@@ -1,3 +1,5 @@
+using AsyncEndpoints.Handlers;
+
 namespace AsyncEndpoints.UnitTests.Utilities;
 
 public class AsyncContextTests

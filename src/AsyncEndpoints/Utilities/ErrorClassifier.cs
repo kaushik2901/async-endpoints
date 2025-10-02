@@ -1,7 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using AsyncEndpoints.Entities;
+using AsyncEndpoints.JobProcessing;
 
 namespace AsyncEndpoints.Utilities;
 
