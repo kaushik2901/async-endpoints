@@ -2,15 +2,17 @@
 
 ## Pending
 
-- AsyncEndpoints.Redis store is not picking existing jobs after restart
+- AsyncEndpoints must release in progress job after certain time
 - AsyncEndpoints must not return serialized result as part of job response
 - AsyncEndpoints should support both AOT and JIT compilation
 - AsyncEndpoints should have extension to register handlers via assembly scanning (using reflection)
+- AsyncEndpoints should record individual job runs
 - AsyncEndpoints should support EF core as job storage
 - AsyncEndpoints should not have delay due to cold start
 
 ## In progress
 
+- AsyncEndpoints.Redis store is not picking existing jobs after restart
 - Fix all the issues from exception-handling-analysis.md
 
 ## Completed
