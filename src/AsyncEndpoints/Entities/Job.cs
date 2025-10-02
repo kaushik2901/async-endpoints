@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AsyncEndpoints.Contracts;
 
@@ -7,8 +7,19 @@ namespace AsyncEndpoints.Entities;
 /// <summary>
 /// Represents an asynchronous job in the AsyncEndpoints system.
 /// </summary>
-public sealed class Job
+/// <remarks>
+/// Initializes a new instance of the <see cref="Job"/> class with a specific time.
+/// </remarks>
+/// <param name="currentTime">The current time to use for timestamps.</param>
+public sealed class Job(DateTimeOffset currentTime)
 {
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Job"/> class with the current time.
+	/// </summary>
+	public Job() : this(DateTimeOffset.UtcNow)
+	{
+	}
+
 	/// <summary>
 	/// Gets the unique identifier of the job.
 	/// </summary>
@@ -45,23 +56,6 @@ public sealed class Job
 	public string Payload { get; init; } = string.Empty;
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="Job"/> class with the current time.
-	/// </summary>
-	public Job() : this(DateTimeOffset.UtcNow)
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="Job"/> class with a specific time.
-	/// </summary>
-	/// <param name="currentTime">The current time to use for timestamps.</param>
-	public Job(DateTimeOffset currentTime)
-	{
-		CreatedAt = currentTime;
-		LastUpdatedAt = currentTime;
-	}
-
-	/// <summary>
 	/// Gets or sets the result of the job execution, if successful.
 	/// </summary>
 	public string? Result { get; set; } = null;
@@ -94,7 +88,7 @@ public sealed class Job
 	/// <summary>
 	/// Gets or sets the date and time when the job was created.
 	/// </summary>
-	public DateTimeOffset CreatedAt { get; set; }
+	public DateTimeOffset CreatedAt { get; set; } = currentTime;
 
 	/// <summary>
 	/// Gets or sets the date and time when the job processing started, if applicable.
@@ -109,7 +103,7 @@ public sealed class Job
 	/// <summary>
 	/// Gets or sets the date and time when the job was last updated.
 	/// </summary>
-	public DateTimeOffset LastUpdatedAt { get; set; }
+	public DateTimeOffset LastUpdatedAt { get; set; } = currentTime;
 
 	/// <summary>
 	/// Gets a value indicating whether the job has been canceled.
@@ -148,7 +142,14 @@ public sealed class Job
 	/// <param name="queryParams">The query parameters associated with the original request.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
 	/// <returns>A new <see cref="Job"/> instance.</returns>
-	public static Job Create(Guid id, string name, string payload, Dictionary<string, List<string?>> headers, Dictionary<string, object?> routeParams, List<KeyValuePair<string, List<string?>>> queryParams, IDateTimeProvider dateTimeProvider)
+	public static Job Create(
+		Guid id,
+		string name,
+		string payload,
+		Dictionary<string, List<string?>> headers,
+		Dictionary<string, object?> routeParams,
+		List<KeyValuePair<string, List<string?>>> queryParams,
+		IDateTimeProvider dateTimeProvider)
 	{
 		var now = dateTimeProvider.DateTimeOffsetNow;
 		return new Job
