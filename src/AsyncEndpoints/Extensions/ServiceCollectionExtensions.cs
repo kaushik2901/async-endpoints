@@ -103,11 +103,11 @@ public static class ServiceCollectionExtensions
 		services.AddKeyedScoped<IAsyncEndpointRequestHandler<TRequest, TResponse>, TAsyncEndpointRequestHandler>(jobName);
 
 		HandlerRegistrationTracker.Register<TRequest, TResponse>(jobName,
-			async (serviceProvider, request, job, cancellationToken) =>
+			(serviceProvider, request, job, cancellationToken) =>
 			{
 				var handler = serviceProvider.GetRequiredKeyedService<IAsyncEndpointRequestHandler<TRequest, TResponse>>(jobName);
 				var context = AsyncContextBuilder.Build(request, job);
-				return await handler.HandleAsync(context, cancellationToken);
+				return handler.HandleAsync(context, cancellationToken);
 			});
 
 		return services;

@@ -35,15 +35,22 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null)
 	{
 		return endpoints
-			.MapPost(pattern, async (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, CancellationToken cancellationToken) =>
+			.MapPost(pattern, async (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
 			{
-				var result = await jsonBodyParserService.ParseAsync<TRequest>(httpContext, cancellationToken);
-				if (!result.IsSuccess)
+				try
 				{
-					return Results.Problem(result.Error.Message);
-				}
+					var result = await jsonBodyParserService.ParseAsync<TRequest>(httpContext, cancellationToken);
+					if (!result.IsSuccess)
+					{
+						return Results.Problem(result.Error.Message);
+					}
 
-				return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, result.Data!, handler, cancellationToken);
+					return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, result.Data!, handler, cancellationToken);
+				}
+				catch (Exception ex)
+				{
+					return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+				}
 			})
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 	}
@@ -61,8 +68,15 @@ public static class RouteBuilderExtensions
 		return endpoints
 			.MapGet(pattern, async (HttpContext httpContext, [FromRoute] Guid jobId, [FromServices] IJobManager jobManager, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
 			{
-				var result = await jobManager.GetJobById(jobId, cancellationToken);
-				return await asyncEndpointsConfigurations.ResponseConfigurations.JobStatusResponseFactory(result, httpContext);
+				try
+				{
+					var result = await jobManager.GetJobById(jobId, cancellationToken);
+					return await asyncEndpointsConfigurations.ResponseConfigurations.JobStatusResponseFactory(result, httpContext);
+				}
+				catch (Exception ex)
+				{
+					return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+				}
 			})
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 	}
