@@ -3,7 +3,6 @@
 ## Pending
 
 - AsyncEndpoints must release in progress job after certain time
-- AsyncEndpoints must not return serialized result as part of job response
 - AsyncEndpoints should support both AOT and JIT compilation
 - AsyncEndpoints should have extension to register handlers via assembly scanning (using reflection)
 - AsyncEndpoints should record individual job runs
@@ -22,3 +21,4 @@
 - MethodResult should not have exception property, it should parse exception properly and convert to AsyncEndpointError object
 - AsyncEndpoints should return proper Result.Problem in case of error
 - AsyncEndpoints should allow developers to configure custom response (both success and error)
+- AsyncEndpoints must not return serialized result as part of job response
