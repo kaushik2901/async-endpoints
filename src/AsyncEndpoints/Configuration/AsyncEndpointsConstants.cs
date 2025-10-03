@@ -26,4 +26,7 @@ internal static class AsyncEndpointsConstants
 
 	// Exception Serializer Constants
 	internal const int ExceptionSeparatorLength = 50;
+
+	// Job Result Serialization Constants
+	internal const string JobResultPlaceholder = "{{JOB_RESULT_PLACEHOLDER}}";
 }

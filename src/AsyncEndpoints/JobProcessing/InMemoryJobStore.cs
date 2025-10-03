@@ -183,7 +183,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 
 			var availableJobs = jobs.Values
 				.Where(job => job.WorkerId == null)
-				.Where(job => 
+				.Where(job =>
 					job.Status == JobStatus.Queued ||
 					job.Status == JobStatus.Scheduled &&
 					(job.RetryDelayUntil == null || job.RetryDelayUntil <= now)

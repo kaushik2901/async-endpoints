@@ -9,8 +9,7 @@ public static class ResponseDefaults
 {
 	public static Task<IResult> DefaultJobSubmittedResponseFactory(Job job, HttpContext _)
 	{
-		var jobResponse = JobResponseMapper.ToResponse(job);
-		return Task.FromResult(Results.Accepted("", jobResponse));
+		return Task.FromResult<IResult>(JobResultResponse.Accepted(job));
 	}
 
 	public static Task<IResult> DefaultJobStatusResponseFactory(MethodResult<Job> jobResult, HttpContext _)
@@ -24,8 +23,8 @@ public static class ResponseDefaults
 			));
 		}
 
-		var jobResponse = JobResponseMapper.ToResponse(jobResult.Data);
-		return Task.FromResult(Results.Ok(jobResponse));
+		var job = jobResult.Data;
+		return Task.FromResult<IResult>(JobResultResponse.Ok(job));
 	}
 
 	public static Task<IResult> DefaultJobSubmissionErrorResponseFactory(AsyncEndpointError? error, HttpContext _)

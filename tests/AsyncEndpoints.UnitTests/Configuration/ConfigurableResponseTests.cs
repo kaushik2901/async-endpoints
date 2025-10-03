@@ -24,9 +24,10 @@ public class ConfigurableResponseTests
 		{
 			ResponseConfigurations = new AsyncEndpointsResponseConfigurations
 			{
-				JobSubmittedResponseFactory = async (job, context) =>
+				JobSubmittedResponseFactory = (job, context) =>
 				{
-					return Results.Created($"/api/custom/{job.Id}", new { JobId = job.Id, CustomMessage = "Custom response" });
+					var response = Results.Created($"/api/custom/{job.Id}", new { JobId = job.Id, CustomMessage = "Custom response" });
+					return Task.FromResult(response);
 				}
 			}
 		};
@@ -66,9 +67,10 @@ public class ConfigurableResponseTests
 		{
 			ResponseConfigurations = new AsyncEndpointsResponseConfigurations
 			{
-				JobSubmissionErrorResponseFactory = async (error, context) =>
+				JobSubmissionErrorResponseFactory = (error, context) =>
 				{
-					return Results.Json(new { Error = "Custom error", Code = "CUSTOM_ERROR" }, statusCode: 422);
+					var response = Results.Json(new { Error = "Custom error", Code = "CUSTOM_ERROR" }, statusCode: 422);
+					return Task.FromResult(response);
 				}
 			}
 		};
