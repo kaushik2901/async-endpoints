@@ -278,19 +278,21 @@ public class RedisJobStore : IJobStore
 			}
 
 			var jobIdString = availableJobIds[0];
-			if (Guid.TryParse(jobIdString, out var jobId))
+			if (!Guid.TryParse(jobIdString, out var jobId))
 			{
-				var result = await ClaimSingleJob(jobId, workerId, cancellationToken);
-
-				if (result.IsSuccess)
-				{
-					_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", jobId, workerId);
-					return result;
-				}
+				_logger.LogDebug("Failed to parse jobId from jobIdString {JobIdString} for worker {WorkerId}", jobIdString, workerId);
+				return MethodResult<Job>.Success(default);
 			}
 
-			_logger.LogDebug("Failed to claim job for worker {WorkerId}", workerId);
-			return MethodResult<Job>.Success(default);
+			var result = await ClaimSingleJob(jobId, workerId, cancellationToken);
+			if (!result.IsSuccess)
+			{
+				_logger.LogDebug("Failed to claim job for worker {WorkerId}", workerId);
+				return MethodResult<Job>.Success(default);
+			}
+
+			_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", jobId, workerId);
+			return result;
 		}
 		catch (Exception ex)
 		{
