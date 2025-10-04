@@ -77,12 +77,6 @@ public class AsyncEndpointsConstantsTests
 	}
 
 	[Fact]
-	public void RetryDelayBaseSeconds_IsCorrect()
-	{
-		Assert.Equal(5, AsyncEndpointsConstants.RetryDelayBaseSeconds);
-	}
-
-	[Fact]
 	public void ExceptionSeparatorLength_IsCorrect()
 	{
 		Assert.Equal(50, AsyncEndpointsConstants.ExceptionSeparatorLength);

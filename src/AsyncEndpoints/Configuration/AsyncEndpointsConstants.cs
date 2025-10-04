@@ -1,32 +1,29 @@
 namespace AsyncEndpoints.Configuration;
 
-internal static class AsyncEndpointsConstants
+public static class AsyncEndpointsConstants
 {
-	internal const string AsyncEndpointTag = "AsyncEndpoint";
-	internal const string JobIdHeaderName = "Async-Job-Id";
-	internal const int MaximumRetries = 3;
+	public const string AsyncEndpointTag = "AsyncEndpoint";
+	public const string JobIdHeaderName = "Async-Job-Id";
+	public const int MaximumRetries = 3;
 
 	// Configuration Default Values
-	internal const int DefaultPollingIntervalMs = 1000;
-	internal const int DefaultJobTimeoutMinutes = 30;
-	internal const int DefaultBatchSize = 5;
-	internal const int DefaultMaximumQueueSize = 50;
+	public const int DefaultPollingIntervalMs = 1000;
+	public const int DefaultJobTimeoutMinutes = 30;
+	public const int DefaultBatchSize = 5;
+	public const int DefaultMaximumQueueSize = 50;
 
 	// Background Service Constants
-	internal const int BackgroundServiceShutdownTimeoutSeconds = 30;
-	internal const int BackgroundServiceWaitDelayMs = 100;
+	public const int BackgroundServiceShutdownTimeoutSeconds = 30;
+	public const int BackgroundServiceWaitDelayMs = 100;
 
 	// Job Producer Service Constants
-	internal const int JobProducerMaxDelayMs = 30000;
-	internal const int JobProducerErrorDelaySeconds = 5;
-	internal const int JobProducerChannelWriteTimeoutSeconds = 5;
-
-	// In-Memory Store Constants
-	internal const int RetryDelayBaseSeconds = 5;
+	public const int JobProducerMaxDelayMs = 30000;
+	public const int JobProducerErrorDelaySeconds = 5;
+	public const int JobProducerChannelWriteTimeoutSeconds = 5;
 
 	// Exception Serializer Constants
-	internal const int ExceptionSeparatorLength = 50;
+	public const int ExceptionSeparatorLength = 50;
 
 	// Job Result Serialization Constants
-	internal const string JobResultPlaceholder = "{{JOB_RESULT_PLACEHOLDER}}";
+	public const string JobResultPlaceholder = "{{JOB_RESULT_PLACEHOLDER}}";
 }

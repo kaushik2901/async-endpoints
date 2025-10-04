@@ -19,6 +19,9 @@ public class RedisJobStore : IJobStore
 	private readonly ISerializer _serializer;
 	private readonly string? _connectionString;
 
+	private static readonly string _queueKey = "ae:jobs:queue";
+	private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="RedisJobStore"/> class.
 	/// </summary>
@@ -32,23 +35,7 @@ public class RedisJobStore : IJobStore
 		_dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
 		_serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
 		_connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-
-		try
-		{
-			var redis = ConnectionMultiplexer.Connect(_connectionString);
-			_database = redis.GetDatabase();
-
-			// Register for connection events to handle reconnection
-			redis.ConnectionFailed += (sender, e) =>
-				_logger.LogError(e.Exception, "Redis connection failed: {ErrorMessage}", e.Exception?.Message);
-			redis.ConnectionRestored += (sender, e) =>
-				_logger.LogInformation("Redis connection restored");
-		}
-		catch (Exception ex)
-		{
-			_logger.LogCritical(ex, "Failed to connect to Redis with connection string: {ConnectionString}", _connectionString);
-			throw;
-		}
+		_database = InitializeDatabase(_connectionString);
 	}
 
 	/// <summary>
@@ -120,8 +107,7 @@ public class RedisJobStore : IJobStore
 			// Add job to the queue set if it's queued
 			if (job.Status == JobStatus.Queued)
 			{
-				var queueKey = GetQueueKey();
-				await _database.SortedSetAddAsync(queueKey, job.Id.ToString(), GetJobScore(job));
+				await _database.SortedSetAddAsync(_queueKey, job.Id.ToString(), GetJobScore(job));
 			}
 
 			_logger.LogInformation("Created job {JobId} with name {JobName}", job.Id, job.Name);
@@ -239,14 +225,13 @@ public class RedisJobStore : IJobStore
 			}
 
 			// Update queue if job status has changed
-			var queueKey = GetQueueKey();
-			await _database.SortedSetRemoveAsync(queueKey, job.Id.ToString());
+			await _database.SortedSetRemoveAsync(_queueKey, job.Id.ToString());
 
 			// Only add back to queue if it's queued or scheduled for retry
 			if (job.Status == JobStatus.Queued ||
 				job.Status == JobStatus.Scheduled && (job.RetryDelayUntil == null || job.RetryDelayUntil <= _dateTimeProvider.UtcNow))
 			{
-				await _database.SortedSetAddAsync(queueKey, job.Id.ToString(), GetJobScore(job));
+				await _database.SortedSetAddAsync(_queueKey, job.Id.ToString(), GetJobScore(job));
 			}
 
 			_logger.LogDebug("Updated job {JobId}", job.Id);
@@ -277,11 +262,9 @@ public class RedisJobStore : IJobStore
 				return await Task.FromCanceled<MethodResult<List<Job>>>(cancellationToken);
 			}
 
-			var queueKey = GetQueueKey();
-
 			// Get available jobs from the queue, considering retry delays
 			var availableJobIds = await _database.SortedSetRangeByScoreAsync(
-				queueKey,
+				_queueKey,
 				start: double.NegativeInfinity,
 				stop: GetScoreForTime(_dateTimeProvider.UtcNow),
 				exclude: Exclude.None,
@@ -398,7 +381,7 @@ public class RedisJobStore : IJobStore
 					jobKey,
 					jobJson,  // Expected current value 
                     updatedJobJson,  // New value
-                    GetQueueKey(),
+                    _queueKey,
 					jobId.ToString()
 				]
 			);
@@ -421,9 +404,28 @@ public class RedisJobStore : IJobStore
 		}
 	}
 
-	private static string GetJobKey(Guid jobId) => $"ae:job:{jobId}";
+	private IDatabase InitializeDatabase(string connectionString)
+	{
+		try
+		{
+			var redis = ConnectionMultiplexer.Connect(connectionString);
 
-	private static string GetQueueKey() => "ae:jobs:queue";
+			// Register for connection events to handle reconnection
+			redis.ConnectionFailed += (sender, e) =>
+				_logger.LogError(e.Exception, "Redis connection failed: {ErrorMessage}", e.Exception?.Message);
+			redis.ConnectionRestored += (sender, e) =>
+				_logger.LogInformation("Redis connection restored");
+
+			return redis.GetDatabase();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogCritical(ex, "Failed to connect to Redis with connection string: {ConnectionString}", connectionString);
+			throw;
+		}
+	}
+
+	private static string GetJobKey(Guid jobId) => $"ae:job:{jobId}";
 
 	private static double GetJobScore(Job job)
 	{
@@ -435,7 +437,6 @@ public class RedisJobStore : IJobStore
 
 	private static double GetScoreForTime(DateTime dateTime)
 	{
-		// Convert to Unix timestamp for use as score in sorted set
-		return (dateTime - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+		return (dateTime - _unixEpoch).TotalSeconds;
 	}
 }
