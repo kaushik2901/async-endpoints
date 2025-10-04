@@ -83,7 +83,7 @@ public class MethodResult<T> : MethodResult
 	/// </summary>
 	public T? DataOrNull => IsSuccess ? PrivateDataField : default;
 
-	private MethodResult(T data) : base()
+	private MethodResult(T? data) : base()
 	{
 		PrivateDataField = data;
 	}
@@ -98,7 +98,7 @@ public class MethodResult<T> : MethodResult
 	/// </summary>
 	/// <param name="data">The data to return.</param>
 	/// <returns>A successful <see cref="MethodResult{T}"/>.</returns>
-	public static MethodResult<T> Success(T data) => new(data);
+	public static MethodResult<T> Success(T? data) => new(data);
 
 	/// <summary>
 	/// Creates a failed method result with the specified error.
