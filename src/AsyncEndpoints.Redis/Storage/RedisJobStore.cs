@@ -16,6 +16,7 @@ public class RedisJobStore : IJobStore
 	private readonly ILogger<RedisJobStore> _logger;
 	private readonly IDatabase _database;
 	private readonly IDateTimeProvider _dateTimeProvider;
+	private readonly IJobHashConverter _jobHashConverter;
 	private readonly ISerializer _serializer;
 	private readonly string? _connectionString;
 
@@ -28,11 +29,13 @@ public class RedisJobStore : IJobStore
 	/// <param name="logger">The logger instance.</param>
 	/// <param name="connectionString">The Redis connection string.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
+	/// <param name="jobHashConverter">The job hash converter service.</param>
 	/// <param name="serializer">The serializer service.</param>
-	public RedisJobStore(ILogger<RedisJobStore> logger, string connectionString, IDateTimeProvider dateTimeProvider, ISerializer serializer)
+	public RedisJobStore(ILogger<RedisJobStore> logger, string connectionString, IDateTimeProvider dateTimeProvider, IJobHashConverter jobHashConverter, ISerializer serializer)
 	{
 		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		_dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
+		_jobHashConverter = jobHashConverter ?? throw new ArgumentNullException(nameof(jobHashConverter));
 		_serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
 		_connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
 		_database = InitializeDatabase(_connectionString);
@@ -44,11 +47,13 @@ public class RedisJobStore : IJobStore
 	/// <param name="logger">The logger instance.</param>
 	/// <param name="database">The Redis database instance.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
+	/// <param name="jobHashConverter">The job hash converter service.</param>
 	/// <param name="serializer">The serializer service.</param>
-	public RedisJobStore(ILogger<RedisJobStore> logger, IDatabase database, IDateTimeProvider dateTimeProvider, ISerializer serializer)
+	public RedisJobStore(ILogger<RedisJobStore> logger, IDatabase database, IDateTimeProvider dateTimeProvider, IJobHashConverter jobHashConverter, ISerializer serializer)
 	{
 		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		_dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
+		_jobHashConverter = jobHashConverter ?? throw new ArgumentNullException(nameof(jobHashConverter));
 		_serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
 		_database = database ?? throw new ArgumentNullException(nameof(database));
 	}
@@ -85,24 +90,18 @@ public class RedisJobStore : IJobStore
 
 			var jobKey = GetJobKey(job.Id);
 
-			// Check if job already exists to avoid overwriting
-			var existingJob = await _database.StringGetAsync(jobKey);
-			if (!existingJob.IsNull)
+			// Use hash exists check to avoid overwriting
+			var jobExists = await _database.KeyExistsAsync(jobKey);
+			if (jobExists)
 			{
 				_logger.LogError("Job with ID {JobId} already exists", job.Id);
 				return MethodResult.Failure(
 					AsyncEndpointError.FromCode("JOB_CREATE_FAILED", $"Job with ID {job.Id} already exists"));
 			}
 
-			var jobJson = _serializer.Serialize(job);
-			var created = await _database.StringSetAsync(jobKey, jobJson, when: When.NotExists);
-
-			if (!created)
-			{
-				_logger.LogError("Failed to create job with ID {JobId}", job.Id);
-				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("JOB_CREATE_FAILED", $"Failed to create job with ID {job.Id}"));
-			}
+			// Create job in Redis as a hash
+			var hashEntries = _jobHashConverter.ConvertToHashEntries(job);
+			await _database.HashSetAsync(jobKey, hashEntries);
 
 			// Add job to the queue set if it's queued
 			if (job.Status == JobStatus.Queued)
@@ -145,21 +144,23 @@ public class RedisJobStore : IJobStore
 			}
 
 			var jobKey = GetJobKey(id);
-			var jobJson = await _database.StringGetAsync(jobKey);
 
-			if (jobJson.IsNull)
+			// Get all hash fields
+			var hashEntries = await _database.HashGetAllAsync(jobKey);
+
+			if (hashEntries.Length == 0)
 			{
 				_logger.LogWarning("Job not found with Id {JobId} from store", id);
 				return MethodResult<Job>.Failure(
 					AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found"));
 			}
 
-			var job = _serializer.Deserialize<Job>(jobJson.ToString());
+			var job = _jobHashConverter.ConvertFromHashEntries(hashEntries);
 			if (job == null)
 			{
-				_logger.LogError("Deserialization failed for job with ID {JobId}", id);
+				_logger.LogError("Conversion failed for job with ID {JobId}", id);
 				return MethodResult<Job>.Failure(
-					AsyncEndpointError.FromCode("DESERIALIZATION_ERROR", $"Failed to deserialize job with ID {id}"));
+					AsyncEndpointError.FromCode("DESERIALIZATION_ERROR", $"Failed to convert hash to job with ID {id}"));
 			}
 
 			return MethodResult<Job>.Success(job);
@@ -214,15 +215,10 @@ public class RedisJobStore : IJobStore
 
 			// Update the last updated timestamp
 			job.LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow;
-			var jobJson = _serializer.Serialize(job);
 
-			var updated = await _database.StringSetAsync(jobKey, jobJson);
-			if (!updated)
-			{
-				_logger.LogError("Failed to update job with ID {JobId}", job.Id);
-				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("JOB_UPDATE_FAILED", $"Failed to update job with ID {job.Id}"));
-			}
+			// Convert the job to hash entries and update the hash
+			var hashEntries = _jobHashConverter.ConvertToHashEntries(job);
+			await _database.HashSetAsync(jobKey, hashEntries);
 
 			// Update queue if job status has changed
 			await _database.SortedSetRemoveAsync(_queueKey, job.Id.ToString());
@@ -306,101 +302,143 @@ public class RedisJobStore : IJobStore
 	{
 		var jobKey = GetJobKey(jobId);
 
-		// Get current job
-		var jobJson = await _database.StringGetAsync(jobKey);
-		if (jobJson.IsNull)
-		{
-			return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_FOUND", "Job not found"));
-		}
+		// Use atomic Lua script to check and claim the job in one operation
+		var luaScript = @"
+			local jobKey = ARGV[1]
+			local expectedStatus1 = ARGV[2]  -- Queued
+			local expectedStatus2 = ARGV[3]  -- Scheduled  
+			local newStatus = ARGV[4]        -- InProgress
+			local newWorkerId = ARGV[5]
+			local newStartedAt = ARGV[6]
+			local newLastUpdatedAt = ARGV[7]
+			local queueKey = ARGV[8]
+			local jobId = ARGV[9]
+			local currentTime = ARGV[10]
 
-		var job = _serializer.Deserialize<Job>(jobJson.ToString());
-		if (job == null)
-		{
-			return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("DESERIALIZATION_ERROR", "Failed to deserialize job"));
-		}
+			-- Get required fields atomically
+			local currentStatus = redis.call('HGET', jobKey, 'Status')
+			local currentWorkerId = redis.call('HGET', jobKey, 'WorkerId')
+			local currentRetryDelayUntil = redis.call('HGET', jobKey, 'RetryDelayUntil')
 
-		// Check if job can be claimed
-		var now = _dateTimeProvider.UtcNow;
-		if (job.WorkerId != null ||
-			job.Status != JobStatus.Queued && job.Status != JobStatus.Scheduled ||
-			job.RetryDelayUntil != null && job.RetryDelayUntil > now)
-		{
-			// Job cannot be claimed
-			return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_CLAIMED", "Could not claim job"));
-		}
+			-- Check if job can be claimed - all checks in one atomic operation
+			if currentWorkerId and currentWorkerId ~= '' then
+				return redis.error_reply('ALREADY_ASSIGNED')
+			end
 
-		// Update job properties
-		var updatedJob = new Job
+			if not (currentStatus == expectedStatus1 or currentStatus == expectedStatus2) then
+				return redis.error_reply('WRONG_STATUS')
+			end
+
+			-- Check retry delay if it exists
+			if currentRetryDelayUntil and currentRetryDelayUntil ~= '' then
+				local retryUntil = tonumber(currentRetryDelayUntil)
+				if retryUntil and retryUntil > tonumber(currentTime) then
+					return redis.error_reply('RETRY_DELAY')
+				end
+			end
+
+			-- Get all fields we need to return the complete job object
+			local currentId = redis.call('HGET', jobKey, 'Id')
+			local currentName = redis.call('HGET', jobKey, 'Name')
+			local currentHeaders = redis.call('HGET', jobKey, 'Headers')
+			local currentRouteParams = redis.call('HGET', jobKey, 'RouteParams')
+			local currentQueryParams = redis.call('HGET', jobKey, 'QueryParams')
+			local currentPayload = redis.call('HGET', jobKey, 'Payload')
+			local currentResult = redis.call('HGET', jobKey, 'Result')
+			local currentError = redis.call('HGET', jobKey, 'Error')
+			local currentRetryCount = redis.call('HGET', jobKey, 'RetryCount')
+			local currentMaxRetries = redis.call('HGET', jobKey, 'MaxRetries')
+			local currentCreatedAt = redis.call('HGET', jobKey, 'CreatedAt')
+			local currentCompletedAt = redis.call('HGET', jobKey, 'CompletedAt')
+
+			-- Claim the job atomically
+			redis.call('HSET', jobKey, 'Status', newStatus)
+			redis.call('HSET', jobKey, 'WorkerId', newWorkerId)
+			redis.call('HSET', jobKey, 'StartedAt', newStartedAt)
+			redis.call('HSET', jobKey, 'LastUpdatedAt', newLastUpdatedAt)
+			redis.call('ZREM', queueKey, jobId)
+
+			-- Return all fields needed to construct the complete job object
+			return { 
+				currentId, currentName, newStatus, currentHeaders, currentRouteParams, 
+				currentQueryParams, currentPayload, currentResult, currentError, 
+				currentRetryCount, currentMaxRetries, currentRetryDelayUntil, 
+				currentWorkerId, currentCreatedAt, newStartedAt, currentCompletedAt, newLastUpdatedAt
+			}
+		";
+
+		var now = _dateTimeProvider.DateTimeOffsetNow;
+		var currentTime = now.ToUnixTimeSeconds().ToString();
+
+		var result = await _database.ScriptEvaluateAsync(
+			luaScript,
+			values:
+			[
+				jobKey,
+				((int)JobStatus.Queued).ToString(),      // Expected status 1
+				((int)JobStatus.Scheduled).ToString(),   // Expected status 2
+				((int)JobStatus.InProgress).ToString(),  // New status
+				workerId.ToString(),                     // New worker ID
+				now.ToString("O"),                       // Started at
+				now.ToString("O"),                       // Last updated at
+				_queueKey,
+				jobId.ToString(),
+				currentTime                              // Current time for retry delay check
+			]
+		);
+
+		// Handle the script result
+		if (result.IsNull || result.ToString().StartsWith("NOSCRIPT"))
 		{
-			// Copy all properties from the original job
-			Id = job.Id,
-			Name = job.Name,
-			Status = JobStatus.InProgress,
-			Headers = job.Headers,
-			RouteParams = job.RouteParams,
-			QueryParams = job.QueryParams,
-			Payload = job.Payload,
-			Result = job.Result,
-			Error = job.Error,
-			RetryCount = job.RetryCount,
-			MaxRetries = job.MaxRetries,
-			RetryDelayUntil = job.RetryDelayUntil,
-			WorkerId = workerId, // Set the worker ID
-			CreatedAt = job.CreatedAt,
-			StartedAt = _dateTimeProvider.DateTimeOffsetNow, // Set started time
-			CompletedAt = job.CompletedAt,
-			LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow, // Update last updated time
-		};
+			// Lua script error occurred
+			return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_CLAIM_ERROR", "Could not claim job due to script error"));
+		}
 
 		try
 		{
-			// Use optimistic locking with a Lua script
-			var luaScript = @"
-                local jobKey = ARGV[1]
-                local expectedValue = ARGV[2]
-                local newValue = ARGV[3]
-                local queueKey = ARGV[4]
-                local jobId = ARGV[5]
-                
-                local currentValue = redis.call('GET', jobKey)
-                
-                if currentValue == expectedValue then
-                    redis.call('SET', jobKey, newValue)
-                    redis.call('ZREM', queueKey, jobId)
-                    return 1
-                else
-                    return 0
-                end
-            ";
-
-			var updatedJobJson = _serializer.Serialize(updatedJob);
-			var result = await _database.ScriptEvaluateAsync(
-				luaScript,
-				values:
-				[
-					jobKey,
-					jobJson,  // Expected current value 
-                    updatedJobJson,  // New value
-                    _queueKey,
-					jobId.ToString()
-				]
-			);
-
-			if ((int)result == 1)
+			// Check if the script returned an error (Redis error reply)
+			if (result.Resp3Type == ResultType.Error)
 			{
-				// Successfully claimed the job
-				return MethodResult<Job>.Success(updatedJob);
+				var error = result.ToString();
+				if (error.Contains("ALREADY_ASSIGNED") || error.Contains("WRONG_STATUS") || error.Contains("RETRY_DELAY"))
+				{
+					return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_CLAIMED", "Could not claim job"));
+				}
+				return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_CLAIM_ERROR", $"Redis Lua script error: {error}"));
 			}
-			else
+
+			// Construct the job from the returned values
+			var resultArray = (RedisValue[])result!;
+
+			var claimedJob = new Job
 			{
-				// The job was updated by another worker between the get and update, so we couldn't claim it
-				return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_CLAIMED", "Could not claim job"));
-			}
+				Id = Guid.Parse(resultArray[0].ToString()),
+				Name = resultArray[1].ToString(),
+				Status = (JobStatus)int.Parse(resultArray[2].ToString()),
+				Headers = string.IsNullOrEmpty(resultArray[3].ToString()) ? [] : Deserialize<Dictionary<string, List<string?>>>(resultArray[3].ToString()) ?? [],
+				RouteParams = string.IsNullOrEmpty(resultArray[4].ToString()) ? [] : Deserialize<Dictionary<string, object?>>(resultArray[4].ToString()) ?? [],
+				QueryParams = string.IsNullOrEmpty(resultArray[5].ToString()) ? [] : Deserialize<List<KeyValuePair<string, List<string?>>>>(resultArray[5].ToString()) ?? [],
+				Payload = resultArray[6].ToString(),
+				Result = string.IsNullOrEmpty(resultArray[7].ToString()) ? null : resultArray[7].ToString(),
+				Error = string.IsNullOrEmpty(resultArray[8].ToString()) ? null :
+						Deserialize<AsyncEndpointError>(resultArray[8].ToString()),
+				RetryCount = int.Parse(resultArray[9].ToString()),
+				MaxRetries = int.Parse(resultArray[10].ToString()),
+				RetryDelayUntil = string.IsNullOrEmpty(resultArray[11].ToString()) ? null :
+								 DateTime.Parse(resultArray[11].ToString()),
+				WorkerId = workerId, // Newly assigned
+				CreatedAt = DateTimeOffset.Parse(resultArray[13].ToString()),
+				StartedAt = DateTimeOffset.Parse(resultArray[14].ToString()), // Newly set
+				CompletedAt = string.IsNullOrEmpty(resultArray[15].ToString()) ? null : DateTimeOffset.Parse(resultArray[15].ToString()),
+				LastUpdatedAt = DateTimeOffset.Parse(resultArray[16].ToString()) // Newly set
+			};
+
+			return MethodResult<Job>.Success(claimedJob);
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Error claiming single job {JobId} for worker {WorkerId}", jobId, workerId);
-			return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_CLAIM_ERROR", $"Error claiming job: {ex.Message}", ex));
+			_logger.LogError(ex, "Error constructing job object after claiming job {JobId}", jobId);
+			return MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_CONSTRUCTION_ERROR", $"Error constructing job object: {ex.Message}"));
 		}
 	}
 
@@ -438,5 +476,11 @@ public class RedisJobStore : IJobStore
 	private static double GetScoreForTime(DateTime dateTime)
 	{
 		return (dateTime - _unixEpoch).TotalSeconds;
+	}
+
+	private T? Deserialize<T>(string value)
+	{
+		if (string.IsNullOrEmpty(value)) return default;
+		return _serializer.Deserialize<T>(value);
 	}
 }

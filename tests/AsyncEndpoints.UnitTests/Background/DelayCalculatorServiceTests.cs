@@ -1,7 +1,6 @@
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.UnitTests.TestSupport;
-using AutoFixture.Xunit2;
 using Microsoft.Extensions.Options;
 using Moq;
 

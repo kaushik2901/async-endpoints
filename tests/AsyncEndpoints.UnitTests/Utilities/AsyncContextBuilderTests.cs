@@ -28,9 +28,9 @@ public class AsyncContextBuilderTests
 		// Arrange
 		var job = new Job
 		{
-			Headers = new Dictionary<string, List<string?>>(),
-			RouteParams = new Dictionary<string, object?>(),
-			QueryParams = new List<KeyValuePair<string, List<string?>>>()
+			Headers = [],
+			RouteParams = [],
+			QueryParams = []
 		};
 
 		// Act

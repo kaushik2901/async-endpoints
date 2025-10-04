@@ -11,7 +11,7 @@ public class AsyncContextTests
 		var request = new TestRequest { Value = "test" };
 		var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
 		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
-		var query = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", new List<string?> { "value1" }) };
+		var query = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", ["value1"]) };
 
 		// Act
 		var context = new AsyncContext<TestRequest>(request, headers, routeParams, query);
@@ -30,7 +30,7 @@ public class AsyncContextTests
 		var request = new TestRequest { Value = "test" };
 		var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
 		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
-		var query = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", new List<string?> { "value1" }) };
+		var query = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", ["value1"]) };
 
 		// Act
 		var context = new AsyncContext<TestRequest>(request, headers, routeParams, query);
@@ -49,7 +49,7 @@ public class AsyncContextTests
 		var request = new TestRequest { Value = "test" };
 		var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
 		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
-		var query = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", new List<string?> { "value1" }) };
+		var query = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", ["value1"]) };
 
 		// Act
 		var context = new AsyncContext<TestRequest>(request, headers, routeParams, query);

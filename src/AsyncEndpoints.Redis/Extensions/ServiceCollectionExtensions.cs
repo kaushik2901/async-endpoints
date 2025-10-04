@@ -26,12 +26,15 @@ public static class RedisServiceCollectionExtensions
 		if (string.IsNullOrWhiteSpace(connectionString))
 			throw new ArgumentException("Redis connection string cannot be null or empty.", nameof(connectionString));
 
+		services.AddSingleton<IJobHashConverter, JobHashConverter>();
+
 		services.AddSingleton<IJobStore>(provider =>
 		{
 			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
 			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
 			var serializer = provider.GetRequiredService<ISerializer>();
-			return new RedisJobStore(logger, connectionString, dateTimeProvider, serializer);
+			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
+			return new RedisJobStore(logger, connectionString, dateTimeProvider, jobHashConverter, serializer);
 		});
 
 		return services;
@@ -49,13 +52,16 @@ public static class RedisServiceCollectionExtensions
 		if (connectionMultiplexer == null)
 			throw new ArgumentNullException(nameof(connectionMultiplexer));
 
+		services.AddSingleton<IJobHashConverter, JobHashConverter>();
+
 		services.AddSingleton<IJobStore>(provider =>
 		{
 			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
 			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
 			var serializer = provider.GetRequiredService<ISerializer>();
+			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
 			var database = connectionMultiplexer.GetDatabase();
-			return new RedisJobStore(logger, database, dateTimeProvider, serializer);
+			return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, serializer);
 		});
 
 		return services;
@@ -76,12 +82,15 @@ public static class RedisServiceCollectionExtensions
 		if (string.IsNullOrWhiteSpace(config.ConnectionString))
 			throw new ArgumentException("Redis connection string cannot be null or empty.");
 
+		services.AddSingleton<IJobHashConverter, JobHashConverter>();
+
 		services.AddSingleton<IJobStore>(provider =>
 		{
 			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
 			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
 			var serializer = provider.GetRequiredService<ISerializer>();
-			return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, serializer);
+			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
+			return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, jobHashConverter, serializer);
 		});
 
 		return services;

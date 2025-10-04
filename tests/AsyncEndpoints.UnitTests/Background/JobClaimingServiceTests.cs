@@ -2,7 +2,6 @@ using AsyncEndpoints.Background;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
-using AutoFixture.Xunit2;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Threading.Channels;

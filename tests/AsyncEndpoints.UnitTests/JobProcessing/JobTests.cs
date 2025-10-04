@@ -47,7 +47,7 @@ public class JobTests
 		var payload = "{\"data\":\"value\"}";
 		var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
 		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
-		var queryParams = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", new List<string?> { "value1" }) };
+		var queryParams = new List<KeyValuePair<string, List<string?>>> { new KeyValuePair<string, List<string?>>("query1", ["value1"]) };
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);

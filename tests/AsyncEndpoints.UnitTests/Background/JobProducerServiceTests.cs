@@ -3,7 +3,6 @@ using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
-using AutoFixture.Xunit2;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

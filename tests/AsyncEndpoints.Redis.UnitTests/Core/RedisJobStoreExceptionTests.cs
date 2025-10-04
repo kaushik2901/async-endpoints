@@ -15,6 +15,7 @@ public class RedisJobStoreExceptionTests
 	public async Task CreateJob_WhenRedisOperationFails_ShouldReturnErrorResult(
 		Mock<ILogger<RedisJobStore>> mockLogger,
 		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<IJobHashConverter> mockJobHashConverter,
 		Mock<ISerializer> mockSerializer,
 		Mock<IDatabase> mockDatabase,
 		Job job)
@@ -22,15 +23,16 @@ public class RedisJobStoreExceptionTests
 		// Arrange
 		job.Name = "TestJob";
 
+		var hashEntries = new[] { new HashEntry("Id", job.Id.ToString()) };
+		mockJobHashConverter
+			.Setup(x => x.ConvertToHashEntries(job))
+			.Returns(hashEntries);
+
 		mockDatabase
-			.Setup(x => x.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), null, false, When.NotExists, CommandFlags.None))
-			.ThrowsAsync(new RedisException("Redis operation failed"));
+			.Setup(x => x.HashSetAsync(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), CommandFlags.None))
+			.Throws(new RedisException("Redis operation failed"));
 
-		mockSerializer
-			.Setup(x => x.Serialize(job, null))
-			.Returns("{}");
-
-		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockSerializer.Object);
+		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object);
 
 		// Act
 		var result = await store.CreateJob(job, It.IsAny<CancellationToken>());
@@ -45,16 +47,17 @@ public class RedisJobStoreExceptionTests
 	public async Task GetJobById_WhenRedisOperationFails_ShouldReturnErrorResult(
 		Mock<ILogger<RedisJobStore>> mockLogger,
 		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<IJobHashConverter> mockJobHashConverter,
 		Mock<ISerializer> mockSerializer,
 		Mock<IDatabase> mockDatabase,
 		Guid jobId)
 	{
 		// Arrange
 		mockDatabase
-			.Setup(x => x.StringGetAsync(It.IsAny<RedisKey>(), CommandFlags.None))
+			.Setup(x => x.HashGetAllAsync(It.IsAny<RedisKey>(), CommandFlags.None))
 			.ThrowsAsync(new RedisException("Redis operation failed"));
 
-		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockSerializer.Object);
+		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object);
 
 		// Act
 		var result = await store.GetJobById(jobId, It.IsAny<CancellationToken>());
@@ -69,6 +72,7 @@ public class RedisJobStoreExceptionTests
 	public async Task UpdateJob_WhenRedisOperationFails_ShouldReturnErrorResult(
 		Mock<ILogger<RedisJobStore>> mockLogger,
 		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<IJobHashConverter> mockJobHashConverter,
 		Mock<ISerializer> mockSerializer,
 		Mock<IDatabase> mockDatabase,
 		Job job)
@@ -76,19 +80,20 @@ public class RedisJobStoreExceptionTests
 		// Arrange
 		job.Name = "TestJob";
 
+		var hashEntries = new[] { new HashEntry("Id", job.Id.ToString()) };
+		mockJobHashConverter
+			.Setup(x => x.ConvertToHashEntries(job))
+			.Returns(hashEntries);
+
 		mockDatabase
 			.Setup(x => x.KeyExistsAsync(It.IsAny<RedisKey>(), CommandFlags.None))
 			.ReturnsAsync(true);
 
 		mockDatabase
-			.Setup(x => x.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), null, false, When.Always, CommandFlags.None))
+			.Setup(x => x.HashSetAsync(It.IsAny<RedisKey>(), It.IsAny<HashEntry[]>(), CommandFlags.None))
 			.ThrowsAsync(new RedisException("Redis operation failed"));
 
-		mockSerializer
-			.Setup(x => x.Serialize(job, null))
-			.Returns("{}");
-
-		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockSerializer.Object);
+		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object);
 
 		// Act
 		var result = await store.UpdateJob(job, It.IsAny<CancellationToken>());
