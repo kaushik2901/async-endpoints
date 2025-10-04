@@ -41,7 +41,7 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 			{
 				_logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
 				var error = result.Error ?? AsyncEndpointError.FromMessage("Unknown error occurred");
-				var d = await _jobManager.ProcessJobFailure(job.Id, error, cancellationToken);
+				await _jobManager.ProcessJobFailure(job.Id, error, cancellationToken);
 			}
 		}
 		catch (Exception ex)
