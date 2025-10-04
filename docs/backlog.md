@@ -2,7 +2,7 @@
 
 ## Pending
 
-- AsyncEndpoints must release in progress job after certain time
+- Fix all the issues from exception-handling-analysis.md
 - AsyncEndpoints should support both AOT and JIT compilation
 - AsyncEndpoints should have extension to register handlers via assembly scanning (using reflection)
 - AsyncEndpoints should record individual job runs
@@ -11,8 +11,8 @@
 
 ## In progress
 
+- AsyncEndpoints must release in progress job after certain time
 - AsyncEndpoints.Redis store is not picking existing jobs after restart
-- Fix all the issues from exception-handling-analysis.md
 
 ## Completed
 
