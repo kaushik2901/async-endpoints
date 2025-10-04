@@ -1,10 +1,10 @@
+using System.Threading.Channels;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Threading.Channels;
 
 namespace AsyncEndpoints.UnitTests.Background;
 
@@ -34,7 +34,7 @@ public class JobClaimingServiceTests
 		// Arrange
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
 		var cancellationToken = CancellationToken.None;
-		
+
 		mockJobManager
 			.Setup(x => x.ClaimNextAvailableJob(workerId, cancellationToken))
 			.ReturnsAsync(MethodResult<Job>.Failure(error));
@@ -58,7 +58,7 @@ public class JobClaimingServiceTests
 		// Arrange
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
 		var cancellationToken = CancellationToken.None;
-		
+
 		mockJobManager
 			.Setup(x => x.ClaimNextAvailableJob(workerId, cancellationToken))
 			.ReturnsAsync(MethodResult<Job>.Success(default(Job)));
@@ -83,11 +83,11 @@ public class JobClaimingServiceTests
 		// Arrange
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
 		var cancellationToken = CancellationToken.None;
-		
+
 		mockJobManager
 			.Setup(x => x.ClaimNextAvailableJob(workerId, cancellationToken))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
-		
+
 		mockJobChannelEnqueuer
 			.Setup(x => x.Enqueue(channel.Writer, job, cancellationToken))
 			.ReturnsAsync(false); // Simulate enqueue failure
@@ -112,11 +112,11 @@ public class JobClaimingServiceTests
 		// Arrange
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
 		var cancellationToken = CancellationToken.None;
-		
+
 		mockJobManager
 			.Setup(x => x.ClaimNextAvailableJob(workerId, cancellationToken))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
-		
+
 		mockJobChannelEnqueuer
 			.Setup(x => x.Enqueue(channel.Writer, job, cancellationToken))
 			.ReturnsAsync(true); // Simulate successful enqueue
@@ -141,11 +141,11 @@ public class JobClaimingServiceTests
 	{
 		// Arrange
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
-		
+
 		mockJobManager
 			.Setup(x => x.ClaimNextAvailableJob(workerId, cancellationToken))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
-		
+
 		mockJobChannelEnqueuer
 			.Setup(x => x.Enqueue(channel.Writer, job, cancellationToken))
 			.ReturnsAsync(true);
@@ -170,11 +170,11 @@ public class JobClaimingServiceTests
 	{
 		// Arrange
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
-		
+
 		mockJobManager
 			.Setup(x => x.ClaimNextAvailableJob(workerId, cancellationToken))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
-		
+
 		mockJobChannelEnqueuer
 			.Setup(x => x.Enqueue(channel.Writer, job, cancellationToken))
 			.ReturnsAsync(true);

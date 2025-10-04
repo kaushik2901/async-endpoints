@@ -93,7 +93,7 @@ public class MethodResultTests
 		Assert.True(result.IsFailure);
 		Assert.NotNull(result.Error);
 		Assert.Equal(errorMessage, result.Error.Message);
-		
+
 		// Data property should throw when IsSuccess is false
 		Assert.Throws<InvalidOperationException>(() => result.Data);
 		Assert.Null(result.DataOrNull);
@@ -112,7 +112,7 @@ public class MethodResultTests
 		Assert.False(result.IsSuccess);
 		Assert.True(result.IsFailure);
 		Assert.Equal(error, result.Error);
-		
+
 		// Data property should throw when IsSuccess is false
 		Assert.Throws<InvalidOperationException>(() => result.Data);
 		Assert.Null(result.DataOrNull);
@@ -132,7 +132,7 @@ public class MethodResultTests
 		Assert.True(result.IsFailure);
 		Assert.NotNull(result.Error);
 		Assert.Equal(exception.Message, result.Error.Message);
-		
+
 		// Data property should throw when IsSuccess is false
 		Assert.Throws<InvalidOperationException>(() => result.Data);
 		Assert.Null(result.DataOrNull);
