@@ -31,23 +31,32 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 		try
 		{
 			var result = await ProcessJobPayloadAsync(job, cancellationToken);
+			if (!result.IsSuccess)
+			{
+				_logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error.Message);
 
-			if (result.IsSuccess)
-			{
-				_logger.LogInformation("Successfully processed job {JobId}", job.Id);
-				await _jobManager.ProcessJobSuccess(job.Id, result.Data, cancellationToken);
+				var processJobFailureResult = await _jobManager.ProcessJobFailure(job.Id, result.Error, cancellationToken);
+				if (!processJobFailureResult.IsSuccess)
+				{
+					_logger.LogError("Failed to update job status for failure {JobId}: {Error}", job.Id, processJobFailureResult.Error.Message);
+					return;
+				}
+
+				return;
 			}
-			else
+
+			var processJobSuccessResult = await _jobManager.ProcessJobSuccess(job.Id, result.Data, cancellationToken);
+			if (!processJobSuccessResult.IsSuccess)
 			{
-				_logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error?.Message);
-				var error = result.Error ?? AsyncEndpointError.FromMessage("Unknown error occurred");
-				await _jobManager.ProcessJobFailure(job.Id, error, cancellationToken);
+				_logger.LogError("Failed to update job status for success {JobId}: {Error}", job.Id, processJobSuccessResult.Error.Message);
+				return;
 			}
+
+			_logger.LogInformation("Successfully processed job {JobId}", job.Id);
 		}
 		catch (Exception ex)
 		{
-			var error = AsyncEndpointError.FromException(ex);
-			await _jobManager.ProcessJobFailure(job.Id, error, cancellationToken);
+			_logger.LogError(ex, "Exception occurred during job processing: {JobName}, JobId: {JobId}", job.Name, job.Id);
 		}
 	}
 
