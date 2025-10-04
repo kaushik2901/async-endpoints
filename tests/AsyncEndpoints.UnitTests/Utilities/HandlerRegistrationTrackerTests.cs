@@ -11,7 +11,7 @@ public class HandlerRegistrationTrackerTests
 	public void Register_AddsHandlerToRegistry()
 	{
 		// Arrange
-		var jobName = "test-job";
+		var jobName = nameof(Register_AddsHandlerToRegistry);
 		Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc =
 			(provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result" }));
 
@@ -40,7 +40,7 @@ public class HandlerRegistrationTrackerTests
 	public async Task GetInvoker_ReturnsInvokerForRegisteredJob()
 	{
 		// Arrange
-		var jobName = "test-job";
+		var jobName = nameof(GetInvoker_ReturnsInvokerForRegisteredJob);
 		var serviceProvider = new ServiceCollection().BuildServiceProvider();
 		var testJob = new Job();
 		var testRequest = new TestRequest { Value = "request" };
@@ -75,8 +75,8 @@ public class HandlerRegistrationTrackerTests
 	public void RegisterMultipleHandlers_EachIsAccessible()
 	{
 		// Arrange
-		var jobName1 = "job1";
-		var jobName2 = "job2";
+		var jobName1 = $"{nameof(RegisterMultipleHandlers_EachIsAccessible)}-1";
+		var jobName2 = $"{nameof(RegisterMultipleHandlers_EachIsAccessible)}-2";
 
 		Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc1 =
 			(provider, request, job, token) => Task.FromResult(MethodResult<TestResponse>.Success(new TestResponse { Value = "result1" }));

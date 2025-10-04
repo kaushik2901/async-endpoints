@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Utilities;
@@ -28,7 +27,7 @@ public interface IJobStore
 	Task<MethodResult> UpdateJob(Job job, CancellationToken cancellationToken);
 
 	/// <summary>
-	/// Atomically claims available jobs for a specific worker
+	/// Atomically claims the next available job for a specific worker
 	/// </summary>
-	Task<MethodResult<List<Job>>> ClaimJobsForWorker(Guid workerId, int maxClaimCount, CancellationToken cancellationToken);
+	Task<MethodResult<Job>> ClaimNextJobForWorker(Guid workerId, CancellationToken cancellationToken);
 }

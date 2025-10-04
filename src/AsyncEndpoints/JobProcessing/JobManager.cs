@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Configuration;
@@ -48,10 +47,10 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		return MethodResult<Job>.Success(job);
 	}
 
-	public async Task<MethodResult<List<Job>>> ClaimJobsForProcessing(Guid workerId, int maxClaimCount, CancellationToken cancellationToken)
+	public async Task<MethodResult<Job>> ClaimNextAvailableJob(Guid workerId, CancellationToken cancellationToken)
 	{
-		var availableJobs = await _jobStore.ClaimJobsForWorker(workerId, maxClaimCount, cancellationToken);
-		return availableJobs;
+		var claimedJob = await _jobStore.ClaimNextJobForWorker(workerId, cancellationToken);
+		return claimedJob;
 	}
 
 	public async Task<MethodResult> ProcessJobSuccess(Guid jobId, string result, CancellationToken cancellationToken)

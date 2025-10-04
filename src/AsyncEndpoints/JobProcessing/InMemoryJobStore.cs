@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -163,48 +162,53 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	}
 
 	/// <summary>
-	/// Atomically claims available jobs for a specific worker.
+	/// Atomically claims the next available job for a specific worker.
 	/// </summary>
-	/// <param name="workerId">The unique identifier of the worker claiming the jobs.</param>
-	/// <param name="maxClaimCount">The maximum number of jobs to claim.</param>
+	/// <param name="workerId">The unique identifier of the worker claiming the job.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A <see cref="MethodResult{T}"/> containing the list of claimed jobs.</returns>
-	public Task<MethodResult<List<Job>>> ClaimJobsForWorker(Guid workerId, int maxClaimCount, CancellationToken cancellationToken)
+	/// <returns>A <see cref="MethodResult{T}"/> containing the claimed job or null if no jobs available.</returns>
+	public Task<MethodResult<Job>> ClaimNextJobForWorker(Guid workerId, CancellationToken cancellationToken)
 	{
 		try
 		{
 			if (cancellationToken.IsCancellationRequested)
 			{
-				_logger.LogDebug("Claim jobs for worker operation cancelled");
-				return Task.FromCanceled<MethodResult<List<Job>>>(cancellationToken);
+				_logger.LogDebug("Claim next job for worker operation cancelled");
+				return Task.FromCanceled<MethodResult<Job>>(cancellationToken);
 			}
 
 			var now = _dateTimeProvider.UtcNow;
 
-			var availableJobs = jobs.Values
+			// Find the next available job (oldest queued/scheduled job)
+			var availableJob = jobs.Values
 				.Where(job => job.WorkerId == null)
 				.Where(job =>
 					job.Status == JobStatus.Queued ||
 					job.Status == JobStatus.Scheduled &&
 					(job.RetryDelayUntil == null || job.RetryDelayUntil <= now)
 				)
-				.Take(maxClaimCount)
-				.ToList();
+				.OrderBy(job => job.CreatedAt) // Claim the oldest job first
+				.FirstOrDefault();
 
-			foreach (var job in availableJobs)
+			if (availableJob != null)
 			{
-				job.WorkerId = workerId;
-				job.Status = JobStatus.InProgress;
+				availableJob.WorkerId = workerId;
+				availableJob.Status = JobStatus.InProgress;
+				availableJob.StartedAt = _dateTimeProvider.DateTimeOffsetNow;
+
+				_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", availableJob.Id, workerId);
+				return Task.FromResult(MethodResult<Job>.Success(availableJob));
 			}
 
-			_logger.LogInformation("Claimed {Count} jobs for worker {WorkerId}", availableJobs.Count, workerId);
-			return Task.FromResult(MethodResult<List<Job>>.Success(availableJobs));
+			_logger.LogDebug("No available jobs to claim for worker {WorkerId}", workerId);
+			// Return successful result with null data to indicate no jobs available (not an error)
+			return Task.FromResult(MethodResult<Job>.Success(default));
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Unexpected error claiming jobs for worker {WorkerId}", workerId);
-			return Task.FromResult(MethodResult<List<Job>>.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error claiming jobs: {ex.Message}", ex)));
+			_logger.LogError(ex, "Unexpected error claiming next job for worker {WorkerId}", workerId);
+			return Task.FromResult(MethodResult<Job>.Failure(
+				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error claiming job: {ex.Message}", ex)));
 		}
 	}
 }

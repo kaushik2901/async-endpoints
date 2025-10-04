@@ -82,7 +82,10 @@ public static class ServiceCollectionExtensions
 		services.AddTransient<IJobConsumerService, JobConsumerService>();
 		services.AddTransient<IJobProducerService, JobProducerService>();
 		services.AddTransient<IJobProcessorService, JobProcessorService>();
+		services.AddTransient<IJobChannelEnqueuer, JobChannelEnqueuer>();
 		services.AddTransient<IHandlerExecutionService, HandlerExecutionService>();
+		services.AddTransient<IDelayCalculatorService, DelayCalculatorService>();
+		services.AddTransient<IJobClaimingService, JobClaimingService>();
 		services.AddHostedService<AsyncEndpointsBackgroundService>();
 
 		return services;

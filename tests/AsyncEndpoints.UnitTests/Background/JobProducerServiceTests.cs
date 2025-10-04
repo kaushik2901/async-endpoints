@@ -3,37 +3,35 @@ using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
-using AsyncEndpoints.Utilities;
 using AutoFixture.Xunit2;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Services;
+namespace AsyncEndpoints.UnitTests.Background;
 
 public class JobProducerServiceTests
 {
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
-		[Frozen] Mock<IServiceScope> mockServiceScope,
-		[Frozen] Mock<IServiceScopeFactory> mockServiceScopeFactory,
-		[Frozen] Mock<IJobManager> mockJobManager,
-		[Frozen] Mock<ILogger<JobProducerService>> mockLogger)
+		Mock<ILogger<JobProducerService>> mockLogger,
+		Mock<IOptions<AsyncEndpointsConfigurations>> mockConfigurations,
+		Mock<IDelayCalculatorService> mockDelayCalculatorService,
+		Mock<IServiceScopeFactory> mockServiceScopeFactory,
+		AsyncEndpointsConfigurations configurations)
 	{
 		// Arrange
-		mockServiceScope
-			.Setup(x => x.ServiceProvider.GetService(typeof(IJobManager)))
-			.Returns(mockJobManager.Object);
-
-		mockServiceScopeFactory
-			.Setup(x => x.CreateScope())
-			.Returns(mockServiceScope.Object);
-
-		var configurations = Options.Create(new AsyncEndpointsConfigurations());
+		mockConfigurations
+			.Setup(x => x.Value)
+			.Returns(configurations);
 
 		// Act
-		var service = new JobProducerService(mockLogger.Object, mockServiceScopeFactory.Object, configurations);
+		var service = new JobProducerService(
+			mockLogger.Object, 
+			mockConfigurations.Object, 
+			mockDelayCalculatorService.Object, 
+			mockServiceScopeFactory.Object);
 
 		// Assert
 		Assert.NotNull(service);
@@ -41,26 +39,34 @@ public class JobProducerServiceTests
 
 	[Theory, AutoMoqData]
 	public async Task ProduceJobsAsync_CompletesChannel_WhenCancellationRequested(
-		[Frozen] Mock<IServiceScope> mockServiceScope,
-		[Frozen] Mock<IServiceScopeFactory> mockServiceScopeFactory,
-		[Frozen] Mock<IJobManager> mockJobManager,
-		[Frozen] Mock<ILogger<JobProducerService>> mockLogger)
+		Mock<ILogger<JobProducerService>> mockLogger,
+		Mock<IOptions<AsyncEndpointsConfigurations>> mockConfigurations,
+		Mock<IDelayCalculatorService> mockDelayCalculatorService,
+		Mock<IServiceScopeFactory> mockServiceScopeFactory,
+		Mock<IServiceScope> mockServiceScope,
+		Mock<IJobClaimingService> mockJobClaimingService)
 	{
 		// Arrange
-		mockServiceScope
-			.Setup(x => x.ServiceProvider.GetService(typeof(IJobManager)))
-			.Returns(mockJobManager.Object);
-
+		var configurations = new AsyncEndpointsConfigurations { WorkerConfigurations = new AsyncEndpointsWorkerConfigurations() };
+		mockConfigurations.Setup(x => x.Value).Returns(configurations);
+		
 		mockServiceScopeFactory
 			.Setup(x => x.CreateScope())
 			.Returns(mockServiceScope.Object);
-
-		var configurations = Options.Create(new AsyncEndpointsConfigurations());
+		
+		mockServiceScope
+			.Setup(x => x.ServiceProvider.GetService(typeof(IJobClaimingService)))
+			.Returns(mockJobClaimingService);
+		
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
 		var cancellationTokenSource = new CancellationTokenSource();
-		cancellationTokenSource.Cancel();
+		cancellationTokenSource.Cancel(); // Cancel immediately
 
-		var jobProducerService = new JobProducerService(mockLogger.Object, mockServiceScopeFactory.Object, configurations);
+		var jobProducerService = new JobProducerService(
+			mockLogger.Object, 
+			mockConfigurations.Object, 
+			mockDelayCalculatorService.Object, 
+			mockServiceScopeFactory.Object);
 
 		// Act
 		await jobProducerService.ProduceJobsAsync(channel.Writer, cancellationTokenSource.Token);
@@ -70,36 +76,122 @@ public class JobProducerServiceTests
 	}
 
 	[Theory, AutoMoqData]
-	public async Task ProduceJobsAsync_ClaimsJobsFromJobManager(
-		[Frozen] Mock<IServiceScope> mockServiceScope,
-		[Frozen] Mock<IServiceScopeFactory> mockServiceScopeFactory,
-		[Frozen] Mock<IJobManager> mockJobManager,
-		[Frozen] Mock<ILogger<JobProducerService>> mockLogger)
+	public async Task ProduceJobsAsync_CallsJobClaimingServiceAndDelayCalculator(
+		Mock<ILogger<JobProducerService>> mockLogger,
+		Mock<IOptions<AsyncEndpointsConfigurations>> mockConfigurations,
+		Mock<IDelayCalculatorService> mockDelayCalculatorService,
+		Mock<IServiceScopeFactory> mockServiceScopeFactory,
+		Mock<IServiceScope> mockServiceScope,
+		Mock<IJobClaimingService> mockJobClaimingService,
+		Guid workerId)
 	{
 		// Arrange
-		mockServiceScope
-			.Setup(x => x.ServiceProvider.GetService(typeof(IJobManager)))
-			.Returns(mockJobManager.Object);
-
+		var workerConfigurations = new AsyncEndpointsWorkerConfigurations { WorkerId = workerId };
+		var configurations = new AsyncEndpointsConfigurations { WorkerConfigurations = workerConfigurations };
+		mockConfigurations.Setup(x => x.Value).Returns(configurations);
+		
 		mockServiceScopeFactory
 			.Setup(x => x.CreateScope())
 			.Returns(mockServiceScope.Object);
-
-		var configurations = Options.Create(new AsyncEndpointsConfigurations());
+		
+		mockServiceScope
+			.Setup(x => x.ServiceProvider.GetService(typeof(IJobClaimingService)))
+			.Returns(mockJobClaimingService.Object);
+		
 		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
-		var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(10)); // Short timeout to avoid hanging
-		var emptyJobs = new List<Job>();
+		var cancellationTokenSource = new CancellationTokenSource();
+		var cancellationToken = cancellationTokenSource.Token;
+		var result = JobClaimingState.NoJobFound;
+		
+		// Setup the job claiming service to return a specific result
+		mockJobClaimingService
+			.Setup(x => x.ClaimAndEnqueueJobAsync(channel.Writer, workerId, cancellationToken))
+			.ReturnsAsync(result);
+		
+		// Setup the delay calculator to return a specific delay
+		var expectedDelay = TimeSpan.FromMilliseconds(100);
+		mockDelayCalculatorService
+			.Setup(x => x.CalculateDelay(result, workerConfigurations))
+			.Returns(expectedDelay);
 
-		mockJobManager
-			.Setup(x => x.ClaimJobsForProcessing(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-			.ReturnsAsync(MethodResult<List<Job>>.Success(emptyJobs));
+		var jobProducerService = new JobProducerService(
+			mockLogger.Object, 
+			mockConfigurations.Object, 
+			mockDelayCalculatorService.Object, 
+			mockServiceScopeFactory.Object);
 
-		var jobProducerService = new JobProducerService(mockLogger.Object, mockServiceScopeFactory.Object, configurations);
+		// Act & Assert - Use a short timeout to prevent hanging
+		var timeoutTask = Task.Delay(150); // Give it a bit more time than the delay
+		var serviceTask = jobProducerService.ProduceJobsAsync(channel.Writer, cancellationToken);
+		
+		// Cancel after a short time to prevent infinite loop
+		await Task.Delay(50);
+		cancellationTokenSource.Cancel();
+		
+		await Task.WhenAny(serviceTask, timeoutTask);
+		
+		// Verify the service was called at least once
+		mockServiceScopeFactory.Verify(x => x.CreateScope(), Times.AtLeastOnce);
+		mockJobClaimingService.Verify(x => x.ClaimAndEnqueueJobAsync(channel.Writer, workerId, cancellationToken), Times.AtLeastOnce);
+		mockDelayCalculatorService.Verify(x => x.CalculateDelay(result, workerConfigurations), Times.AtLeastOnce);
+	}
 
-		// Act & Assert - Should not throw
-		var exception = await Record.ExceptionAsync(() =>
-			jobProducerService.ProduceJobsAsync(channel.Writer, cancellationTokenSource.Token));
+	[Theory, AutoMoqData]
+	public async Task ProduceJobsAsync_HandlesExceptionAndUsesErrorDelay(
+		Mock<ILogger<JobProducerService>> mockLogger,
+		Mock<IOptions<AsyncEndpointsConfigurations>> mockConfigurations,
+		Mock<IDelayCalculatorService> mockDelayCalculatorService,
+		Mock<IServiceScopeFactory> mockServiceScopeFactory,
+		Mock<IServiceScope> mockServiceScope,
+		Mock<IJobClaimingService> mockJobClaimingService,
+		Guid workerId)
+	{
+		// Arrange
+		var workerConfigurations = new AsyncEndpointsWorkerConfigurations { WorkerId = workerId };
+		var configurations = new AsyncEndpointsConfigurations { WorkerConfigurations = workerConfigurations };
+		mockConfigurations.Setup(x => x.Value).Returns(configurations);
+		
+		mockServiceScopeFactory
+			.Setup(x => x.CreateScope())
+			.Returns(mockServiceScope.Object);
+		
+		mockServiceScope
+			.Setup(x => x.ServiceProvider.GetService(typeof(IJobClaimingService)))
+			.Returns(mockJobClaimingService.Object);
+		
+		var channel = Channel.CreateBounded<Job>(new BoundedChannelOptions(10));
+		var cancellationTokenSource = new CancellationTokenSource();
+		var cancellationToken = cancellationTokenSource.Token;
+		
+		// Setup the job claiming service to throw an exception
+		mockJobClaimingService
+			.Setup(x => x.ClaimAndEnqueueJobAsync(channel.Writer, workerId, cancellationToken))
+			.ThrowsAsync(new InvalidOperationException("Test exception"));
+		
+		// Setup the delay calculator to return a specific delay for error state
+		var expectedErrorDelay = TimeSpan.FromSeconds(5);
+		var errorState = JobClaimingState.ErrorOccurred;
+		mockDelayCalculatorService
+			.Setup(x => x.CalculateDelay(errorState, workerConfigurations))
+			.Returns(expectedErrorDelay);
 
-		Assert.Null(exception);
+		var jobProducerService = new JobProducerService(
+			mockLogger.Object, 
+			mockConfigurations.Object, 
+			mockDelayCalculatorService.Object, 
+			mockServiceScopeFactory.Object);
+
+		// Act & Assert - Use a short timeout to prevent hanging
+		var timeoutTask = Task.Delay(200);
+		var serviceTask = jobProducerService.ProduceJobsAsync(channel.Writer, cancellationToken);
+		
+		// Cancel after a short time to prevent infinite loop
+		await Task.Delay(50);
+		cancellationTokenSource.Cancel();
+		
+		await Task.WhenAny(serviceTask, timeoutTask);
+		
+		// Verify the delay calculator was called with the error state
+		mockDelayCalculatorService.Verify(x => x.CalculateDelay(errorState, workerConfigurations), Times.AtLeastOnce);
 	}
 }

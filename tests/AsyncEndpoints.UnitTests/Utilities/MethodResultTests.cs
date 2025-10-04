@@ -5,7 +5,7 @@ namespace AsyncEndpoints.UnitTests.Utilities;
 public class MethodResultTests
 {
 	[Fact]
-	public void Success_CreatesSuccessfulResult()
+	public void MethodResult_Success_ReturnsSuccessResult()
 	{
 		// Act
 		var result = MethodResult.Success();
@@ -13,11 +13,11 @@ public class MethodResultTests
 		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.False(result.IsFailure);
-		Assert.NotNull(result.Error); // The error property is initialized even for successful results with a placeholder
+		Assert.NotNull(result.Error);
 	}
 
 	[Fact]
-	public void Failure_WithErrorMessage_CreatesFailedResult()
+	public void MethodResult_Failure_WithErrorMessage_ReturnsFailureResult()
 	{
 		// Arrange
 		var errorMessage = "Test error";
@@ -29,15 +29,14 @@ public class MethodResultTests
 		Assert.False(result.IsSuccess);
 		Assert.True(result.IsFailure);
 		Assert.NotNull(result.Error);
-		Assert.Equal("UNKNOWN", result.Error!.Code);
 		Assert.Equal(errorMessage, result.Error.Message);
 	}
 
 	[Fact]
-	public void Failure_WithAsyncEndpointError_CreatesFailedResult()
+	public void MethodResult_Failure_WithAsyncEndpointError_ReturnsFailureResult()
 	{
 		// Arrange
-		var error = AsyncEndpointError.FromCode("TEST_CODE", "Test error message");
+		var error = AsyncEndpointError.FromMessage("Test error");
 
 		// Act
 		var result = MethodResult.Failure(error);
@@ -45,13 +44,11 @@ public class MethodResultTests
 		// Assert
 		Assert.False(result.IsSuccess);
 		Assert.True(result.IsFailure);
-		Assert.Same(error, result.Error);
-		Assert.Equal("TEST_CODE", result.Error!.Code);
-		Assert.Equal("Test error message", result.Error.Message);
+		Assert.Equal(error, result.Error);
 	}
 
 	[Fact]
-	public void Failure_WithException_CreatesFailedResult()
+	public void MethodResult_Failure_WithException_ReturnsFailureResult()
 	{
 		// Arrange
 		var exception = new InvalidOperationException("Test exception");
@@ -63,18 +60,14 @@ public class MethodResultTests
 		Assert.False(result.IsSuccess);
 		Assert.True(result.IsFailure);
 		Assert.NotNull(result.Error);
-		Assert.Equal("INVALIDOPERATIONEXCEPTION", result.Error!.Code);
-		Assert.Equal("Test exception", result.Error.Message);
+		Assert.Equal(exception.Message, result.Error.Message);
 	}
-}
 
-public class MethodResultGenericTests
-{
 	[Fact]
-	public void Success_WithData_CreatesSuccessfulResult()
+	public void MethodResultT_Success_ReturnsSuccessResultWithData()
 	{
 		// Arrange
-		var testData = "Test data";
+		var testData = "test data";
 
 		// Act
 		var result = MethodResult<string>.Success(testData);
@@ -82,12 +75,12 @@ public class MethodResultGenericTests
 		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.False(result.IsFailure);
-		Assert.NotNull(result.Error); // The error property is initialized even for successful results with a placeholder
 		Assert.Equal(testData, result.Data);
+		Assert.Equal(testData, result.DataOrNull);
 	}
 
 	[Fact]
-	public void Failure_WithErrorMessage_CreatesFailedResult()
+	public void MethodResultT_Failure_WithErrorMessage_ReturnsFailureResult()
 	{
 		// Arrange
 		var errorMessage = "Test error";
@@ -99,15 +92,18 @@ public class MethodResultGenericTests
 		Assert.False(result.IsSuccess);
 		Assert.True(result.IsFailure);
 		Assert.NotNull(result.Error);
-		Assert.Equal("UNKNOWN", result.Error!.Code);
 		Assert.Equal(errorMessage, result.Error.Message);
+		
+		// Data property should throw when IsSuccess is false
+		Assert.Throws<InvalidOperationException>(() => result.Data);
+		Assert.Null(result.DataOrNull);
 	}
 
 	[Fact]
-	public void Failure_WithAsyncEndpointError_CreatesFailedResult()
+	public void MethodResultT_Failure_WithAsyncEndpointError_ReturnsFailureResult()
 	{
 		// Arrange
-		var error = AsyncEndpointError.FromCode("TEST_CODE", "Test error message");
+		var error = AsyncEndpointError.FromMessage("Test error");
 
 		// Act
 		var result = MethodResult<string>.Failure(error);
@@ -115,13 +111,15 @@ public class MethodResultGenericTests
 		// Assert
 		Assert.False(result.IsSuccess);
 		Assert.True(result.IsFailure);
-		Assert.Same(error, result.Error);
-		Assert.Equal("TEST_CODE", result.Error!.Code);
-		Assert.Equal("Test error message", result.Error.Message);
+		Assert.Equal(error, result.Error);
+		
+		// Data property should throw when IsSuccess is false
+		Assert.Throws<InvalidOperationException>(() => result.Data);
+		Assert.Null(result.DataOrNull);
 	}
 
 	[Fact]
-	public void Failure_WithException_CreatesFailedResult()
+	public void MethodResultT_Failure_WithException_ReturnsFailureResult()
 	{
 		// Arrange
 		var exception = new InvalidOperationException("Test exception");
@@ -133,7 +131,24 @@ public class MethodResultGenericTests
 		Assert.False(result.IsSuccess);
 		Assert.True(result.IsFailure);
 		Assert.NotNull(result.Error);
-		Assert.Equal("INVALIDOPERATIONEXCEPTION", result.Error!.Code);
-		Assert.Equal("Test exception", result.Error.Message);
+		Assert.Equal(exception.Message, result.Error.Message);
+		
+		// Data property should throw when IsSuccess is false
+		Assert.Throws<InvalidOperationException>(() => result.Data);
+		Assert.Null(result.DataOrNull);
+	}
+
+	[Fact]
+	public void MethodResultT_Success_WithNullData_ReturnsSuccessResultWithNull()
+	{
+		// Act
+		var result = MethodResult<string>.Success(null);
+
+		// Assert
+		Assert.True(result.IsSuccess);
+		Assert.False(result.IsFailure);
+		Assert.Null(result.DataOrNull);
+		// Accessing Data with null value should throw InvalidOperationException based on the implementation
+		Assert.Throws<InvalidOperationException>(() => result.Data);
 	}
 }

@@ -74,7 +74,14 @@ public class MethodResult<T> : MethodResult
 	/// <summary>
 	/// Gets the data returned by the operation if it was successful.
 	/// </summary>
-	public T Data => PrivateDataField ?? throw new InvalidOperationException("Data is null.");
+	public T Data => IsSuccess
+		? PrivateDataField ?? throw new InvalidOperationException("Data is null.")
+		: throw new InvalidOperationException("Data is null.");
+
+	/// <summary>
+	/// Gets the data returned by the operation if it was successful, allowing for null values.
+	/// </summary>
+	public T? DataOrNull => IsSuccess ? PrivateDataField : default;
 
 	private MethodResult(T data) : base()
 	{

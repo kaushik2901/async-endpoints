@@ -93,29 +93,28 @@ public class JobManagerTests
 	}
 
 	[Theory, AutoMoqData]
-	public async Task ClaimJobsForProcessing_ReturnsJobs_WhenJobsAvailable(
+	public async Task ClaimNextAvailableJob_ReturnsJob_WhenJobAvailable(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		Guid workerId,
-		int maxClaimCount,
-		List<Job> jobs)
+		Job job)
 	{
 		// Arrange
 		var options = Options.Create(new AsyncEndpointsConfigurations());
 
 		mockJobStore
-			.Setup(x => x.ClaimJobsForWorker(workerId, maxClaimCount, It.IsAny<CancellationToken>()))
-			.ReturnsAsync(MethodResult<List<Job>>.Success(jobs));
+			.Setup(x => x.ClaimNextJobForWorker(workerId, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(MethodResult<Job>.Success(job));
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
 
 		// Act
-		var result = await jobManager.ClaimJobsForProcessing(workerId, maxClaimCount, CancellationToken.None);
+		var result = await jobManager.ClaimNextAvailableJob(workerId, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
-		Assert.Same(jobs, result.Data);
+		Assert.Same(job, result.Data);
 	}
 
 	[Theory, AutoMoqData]

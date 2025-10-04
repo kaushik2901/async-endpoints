@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Utilities;
@@ -18,9 +17,9 @@ public interface IJobManager
 	Task<MethodResult<Job>> SubmitJob(string jobName, string payload, HttpContext httpContext, CancellationToken cancellationToken);
 
 	/// <summary>
-	/// Claims available jobs for processing by a worker
+	/// Claims the next available job for processing by a worker
 	/// </summary>
-	Task<MethodResult<List<Job>>> ClaimJobsForProcessing(Guid workerId, int maxClaimCount, CancellationToken cancellationToken);
+	Task<MethodResult<Job>> ClaimNextAvailableJob(Guid workerId, CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Processes a successful job completion

@@ -246,59 +246,57 @@ public class RedisJobStore : IJobStore
 	}
 
 	/// <summary>
-	/// Atomically claims available jobs for a specific worker.
+	/// Atomically claims the next available job for a specific worker.
 	/// </summary>
-	/// <param name="workerId">The unique identifier of the worker claiming the jobs.</param>
-	/// <param name="maxClaimCount">The maximum number of jobs to claim.</param>
+	/// <param name="workerId">The unique identifier of the worker claiming the job.</param>
 	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A <see cref="MethodResult{T}"/> containing the list of claimed jobs.</returns>
-	public async Task<MethodResult<List<Job>>> ClaimJobsForWorker(Guid workerId, int maxClaimCount, CancellationToken cancellationToken)
+	/// <returns>A <see cref="MethodResult{T}"/> containing the claimed job or null if no jobs available.</returns>
+	public async Task<MethodResult<Job>> ClaimNextJobForWorker(Guid workerId, CancellationToken cancellationToken)
 	{
 		try
 		{
 			if (cancellationToken.IsCancellationRequested)
 			{
-				_logger.LogDebug("Claim jobs for worker operation cancelled");
-				return await Task.FromCanceled<MethodResult<List<Job>>>(cancellationToken);
+				_logger.LogDebug("Claim next job for worker operation cancelled");
+				return await Task.FromCanceled<MethodResult<Job>>(cancellationToken);
 			}
 
-			// Get available jobs from the queue, considering retry delays
+			// Get the next available job from the queue (oldest first), considering retry delays
 			var availableJobIds = await _database.SortedSetRangeByScoreAsync(
 				_queueKey,
 				start: double.NegativeInfinity,
 				stop: GetScoreForTime(_dateTimeProvider.UtcNow),
 				exclude: Exclude.None,
 				skip: 0,
-				take: maxClaimCount
+				take: 1  // Only take the next available job
 			);
 
-			var claimedJobs = new List<Job>();
-
-			foreach (var jobIdString in availableJobIds)
+			if (availableJobIds.Length == 0)
 			{
-				if (cancellationToken.IsCancellationRequested)
-				{
-					break;
-				}
+				_logger.LogDebug("No available jobs to claim for worker {WorkerId}", workerId);
+				return MethodResult<Job>.Success(default);
+			}
 
-				if (Guid.TryParse(jobIdString, out var jobId))
+			var jobIdString = availableJobIds[0];
+			if (Guid.TryParse(jobIdString, out var jobId))
+			{
+				var result = await ClaimSingleJob(jobId, workerId, cancellationToken);
+
+				if (result.IsSuccess)
 				{
-					var result = await ClaimSingleJob(jobId, workerId, cancellationToken);
-					if (result.IsSuccess)
-					{
-						claimedJobs.Add(result.Data);
-					}
+					_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", jobId, workerId);
+					return result;
 				}
 			}
 
-			_logger.LogInformation("Claimed {Count} jobs for worker {WorkerId}", claimedJobs.Count, workerId);
-			return MethodResult<List<Job>>.Success(claimedJobs);
+			_logger.LogDebug("Failed to claim job for worker {WorkerId}", workerId);
+			return MethodResult<Job>.Success(default);
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Unexpected error claiming jobs for worker {WorkerId}", workerId);
-			return MethodResult<List<Job>>.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error claiming jobs: {ex.Message}", ex));
+			_logger.LogError(ex, "Unexpected error claiming next job for worker {WorkerId}", workerId);
+			return MethodResult<Job>.Failure(
+				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error claiming job: {ex.Message}", ex));
 		}
 	}
 

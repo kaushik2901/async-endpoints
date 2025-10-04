@@ -122,13 +122,12 @@ public class InMemoryJobStoreTests
 	}
 
 	[Theory, AutoMoqData]
-	public async Task ClaimJobsForWorker_ReturnsAvailableJobs_WhenJobsExist(
+	public async Task ClaimNextJobForWorker_ReturnsAvailableJob_WhenJobExists(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		Job job1,
 		Job job2,
-		Guid workerId,
-		int maxClaimCount)
+		Guid workerId)
 	{
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
@@ -140,29 +139,32 @@ public class InMemoryJobStoreTests
 		// Arrange
 		job1.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
 		job2.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
+		// Ensure the jobs have no worker assigned initially
+		job1.WorkerId = null;
+		job2.WorkerId = null;
 		await store.CreateJob(job1, CancellationToken.None);
 		await store.CreateJob(job2, CancellationToken.None);
 
 		// Act
-		var result = await store.ClaimJobsForWorker(workerId, maxClaimCount, CancellationToken.None);
+		var result = await store.ClaimNextJobForWorker(workerId, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
-		Assert.NotNull(result.Data);
+		Assert.NotNull(result.DataOrNull);
+		Assert.Equal(JobStatus.InProgress, result.DataOrNull.Status);
+		Assert.Equal(workerId, result.DataOrNull.WorkerId);
 	}
 
 	[Theory, AutoMoqData]
-	public async Task ClaimJobsForWorker_ReturnsEmptyList_WhenNoJobsAvailable(
+	public async Task ClaimNextJobForWorker_ReturnsNull_WhenNoJobsAvailable(
 		[Frozen] InMemoryJobStore store,
-		Guid workerId,
-		int maxClaimCount)
+		Guid workerId)
 	{
 		// Act
-		var result = await store.ClaimJobsForWorker(workerId, maxClaimCount, CancellationToken.None);
+		var result = await store.ClaimNextJobForWorker(workerId, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
-		Assert.NotNull(result.Data);
-		Assert.Empty(result.Data);
+		Assert.Null(result.DataOrNull);
 	}
 }
