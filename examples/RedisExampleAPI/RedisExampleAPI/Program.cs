@@ -7,9 +7,9 @@ var builder = WebApplication.CreateSlimBuilder(args);
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
 
 builder.Services
-    .AddAsyncEndpoints()
-    .AddAsyncEndpointsRedisStore(redisConnectionString)
-    .AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default);
+	.AddAsyncEndpoints()
+	.AddAsyncEndpointsRedisStore(redisConnectionString)
+	.AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default);
 
 var app = builder.Build();
 

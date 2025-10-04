@@ -9,11 +9,11 @@ var builder = WebApplication.CreateSlimBuilder(args);
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
 
 builder.Services
-    .AddAsyncEndpoints()
-    .AddAsyncEndpointsWorker()
-    .AddAsyncEndpointsRedisStore(redisConnectionString)
-    .AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default)
-    .AddAsyncEndpointHandler<ExampleJobHandler, ExampleJobRequest, ExampleJobResponse>("ExampleJob");
+	.AddAsyncEndpoints()
+	.AddAsyncEndpointsWorker()
+	.AddAsyncEndpointsRedisStore(redisConnectionString)
+	.AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default)
+	.AddAsyncEndpointHandler<ExampleJobHandler, ExampleJobRequest, ExampleJobResponse>("ExampleJob");
 
 var app = builder.Build();
 
