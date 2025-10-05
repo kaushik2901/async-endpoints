@@ -20,97 +20,28 @@ When the system restarts:
 3. These jobs are not reconsidered for processing since they're not in the queue
 4. The system only processes jobs with status `Queued` or `Scheduled`
 
-## Most Recommended Solution: Job Lease with Distributed Recovery
+## Most Recommended Solution: Job Lease with Distributed Recovery (Using StartedAt)
 
-The most robust and scalable approach is to implement a **Job Lease with Distributed Recovery** mechanism that works well in a multi-worker distributed environment.
+The most robust and scalable approach is to implement a **Job Lease with Distributed Recovery** mechanism that works well in a multi-worker distributed environment, using the existing `StartedAt` field for timeout calculations.
 
 ### Core Components
 
-1. **Job Lease Timeouts**: Each job gets a lease that expires after a configurable time
+1. **Time-based Job Recovery**: Use `StartedAt` field with a configured timeout to detect stuck jobs
 2. **Distributed Recovery Service**: Multiple workers can participate in recovery without conflicts
 3. **Atomic Operations**: All recovery operations use Redis Lua scripts for atomicity
 
 ### Implementation Details
 
-#### 1. Enhanced Job Model
-```csharp
-// Add to Job class
-public DateTimeOffset? LeaseExpiration { get; set; } = null;
-public Guid? LeasingWorkerId { get; set; } = null;
-```
-
-#### 2. Lease-Based Job Claiming
-Update the existing Lua script in `ClaimNextJobForWorker` to include lease expiration:
+#### 1. Lease-Based Job Claiming (Updated)
+The existing Lua script in `ClaimNextJobForWorker` already sets the `StartedAt` field, which we'll use for timeout calculations:
 
 ```csharp
-// In RedisJobStore.cs - update the Lua script to include lease time
-var luaScript = @"
-    local jobKey = ARGV[1]
-    local expectedStatus1 = ARGV[2]  -- Queued
-    local expectedStatus2 = ARGV[3]  -- Scheduled  
-    local newStatus = ARGV[4]        -- InProgress
-    local newWorkerId = ARGV[5]
-    local newStartedAt = ARGV[6]
-    local newLastUpdatedAt = ARGV[7]
-    local queueKey = ARGV[8]
-    local jobId = ARGV[9]
-    local currentTime = ARGV[10]
-    local leaseDuration = ARGV[11]   -- Lease duration in seconds
-
-    -- Get required fields atomically
-    local currentStatus = redis.call('HGET', jobKey, 'Status')
-    local currentWorkerId = redis.call('HGET', jobKey, 'WorkerId')
-
-    -- Check if job can be claimed - all checks in one atomic operation
-    if currentWorkerId and currentWorkerId ~= '' then
-        return redis.error_reply('ALREADY_ASSIGNED')
-    end
-
-    if not (currentStatus == expectedStatus1 or currentStatus == expectedStatus2) then
-        return redis.error_reply('WRONG_STATUS')
-    end
-
-    -- Get all fields we need to return the complete job object
-    local currentId = redis.call('HGET', jobKey, 'Id')
-    local currentName = redis.call('HGET', jobKey, 'Name')
-    local currentHeaders = redis.call('HGET', jobKey, 'Headers')
-    local currentRouteParams = redis.call('HGET', jobKey, 'RouteParams')
-    local currentQueryParams = redis.call('HGET', jobKey, 'QueryParams')
-    local currentPayload = redis.call('HGET', jobKey, 'Payload')
-    local currentResult = redis.call('HGET', jobKey, 'Result')
-    local currentError = redis.call('HGET', jobKey, 'Error')
-    local currentRetryCount = redis.call('HGET', jobKey, 'RetryCount')
-    local currentMaxRetries = redis.call('HGET', jobKey, 'MaxRetries')
-    local currentCreatedAt = redis.call('HGET', jobKey, 'CreatedAt')
-    local currentCompletedAt = redis.call('HGET', jobKey, 'CompletedAt')
-    local currentLastUpdatedAt = redis.call('HGET', jobKey, 'LastUpdatedAt')
-
-    -- Calculate lease expiration (current time + lease duration)
-    local leaseExpiration = tonumber(currentTime) + tonumber(leaseDuration)
-
-    -- Claim the job atomically with lease information
-    redis.call('HSET', jobKey, 
-        'Status', newStatus,
-        'WorkerId', newWorkerId,
-        'StartedAt', newStartedAt,
-        'LastUpdatedAt', newLastUpdatedAt,
-        'LeaseExpiration', leaseExpiration,
-        'LeasingWorkerId', newWorkerId)
-    redis.call('ZREM', queueKey, jobId)
-
-    -- Return all fields needed to construct the complete job object
-    return { 
-        currentId, currentName, newStatus, currentHeaders, currentRouteParams, 
-        currentQueryParams, currentPayload, currentResult, currentError, 
-        currentRetryCount, currentMaxRetries, currentWorkerId, 
-        currentCreatedAt, newStartedAt, currentCompletedAt, newLastUpdatedAt,
-        leaseExpiration
-    }
-";
+// In RedisJobStore.cs - the existing Lua script already handles StartedAt
+// No changes needed to the claiming logic, we just use StartedAt for recovery
 ```
 
-#### 3. Distributed Recovery Service
-Create a background service that safely recovers stuck jobs across multiple workers:
+#### 2. Distributed Recovery Service
+Create a background service that safely recovers stuck jobs across multiple workers using `StartedAt`:
 
 ```csharp
 public class DistributedJobRecoveryService : BackgroundService
@@ -154,43 +85,48 @@ public class DistributedJobRecoveryService : BackgroundService
 
     private async Task RecoverStuckJobs(CancellationToken cancellationToken)
     {
-        // Use a Lua script to atomically find and recover stuck jobs
+        // Use a Lua script to atomically find and recover stuck jobs using StartedAt
         var luaScript = @"
             local timeoutUnixTime = tonumber(ARGV[1])
             local maxRetries = tonumber(ARGV[2])
             local retryDelayBaseSeconds = tonumber(ARGV[3])
-            local recoveryWorkerId = ARGV[4]
-            local currentTime = ARGV[5]
+            local currentTime = ARGV[4]
             
-            -- Find all expired leases (jobs where LeaseExpiration < current time)
-            -- This requires maintaining a separate sorted set for lease tracking
-            -- or querying all in-progress jobs and checking their lease expiration
-            
-            -- For Redis hash + sorted set approach, we'd maintain a separate index
-            -- Let's use a different approach: scan all job hashes
-            
-            local cursor = 0
             local recoveredCount = 0
+            local cursor = 0
             
+            -- Use SCAN to efficiently find all job keys
             repeat
                 local result = redis.call('SCAN', cursor, 'MATCH', 'ae:job:*', 'COUNT', 100)
                 cursor = tonumber(result[1])
                 local keys = result[2]
                 
                 for _, jobKey in ipairs(keys) do
-                    local leaseExpiration = redis.call('HGET', jobKey, 'LeaseExpiration')
                     local status = redis.call('HGET', jobKey, 'Status')
+                    local startedAt = redis.call('HGET', jobKey, 'StartedAt')
                     local retryCount = redis.call('HGET', jobKey, 'RetryCount') or 0
                     local maxRetriesForJob = redis.call('HGET', jobKey, 'MaxRetries') or maxRetries
                     
-                    if status == '300' and leaseExpiration and tonumber(leaseExpiration) < timeoutUnixTime then
-                        -- This job is expired and in progress, try to recover it
-                        -- Use atomic operation to ensure only one worker recovers it
+                    -- Check if job is InProgress (status 300) and started more than timeout ago
+                    if status == '300' and startedAt then
+                        -- Parse ISO 8601 datetime string to compare with timeout
+                        -- For efficiency, store StartedAt as Unix timestamp too (optional enhancement)
+                        local jobStartDateTime = startedAt
                         
-                        local currentWorkerId = redis.call('HGET', jobKey, 'WorkerId')
+                        -- Using a simplified approach: parse the StartedAt and check if it's too old
+                        -- In practice, we'd store a numeric timestamp for easier comparison
+                        -- For this script, we'll assume startedAt is in ISO format
+                        -- and we'll use the timeoutUnixTime to compare
                         
-                        -- Attempt to claim this expired job
-                        if leaseExpiration then
+                        -- If we store StartedAt as Unix timestamp, comparison becomes:
+                        -- if tonumber(startedAt) < timeoutUnixTime then
+                        -- For ISO format, we'd need Redis to parse it, which is inefficient
+                        -- Better approach: store both StartedAt (for API) and StartedAtUnix (for recovery)
+                        
+                        -- Option 1: Store an additional StartedAtUnix field when claiming
+                        local startedAtUnix = redis.call('HGET', jobKey, 'StartedAtUnix')
+                        
+                        if startedAtUnix and tonumber(startedAtUnix) < timeoutUnixTime then
                             retryCount = tonumber(retryCount)
                             maxRetriesForJob = tonumber(maxRetriesForJob)
                             
@@ -205,12 +141,12 @@ public class DistributedJobRecoveryService : BackgroundService
                                     'Status', '200', -- Scheduled
                                     'RetryCount', newRetryCount,
                                     'RetryDelayUntil', retryUntil,
-                                    'WorkerId', '',
-                                    'LeasingWorkerId', '',
-                                    'LeaseExpiration', '',
+                                    'WorkerId', '', -- Release worker assignment
+                                    'StartedAt', '', -- Clear started time
+                                    'StartedAtUnix', '', -- Clear started time
                                     'LastUpdatedAt', currentTime)
                                 
-                                -- Add back to the queue
+                                -- Get job ID from key and add back to the queue
                                 local jobId = string.gsub(jobKey, 'ae:job:', '')
                                 redis.call('ZADD', 'ae:jobs:queue', retryUntil, jobId)
                                 
@@ -221,8 +157,8 @@ public class DistributedJobRecoveryService : BackgroundService
                                     'Status', '500', -- Failed
                                     'Error', 'Job failed after maximum retries',
                                     'WorkerId', '',
-                                    'LeasingWorkerId', '',
-                                    'LeaseExpiration', '',
+                                    'StartedAt', '',
+                                    'StartedAtUnix', '',
                                     'LastUpdatedAt', currentTime)
                             end
                         end
@@ -239,7 +175,6 @@ public class DistributedJobRecoveryService : BackgroundService
                 timeoutUnixTime.ToString(),
                 AsyncEndpointsConstants.MaximumRetries.ToString(),
                 "5", // retry delay base, should come from config
-                Guid.NewGuid().ToString(), // worker ID for this recovery attempt
                 _dateTimeProvider.UtcNow.ToUnixTimeSeconds().ToString()
             ]);
 
@@ -252,6 +187,26 @@ public class DistributedJobRecoveryService : BackgroundService
 }
 ```
 
+#### 3. Enhanced Job Claiming to Support Recovery
+To make the recovery efficient, we should add a Unix timestamp version of `StartedAt`:
+
+```csharp
+// In the existing ClaimNextJobForWorker Lua script, add:
+-- Calculate and store StartedAt as Unix timestamp for efficient recovery
+local startedAtDateTime = ARGV[6]  -- This is the ISO datetime string
+-- For recovery efficiency, also store as Unix timestamp
+-- We can add this during claiming:
+local startedUnix = tonumber(currentTime)  -- Use the current time provided
+
+-- In the job claiming script, after setting StartedAt:
+redis.call('HSET', jobKey, 
+    'Status', newStatus,
+    'WorkerId', newWorkerId,
+    'StartedAt', newStartedAt,
+    'StartedAtUnix', startedUnix,  -- Add Unix timestamp
+    'LastUpdatedAt', newLastUpdatedAt)
+```
+
 #### 4. Startup Recovery
 Implement startup recovery to handle jobs that were stuck at the time of shutdown:
 
@@ -261,33 +216,36 @@ public class StartupRecoveryService
     private readonly ILogger<StartupRecoveryService> _logger;
     private readonly IJobStore _jobStore;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly int _jobTimeoutMinutes;
     
     public async Task RecoverJobsOnStartup(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting startup job recovery");
         
-        // Find jobs that were in progress at the time of shutdown
-        // This can be done with a scan for jobs with InProgress status
-        // Implementation similar to the distributed recovery service
-        // but run once at startup
-        
+        // Run immediate recovery for any jobs that got stuck during shutdown
         await RecoverStuckJobs(cancellationToken);
+    }
+    
+    private async Task RecoverStuckJobs(CancellationToken cancellationToken)
+    {
+        // Similar implementation to the distributed recovery service
     }
 }
 ```
 
 ## Why This Approach is Best for Distributed Environments
 
-1. **Atomic Operations**: Uses Lua scripts to ensure that recovery operations are atomic and avoid race conditions between multiple workers
-2. **No Conflicts**: Multiple workers can safely run the recovery service without conflicting with each other
-3. **Scalable**: The recovery service can run on all or some workers without coordination
-4. **Efficient**: Uses Redis SCAN operations to efficiently find stuck jobs without blocking
-5. **Safe**: Only recovers jobs that have actually timed out, avoiding interference with currently processing jobs
-6. **Configurable**: Timeout values can be adjusted based on job requirements
+1. **Uses Existing Fields**: Leverages the existing `StartedAt` field, requiring minimal changes
+2. **Atomic Operations**: Uses Lua scripts to ensure that recovery operations are atomic and avoid race conditions between multiple workers
+3. **No Conflicts**: Multiple workers can safely run the recovery service without conflicting with each other
+4. **Scalable**: The recovery service can run on all or some workers without coordination overhead
+5. **Efficient**: Uses Redis SCAN operations to efficiently find stuck jobs without blocking
+6. **Safe**: Only recovers jobs that have actually timed out, avoiding interference with currently processing jobs
+7. **Minimal Overhead**: Only adds one additional field (`StartedAtUnix`) for efficient recovery
 
 ## Implementation Steps
 
-1. **Phase 1**: Add lease expiration to job model and update claiming logic
+1. **Phase 1**: Update job claiming logic to add `StartedAtUnix` timestamp
 2. **Phase 2**: Implement distributed recovery background service
 3. **Phase 3**: Add startup recovery mechanism
 4. **Phase 4**: Test with multiple workers and various failure scenarios
@@ -295,7 +253,7 @@ public class StartupRecoveryService
 ## Configuration
 
 Add these configuration options:
-- `JobLeaseTimeoutMinutes`: How long a worker has to complete a job (default: 30 minutes)
+- `JobTimeoutMinutes`: How long a worker has to complete a job (default: 30 minutes)
 - `RecoveryCheckIntervalSeconds`: How often recovery service runs (default: 300 seconds)
 - `EnableDistributedRecovery`: Whether to enable the recovery service (default: true)
 
@@ -307,6 +265,7 @@ Add these configuration options:
 - ✅ **Configurable**: Timeout values can be tailored to specific job requirements
 - ✅ **Self-healing**: System automatically recovers from stuck jobs
 - ✅ **Distributed**: Multiple workers can participate in recovery without conflicts
+- ✅ **Minimal Changes**: Uses existing `StartedAt` field with only one additional timestamp field
 - ✅ **Low overhead**: Efficient Redis operations with minimal impact on performance
 
-This solution provides the most robust and scalable approach for handling job recovery in a distributed environment with multiple workers.
+This solution provides the most robust and scalable approach for handling job recovery in a distributed environment with multiple workers, using the existing `StartedAt` field as the foundation for timeout detection.
