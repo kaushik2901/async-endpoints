@@ -76,9 +76,19 @@ public static class ServiceCollectionExtensions
 	/// This includes job consumers, producers, processors, and the hosted background service.
 	/// </summary>
 	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
+	/// <param name="recoveryConfiguration">Optional configuration for distributed job recovery.</param>
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
-	public static IServiceCollection AddAsyncEndpointsWorker(this IServiceCollection services)
+	public static IServiceCollection AddAsyncEndpointsWorker(this IServiceCollection services,
+		Action<AsyncEndpointsRecoveryConfiguration>? recoveryConfiguration = null)
 	{
+		// Configure recovery options
+		var recoveryConfig = new AsyncEndpointsRecoveryConfiguration();
+		recoveryConfiguration?.Invoke(recoveryConfig);
+
+		// Register recovery configuration as singleton
+		services.AddSingleton(recoveryConfig);
+
+		// Register worker services
 		services.AddTransient<IJobConsumerService, JobConsumerService>();
 		services.AddTransient<IJobProducerService, JobProducerService>();
 		services.AddTransient<IJobProcessorService, JobProcessorService>();
@@ -86,7 +96,15 @@ public static class ServiceCollectionExtensions
 		services.AddTransient<IHandlerExecutionService, HandlerExecutionService>();
 		services.AddTransient<IDelayCalculatorService, DelayCalculatorService>();
 		services.AddTransient<IJobClaimingService, JobClaimingService>();
+
+		// Always register the main background service
 		services.AddHostedService<AsyncEndpointsBackgroundService>();
+
+		// Conditionally register recovery service based on configuration
+		if (recoveryConfig.EnableDistributedJobRecovery)
+		{
+			services.AddHostedService<DistributedJobRecoveryService>();
+		}
 
 		return services;
 	}
