@@ -19,6 +19,13 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
 	private readonly ConcurrentDictionary<Guid, Job> jobs = new();
 
+	public bool SupportsJobRecovery => false; // In-memory store doesn't support recovery
+
+	public Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, double retryDelayBaseSeconds, CancellationToken cancellationToken)
+	{
+		throw new NotSupportedException("In-memory job store does not support job recovery operations.");
+	}
+
 	/// <summary>
 	/// Creates a new job in the store.
 	/// </summary>

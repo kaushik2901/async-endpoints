@@ -23,6 +23,8 @@ public class RedisJobStore : IJobStore
 	private static readonly string _queueKey = "ae:jobs:queue";
 	private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
+	public bool SupportsJobRecovery => true; // Redis supports recovery
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="RedisJobStore"/> class.
 	/// </summary>
@@ -482,5 +484,84 @@ public class RedisJobStore : IJobStore
 	{
 		if (string.IsNullOrEmpty(value)) return default;
 		return _serializer.Deserialize<T>(value);
+	}
+
+	public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, double retryDelayBaseSeconds, CancellationToken cancellationToken)
+	{
+		var luaScript = @"
+        local timeoutUnixTime = tonumber(ARGV[1])
+        local maxRetries = tonumber(ARGV[2])
+        local retryDelayBaseSeconds = tonumber(ARGV[3])
+        local currentTime = ARGV[4]
+        
+        local recoveredCount = 0
+        local cursor = 0
+        
+        -- Use SCAN to efficiently find all job keys
+        repeat
+            local result = redis.call('SCAN', cursor, 'MATCH', 'ae:job:*', 'COUNT', 100)
+            cursor = tonumber(result[1])
+            local keys = result[2]
+            
+            for _, jobKey in ipairs(keys) do
+                local status = redis.call('HGET', jobKey, 'Status')
+                local startedAtUnix = redis.call('HGET', jobKey, 'StartedAtUnix')
+                local retryCount = redis.call('HGET', jobKey, 'RetryCount') or '0'
+                local maxRetriesForJob = redis.call('HGET', jobKey, 'MaxRetries') or ARGV[2]
+                
+                -- Check if job is InProgress (status 300) and started more than timeout ago
+                if status == '300' and startedAtUnix then -- 300 = JobStatus.InProgress
+                    if tonumber(startedAtUnix) < timeoutUnixTime then
+                        retryCount = tonumber(retryCount)
+                        maxRetriesForJob = tonumber(maxRetriesForJob)
+                        
+                        if retryCount < maxRetriesForJob then
+                            -- Calculate exponential backoff delay
+                            local newRetryCount = retryCount + 1
+                            local newRetryDelay = math.pow(2, newRetryCount) * retryDelayBaseSeconds
+                            local retryUntil = tonumber(currentTime) + newRetryDelay
+                            
+                            -- Update the job to scheduled status
+                            redis.call('HSET', jobKey, 
+                                'Status', '200', -- 200 = JobStatus.Scheduled
+                                'RetryCount', tostring(newRetryCount),
+                                'RetryDelayUntil', tostring(retryUntil),
+                                'WorkerId', '', -- Release worker assignment
+                                'StartedAt', '', -- Clear started time
+                                'StartedAtUnix', '', -- Clear started time
+                                'LastUpdatedAt', currentTime)
+                            
+                            -- Add back to the queue with the retry time as score
+                            local jobId = string.gsub(jobKey, 'ae:job:', '')
+                            redis.call('ZADD', 'ae:jobs:queue', retryUntil, jobId)
+                            
+                            recoveredCount = recoveredCount + 1
+                        else
+                            -- Mark as permanently failed
+                            redis.call('HSET', jobKey,
+                                'Status', '500', -- 500 = JobStatus.Failed
+                                'Error', 'Job failed after maximum retries',
+                                'WorkerId', '',
+                                'StartedAt', '',
+                                'StartedAtUnix', '',
+                                'LastUpdatedAt', currentTime)
+                        end
+                    end
+                end
+            until cursor == 0
+            
+            return recoveredCount
+    ";
+
+		var result = await _database.ScriptEvaluateAsync(luaScript,
+			values: new RedisValue[]
+			{
+				timeoutUnixTime.ToString(),
+				maxRetries.ToString(),
+				retryDelayBaseSeconds.ToString(),
+				((DateTimeOffset)_dateTimeProvider.UtcNow).ToUnixTimeSeconds().ToString()
+			});
+
+		return (int)(long)result;
 	}
 }
