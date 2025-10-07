@@ -13,7 +13,7 @@ public class AsyncEndpointsRecoveryConfiguration
 	/// <summary>
 	/// Time in minutes after which a job in progress is considered stuck
 	/// </summary>
-	public int JobTimeoutMinutes { get; set; } = 30;
+	public int JobTimeoutMinutes { get; set; } = 4;
 
 	/// <summary>
 	/// Interval in seconds between recovery checks

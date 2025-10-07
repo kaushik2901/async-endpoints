@@ -3,6 +3,7 @@ using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Redis.Configuration;
 using AsyncEndpoints.Redis.Storage;
+using AsyncEndpoints.Redis.Storage.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -27,6 +28,7 @@ public static class RedisServiceCollectionExtensions
 			throw new ArgumentException("Redis connection string cannot be null or empty.", nameof(connectionString));
 
 		services.AddSingleton<IJobHashConverter, JobHashConverter>();
+		services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
 
 		services.AddSingleton<IJobStore>(provider =>
 		{
@@ -34,7 +36,8 @@ public static class RedisServiceCollectionExtensions
 			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
 			var serializer = provider.GetRequiredService<ISerializer>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
-			return new RedisJobStore(logger, connectionString, dateTimeProvider, jobHashConverter, serializer);
+			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
+			return new RedisJobStore(logger, connectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService);
 		});
 
 		return services;
@@ -49,10 +52,10 @@ public static class RedisServiceCollectionExtensions
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
 	public static IServiceCollection AddAsyncEndpointsRedisStore(this IServiceCollection services, IConnectionMultiplexer connectionMultiplexer)
 	{
-		if (connectionMultiplexer == null)
-			throw new ArgumentNullException(nameof(connectionMultiplexer));
+		ArgumentNullException.ThrowIfNull(connectionMultiplexer);
 
 		services.AddSingleton<IJobHashConverter, JobHashConverter>();
+		services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
 
 		services.AddSingleton<IJobStore>(provider =>
 		{
@@ -60,8 +63,9 @@ public static class RedisServiceCollectionExtensions
 			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
 			var serializer = provider.GetRequiredService<ISerializer>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
+			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
 			var database = connectionMultiplexer.GetDatabase();
-			return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, serializer);
+			return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService);
 		});
 
 		return services;
@@ -83,6 +87,7 @@ public static class RedisServiceCollectionExtensions
 			throw new ArgumentException("Redis connection string cannot be null or empty.");
 
 		services.AddSingleton<IJobHashConverter, JobHashConverter>();
+		services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
 
 		services.AddSingleton<IJobStore>(provider =>
 		{
@@ -90,7 +95,8 @@ public static class RedisServiceCollectionExtensions
 			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
 			var serializer = provider.GetRequiredService<ISerializer>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
-			return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, jobHashConverter, serializer);
+			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
+			return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService);
 		});
 
 		return services;

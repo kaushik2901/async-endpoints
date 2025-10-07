@@ -10,7 +10,7 @@ Accept: application/json
 
 {
     "message": "Hello from AsyncEndpoints!",
-    "delayInSeconds": 2
+    "delayInSeconds": 20
 }
 
 ###
