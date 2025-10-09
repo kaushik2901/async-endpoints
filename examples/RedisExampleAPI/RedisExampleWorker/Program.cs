@@ -10,7 +10,11 @@ var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?
 
 builder.Services
 	.AddAsyncEndpoints()
-	.AddAsyncEndpointsWorker()
+	.AddAsyncEndpointsWorker(options =>
+	{
+		options.JobTimeoutMinutes = 1;
+		options.RecoveryCheckIntervalSeconds = 120;
+	})
 	.AddAsyncEndpointsRedisStore(redisConnectionString)
 	.AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default)
 	.AddAsyncEndpointHandler<ExampleJobHandler, ExampleJobRequest, ExampleJobResponse>("ExampleJob");

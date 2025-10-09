@@ -25,7 +25,6 @@ namespace AsyncEndpoints.Background
 		private readonly TimeSpan _recoveryInterval = TimeSpan.FromSeconds(recoveryConfig.RecoveryCheckIntervalSeconds);
 		private readonly int _jobTimeoutMinutes = recoveryConfig.JobTimeoutMinutes;
 		private readonly int _maxRetries = recoveryConfig.MaximumRetries;
-		private readonly double _retryDelayBaseSeconds = recoveryConfig.RetryDelayBaseSeconds;
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
@@ -63,7 +62,6 @@ namespace AsyncEndpoints.Background
 			var recoveredCount = await _jobStore.RecoverStuckJobs(
 				timeoutUnixTime,
 				_maxRetries,
-				_retryDelayBaseSeconds,
 				cancellationToken);
 
 			if (recoveredCount > 0)

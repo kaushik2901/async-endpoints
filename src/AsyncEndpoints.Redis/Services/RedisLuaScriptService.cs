@@ -88,6 +88,9 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
 			redis.call('HSET', jobKey, 'StartedAtUnix', startedAtUnix)
 			redis.call('HSET', jobKey, 'LastUpdatedAt', newLastUpdatedAt)
 			redis.call('ZREM', queueKey, jobId)
+			
+			-- Add to in-progress set with started timestamp as score for efficient recovery scanning
+			redis.call('ZADD', 'ae:jobs:inprogress', startedAtUnix, jobId)
 
 			-- Return all fields needed to construct the complete job object
 			return { 
@@ -155,92 +158,83 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
 	/// <param name="database">The Redis database instance.</param>
 	/// <param name="timeoutUnixTime">The Unix timestamp after which jobs are considered stuck.</param>
 	/// <param name="maxRetries">The maximum number of retries allowed for a job.</param>
-	/// <param name="retryDelayBaseSeconds">The base delay in seconds for exponential backoff retry strategy.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
 	/// <returns>The number of jobs that were successfully recovered.</returns>
-	public async Task<int> RecoverStuckJobs(IDatabase database, long timeoutUnixTime, int maxRetries, double retryDelayBaseSeconds)
+	public async Task<int> RecoverStuckJobs(IDatabase database, long timeoutUnixTime, int maxRetries)
 	{
 		var luaScript = @"
 			local timeoutUnixTime = tonumber(ARGV[1])
 			local maxRetries = tonumber(ARGV[2])
-			local retryDelayBaseSeconds = tonumber(ARGV[3])
-			local currentTime = ARGV[4]
-        
+			local currentTimeUnix = tonumber(ARGV[3])
+			local currentTimeIso = ARGV[4]
+			local inProgressStatus = tonumber(ARGV[5])
+			local scheduledStatus = tonumber(ARGV[6])
+			local failedStatus = tonumber(ARGV[7])
+
+			-- Get all in-progress jobs that started before the timeout
+			local inProgressJobIds = redis.call('ZRANGEBYSCORE', 'ae:jobs:inprogress', '-inf', timeoutUnixTime - 1)
+
 			local recoveredCount = 0
-			local cursor = 0
-        
-			-- Use SCAN to efficiently find all job keys
-			repeat
-				local result = redis.call('SCAN', cursor, 'MATCH', 'ae:job:*', 'COUNT', 100)
-				cursor = tonumber(result[1])
-				local keys = result[2]
-            
-				for _, jobKey in ipairs(keys) do
-					local status = redis.call('HGET', jobKey, 'Status')
-					local startedAtUnix = redis.call('HGET', jobKey, 'StartedAtUnix')
-					local retryCount = redis.call('HGET', jobKey, 'RetryCount') or '0'
-					local maxRetriesForJob = redis.call('HGET', jobKey, 'MaxRetries') or ARGV[2]
-                
-					-- Check if job is InProgress (status 300) and started more than timeout ago
-					if status == '300' and startedAtUnix and startedAtUnix ~= '' then -- 300 = JobStatus.InProgress
-						if tonumber(startedAtUnix) < timeoutUnixTime then
-							retryCount = tonumber(retryCount)
-							maxRetriesForJob = tonumber(maxRetriesForJob)
-                        
-							if retryCount < maxRetriesForJob then
-								-- Calculate exponential backoff delay
-								local newRetryCount = retryCount + 1
-								local newRetryDelay = math.pow(2, newRetryCount) * retryDelayBaseSeconds
-								local retryUntil = tonumber(currentTime) + newRetryDelay
-                            
-								-- We need to make sure RetryDelayUntil gets stored in ISO format
-								-- Extract date components and convert to ISO format
-								local retryUntilYear = math.floor(retryUntil / (365.25 * 24 * 3600)) + 1970
-								-- This approach is complex; the proper way would be to ensure the retryUntil value 
-								-- represents time in ISO format already, but for now we'll keep the old implementation
-                            
-								-- Update the job to scheduled status, storing retry delay as Unix timestamp
-								redis.call('HSET', jobKey, 
-									'Status', '200', -- 200 = JobStatus.Scheduled
-									'RetryCount', tostring(newRetryCount),
-									'RetryDelayUntil', tostring(retryUntil), -- Store as Unix timestamp string for now
-									'WorkerId', '', -- Release worker assignment
-									'StartedAt', '', -- Clear started time
-									'StartedAtUnix', '', -- Clear started time
-									'LastUpdatedAt', currentTime)
-                            
-								-- Add back to the queue with the retry time as score
-								local jobId = string.gsub(jobKey, 'ae:job:', '')
-								redis.call('ZADD', 'ae:jobs:queue', retryUntil, jobId)
-                            
-								recoveredCount = recoveredCount + 1
-							else
-								-- Mark as permanently failed
-								redis.call('HSET', jobKey,
-									'Status', '500', -- 500 = JobStatus.Failed
-									'Error', 'Job failed after maximum retries',
-									'WorkerId', '',
-									'StartedAt', '',
-									'StartedAtUnix', '',
-									'LastUpdatedAt', currentTime)
-							end
-						end
+
+			for _, jobId in ipairs(inProgressJobIds) do
+				local jobKey = 'ae:job:' .. jobId
+				local status = redis.call('HGET', jobKey, 'Status')
+				local startedAtUnix = redis.call('HGET', jobKey, 'StartedAtUnix')
+				local retryCount = redis.call('HGET', jobKey, 'RetryCount') or '0'
+				local maxRetriesForJob = redis.call('HGET', jobKey, 'MaxRetries') or ARGV[2]
+
+				-- Check that job is in-progress and has a valid start time before timeout
+				if tonumber(status) == inProgressStatus and startedAtUnix and startedAtUnix ~= '' and tonumber(startedAtUnix) <= timeoutUnixTime then
+					retryCount = tonumber(retryCount)
+					maxRetriesForJob = tonumber(maxRetriesForJob)
+
+					if retryCount < maxRetriesForJob then
+						-- Recover: reschedule immediately, increment retry count
+						local newRetryCount = retryCount + 1
+
+						redis.call('HSET', jobKey,
+							'Status', tostring(scheduledStatus),
+							'RetryCount', tostring(newRetryCount),
+							'RetryDelayUntil', '',
+							'WorkerId', '',
+							'StartedAt', '',
+							'StartedAtUnix', '',
+							'LastUpdatedAt', currentTimeIso)
+
+						redis.call('ZADD', 'ae:jobs:queue', currentTimeUnix, jobId)
+						redis.call('ZREM', 'ae:jobs:inprogress', jobId)
+						recoveredCount = recoveredCount + 1
+					else
+						-- Mark as permanently failed
+						redis.call('HSET', jobKey,
+							'Status', tostring(failedStatus),
+							'Error', 'Job failed after maximum retries',
+							'WorkerId', '',
+							'StartedAt', '',
+							'StartedAtUnix', '',
+							'LastUpdatedAt', currentTimeIso)
+
+						redis.call('ZREM', 'ae:jobs:inprogress', jobId)
 					end
 				end
-			until cursor == 0
-        
+			end
+
 			return recoveredCount
 		";
 
-		var currentTimeUnix = _dateTimeProvider.DateTimeOffsetNow.ToUnixTimeSeconds();
+		var now = _dateTimeProvider.DateTimeOffsetNow;
+		var currentTimeUnix = now.ToUnixTimeSeconds();
+		var currentTimeIso = now.ToString("O"); // ISO 8601 format
 
 		var result = await database.ScriptEvaluateAsync(luaScript,
 			values:
 			[
 				timeoutUnixTime.ToString(),
 				maxRetries.ToString(),
-				retryDelayBaseSeconds.ToString(),
-				currentTimeUnix.ToString()
+				currentTimeUnix.ToString(),
+				currentTimeIso,
+				((int)JobStatus.InProgress).ToString(),
+				((int)JobStatus.Scheduled).ToString(),
+				((int)JobStatus.Failed).ToString()
 			]);
 
 		return (int)(long)result;
