@@ -1,10 +1,10 @@
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
-using AsyncEndpoints.Redis.Storage;
+using AsyncEndpoints.Redis.Services;
 using AsyncEndpoints.Utilities;
 using Moq;
 
-namespace AsyncEndpoints.Redis.UnitTests;
+namespace AsyncEndpoints.Redis.UnitTests.Services;
 
 public class JobHashConverterTests
 {

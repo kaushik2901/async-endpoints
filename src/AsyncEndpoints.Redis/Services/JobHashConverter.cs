@@ -3,7 +3,7 @@ using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Storage;
+namespace AsyncEndpoints.Redis.Services;
 
 /// <summary>
 /// Provides functionality to convert between Job objects and Redis hash entries.

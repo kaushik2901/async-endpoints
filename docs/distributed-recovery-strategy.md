@@ -26,7 +26,66 @@ While the underlying storage operations are atomic (preventing data corruption),
 
 ## Recommended Solutions
 
-### 1. Distributed Locking (Recommended Approach)
+### 1. Data Structure Optimization (Primary Approach)
+
+For Redis deployments, optimize the data structure to maintain a separate sorted set for in-progress jobs:
+
+```csharp
+// Add a separate sorted set for in-progress jobs to optimize recovery scanning
+private static readonly string _inProgressKey = "ae:jobs:inprogress";
+
+// When a job transitions to InProgress status, add it to the in-progress set
+// This happens in the RedisJobStore.UpdateJob method:
+await _database.SortedSetRemoveAsync(_queueKey, job.Id.ToString());
+await _database.SortedSetRemoveAsync(_inProgressKey, job.Id.ToString());
+
+// Add to appropriate set based on job status
+if (job.Status == JobStatus.Queued ||
+    job.Status == JobStatus.Scheduled && (job.RetryDelayUntil == null || job.RetryDelayUntil <= _dateTimeProvider.UtcNow))
+{
+    await _database.SortedSetAddAsync(_queueKey, job.Id.ToString(), GetJobScore(job));
+}
+else if (job.Status == JobStatus.InProgress && job.WorkerId.HasValue)
+{
+    // Add to in-progress set with started timestamp as score for efficient recovery scanning
+    var startedAtScore = (job.StartedAt?.ToUnixTimeSeconds() ?? _dateTimeProvider.DateTimeOffsetNow.ToUnixTimeSeconds()).ToString();
+    await _database.SortedSetAddAsync(_inProgressKey, job.Id.ToString(), double.Parse(startedAtScore));
+}
+```
+
+Update the Lua script to use the in-progress set:
+
+```lua
+-- Get all in-progress jobs that started before the timeout
+local inProgressJobIds = redis.call('ZRANGEBYSCORE', 'ae:jobs:inprogress', '-inf', timeoutUnixTime - 1)
+
+for _, jobId in ipairs(inProgressJobIds) do
+    local jobKey = 'ae:job:' .. jobId
+    local status = redis.call('HGET', jobKey, 'Status')
+    local startedAtUnix = redis.call('HGET', jobKey, 'StartedAtUnix')
+    local retryCount = redis.call('HGET', jobKey, 'RetryCount') or '0'
+    local maxRetriesForJob = redis.call('HGET', jobKey, 'MaxRetries') or ARGV[2]
+
+    -- Double-check the status and start time atomically
+    if status == '300' and startedAtUnix and startedAtUnix ~= '' then -- 300 = JobStatus.InProgress
+        if tonumber(startedAtUnix) <= timeoutUnixTime then
+            -- Recovery logic here...
+        end
+    end
+end
+```
+
+This optimization changes the recovery from O(N) where N is all jobs to O(M) where M is only in-progress jobs, which is typically much smaller and provides significant performance improvements.
+
+### 3. Implementation in RedisJobStore
+
+To fully implement this optimization, the RedisJobStore needs to be updated to:
+
+1. **Maintain the in-progress sorted set**: When jobs transition to `InProgress` status, they're added to the `_inProgressKey` sorted set
+2. **Update the recovery Lua script**: Use `ZRANGEBYSCORE` on the in-progress set instead of `SCAN` on all job keys
+3. **Clean up the set**: Remove jobs from the in-progress set when they complete, fail, or are scheduled for retry
+
+### 4. Distributed Locking (Secondary Approach)
 
 Implement a distributed lock to ensure only one instance performs recovery at a time:
 
