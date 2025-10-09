@@ -2,7 +2,7 @@ using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Utilities;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Storage.Services;
+namespace AsyncEndpoints.Redis.Services;
 
 public interface IRedisLuaScriptService
 {
