@@ -1,7 +1,7 @@
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
-using AsyncEndpoints.Redis.Storage.Services;
+using AsyncEndpoints.Redis.Services;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;

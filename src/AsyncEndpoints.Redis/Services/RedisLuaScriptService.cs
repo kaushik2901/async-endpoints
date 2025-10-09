@@ -4,7 +4,7 @@ using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Storage.Services;
+namespace AsyncEndpoints.Redis.Services;
 
 /// <summary>
 /// Provides functionality to execute Redis Lua scripts for job operations.
