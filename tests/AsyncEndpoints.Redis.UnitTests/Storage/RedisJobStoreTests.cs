@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.UnitTests;
+namespace AsyncEndpoints.Redis.UnitTests.Storage;
 
 public class RedisJobStoreTests
 {

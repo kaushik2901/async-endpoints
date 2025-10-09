@@ -23,7 +23,6 @@ public class RedisJobStore : IJobStore
 	private readonly string? _connectionString;
 
 	private static readonly string _queueKey = "ae:jobs:queue";
-	private static readonly string _inProgressKey = "ae:jobs:inprogress";
 	private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
 	public bool SupportsJobRecovery => true; // Redis supports recovery
