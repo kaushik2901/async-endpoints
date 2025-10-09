@@ -23,6 +23,7 @@ public class RedisJobStore : IJobStore
 	private readonly string? _connectionString;
 
 	private static readonly string _queueKey = "ae:jobs:queue";
+	private static readonly string _inProgressKey = "ae:jobs:inprogress";
 	private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
 	public bool SupportsJobRecovery => true; // Redis supports recovery
@@ -228,14 +229,22 @@ public class RedisJobStore : IJobStore
 			var hashEntries = _jobHashConverter.ConvertToHashEntries(job);
 			await _database.HashSetAsync(jobKey, hashEntries);
 
-			// Update queue if job status has changed
+			// Update queue and in-progress sets based on job status
 			await _database.SortedSetRemoveAsync(_queueKey, job.Id.ToString());
+			await _database.SortedSetRemoveAsync(_inProgressKey, job.Id.ToString());
 
 			// Only add back to queue if it's queued or scheduled for retry
 			if (job.Status == JobStatus.Queued ||
 				job.Status == JobStatus.Scheduled && (job.RetryDelayUntil == null || job.RetryDelayUntil <= _dateTimeProvider.UtcNow))
 			{
 				await _database.SortedSetAddAsync(_queueKey, job.Id.ToString(), GetJobScore(job));
+			}
+			// Add to in-progress set if status is InProgress and has a worker assigned
+			else if (job.Status == JobStatus.InProgress && job.WorkerId.HasValue)
+			{
+				// Add to in-progress set with started timestamp as score for efficient recovery scanning
+				var startedAtScore = (job.StartedAt?.ToUnixTimeSeconds() ?? _dateTimeProvider.DateTimeOffsetNow.ToUnixTimeSeconds()).ToString();
+				await _database.SortedSetAddAsync(_inProgressKey, job.Id.ToString(), double.Parse(startedAtScore));
 			}
 
 			_logger.LogDebug("Updated job {JobId}", job.Id);
@@ -330,12 +339,10 @@ public class RedisJobStore : IJobStore
 				QueryParams = string.IsNullOrEmpty(resultArray[5].ToString()) ? [] : Deserialize<List<KeyValuePair<string, List<string?>>>>(resultArray[5].ToString()) ?? [],
 				Payload = resultArray[6].ToString(),
 				Result = string.IsNullOrEmpty(resultArray[7].ToString()) ? null : resultArray[7].ToString(),
-				Error = string.IsNullOrEmpty(resultArray[8].ToString()) ? null :
-						Deserialize<AsyncEndpointError>(resultArray[8].ToString()),
+				Error = string.IsNullOrEmpty(resultArray[8].ToString()) ? null : Deserialize<AsyncEndpointError>(resultArray[8].ToString()),
 				RetryCount = int.Parse(resultArray[9].ToString()),
 				MaxRetries = int.Parse(resultArray[10].ToString()),
-				RetryDelayUntil = string.IsNullOrEmpty(resultArray[11].ToString()) ? null :
-								 DateTime.Parse(resultArray[11].ToString()),
+				RetryDelayUntil = string.IsNullOrEmpty(resultArray[11].ToString()) ? null : DateTime.Parse(resultArray[11].ToString()),
 				WorkerId = workerId, // Newly assigned
 				CreatedAt = DateTimeOffset.Parse(resultArray[13].ToString()),
 				StartedAt = DateTimeOffset.Parse(resultArray[14].ToString()), // Newly set
@@ -394,8 +401,8 @@ public class RedisJobStore : IJobStore
 		return _serializer.Deserialize<T>(value);
 	}
 
-	public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, double retryDelayBaseSeconds, CancellationToken cancellationToken)
+	public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, CancellationToken cancellationToken)
 	{
-		return await _redisLuaScriptService.RecoverStuckJobs(_database, timeoutUnixTime, maxRetries, retryDelayBaseSeconds);
+		return await _redisLuaScriptService.RecoverStuckJobs(_database, timeoutUnixTime, maxRetries);
 	}
 }

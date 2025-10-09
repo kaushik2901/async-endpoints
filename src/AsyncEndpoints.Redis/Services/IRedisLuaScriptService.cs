@@ -7,5 +7,5 @@ public interface IRedisLuaScriptService
 {
 	Task<MethodResult<RedisValue[]>> ClaimSingleJob(IDatabase database, Guid jobId, Guid workerId);
 
-	Task<int> RecoverStuckJobs(IDatabase database, long timeoutUnixTime, int maxRetries, double retryDelayBaseSeconds);
+	Task<int> RecoverStuckJobs(IDatabase database, long timeoutUnixTime, int maxRetries);
 }
