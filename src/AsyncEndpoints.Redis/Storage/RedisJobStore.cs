@@ -23,6 +23,7 @@ public class RedisJobStore : IJobStore
 	private readonly string? _connectionString;
 
 	private static readonly string _queueKey = "ae:jobs:queue";
+	private static readonly string _inProgressKey = "ae:jobs:inprogress";
 	private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
 	public bool SupportsJobRecovery => true; // Redis supports recovery
@@ -308,7 +309,7 @@ public class RedisJobStore : IJobStore
 
 	private async Task<MethodResult<Job>> ClaimSingleJob(Guid jobId, Guid workerId, CancellationToken cancellationToken)
 	{
-		var result = await _redisLuaScriptService.ClaimSingleJob(_database, jobId, workerId, _dateTimeProvider, cancellationToken);
+		var result = await _redisLuaScriptService.ClaimSingleJob(_database, jobId, workerId);
 
 		if (!result.IsSuccess)
 		{
@@ -396,6 +397,6 @@ public class RedisJobStore : IJobStore
 
 	public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, double retryDelayBaseSeconds, CancellationToken cancellationToken)
 	{
-		return await _redisLuaScriptService.RecoverStuckJobs(_database, timeoutUnixTime, maxRetries, retryDelayBaseSeconds, _dateTimeProvider, cancellationToken);
+		return await _redisLuaScriptService.RecoverStuckJobs(_database, timeoutUnixTime, maxRetries, retryDelayBaseSeconds);
 	}
 }
