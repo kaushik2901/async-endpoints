@@ -23,6 +23,10 @@ public class AsyncEndpointRequestDelegateTests
 		_mockSerializer = new Mock<ISerializer>();
 	}
 
+	/// <summary>
+	/// Verifies that the AsyncEndpointRequestDelegate can be constructed with valid dependencies without throwing an exception.
+	/// This test ensures the constructor properly accepts and stores all required dependencies.
+	/// </summary>
 	[Fact]
 	public void Constructor_CreatesInstance()
 	{
@@ -36,6 +40,10 @@ public class AsyncEndpointRequestDelegateTests
 		Assert.NotNull(requestDelegate);
 	}
 
+	/// <summary>
+	/// Verifies that the AsyncEndpointRequestDelegate can handle requests with a custom handler without throwing exceptions.
+	/// This test ensures the request delegate properly supports custom handler execution.
+	/// </summary>
 	[Fact]
 	public async Task HandleAsync_WithCustomHandler_CanBeCalledWithoutError()
 	{

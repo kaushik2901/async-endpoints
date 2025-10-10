@@ -125,3 +125,74 @@ Similar patterns occur with other extension methods throughout the codebase. Whe
 6. Only use manual fixture creation when method parameters are insufficient for your scenario
 7. Create reusable test attributes for common test patterns
 8. Remember to mock underlying methods instead of extension methods
+
+## Moq Parameter Setup with Optional Parameters
+
+When mocking methods that have optional parameters (parameters with default values), you must specify all parameters in the setup if you want to control their values. This is a limitation in Moq.
+
+**Example of correct mocking:**
+```csharp
+// When the actual method signature is:
+// string Serialize<T>(T value, JsonSerializerOptions? options = null)
+
+// You should mock all parameters:
+mockSerializer
+    .Setup(x => x.Serialize(It.IsAny<object>(), It.IsAny<JsonSerializerOptions>()))
+    .Returns(expectedResult);
+
+// Or for the non-generic overload:
+// string Serialize(object value, Type type, JsonSerializerOptions? options = null)
+mockSerializer
+    .Setup(x => x.Serialize(It.IsAny<object>(), It.IsAny<Type>(), It.IsAny<JsonSerializerOptions>()))
+    .Returns(expectedResult);
+```
+
+## Unit Testing Standards
+
+### Test Structure
+- **Follow the Arrange-Act-Assert (AAA) pattern**:
+  - **Arrange**: Set up test data, dependencies, and mocks
+  - **Act**: Execute the operation being tested
+  - **Assert**: Verify the expected outcomes
+
+### Test Naming Convention
+- Use the format: `MethodName_Condition_ExpectedOutcome`
+- Example: `SubmitJob_CreatesNewJob_WhenJobDoesNotExist`
+
+### Test Documentation
+- Include XML documentation comments for each test method
+- Format: `/// <summary>Verifies that [specific behavior] [expected outcome].</summary>`
+- Example:
+```csharp
+/// <summary>
+/// Verifies that when a job ID is provided in the request headers and the job already exists, 
+/// the JobManager returns the existing job instead of creating a new one.
+/// This ensures idempotent behavior for job submissions with duplicate IDs.
+/// </summary>
+```
+
+### Test Scope
+- **Single Responsibility**: Each test should verify one specific behavior or scenario
+- **Independent**: Tests should not depend on each other or shared state
+- **Deterministic**: Tests should produce the same results every time they run
+
+### Assertion Guidelines
+- Group related assertions logically within a test, but consider splitting if testing different scenarios
+- Use specific assertions with descriptive messages when needed
+- Verify both success and failure scenarios
+- Test edge cases and error conditions
+
+### Mocking Standards
+- Use AutoFixture and AutoMoq for automatic dependency injection when possible
+- Mock the actual underlying methods, not extension methods
+- Set up return values and verify interactions appropriately
+- Avoid excessive mocking - aim for focused unit tests
+
+### Performance
+- Keep tests fast and efficient for good development workflow
+- Use in-memory implementations when possible instead of external dependencies
+
+### Maintainability
+- Write clear, readable test code that serves as documentation
+- Update test documentation when test behavior changes
+- Keep tests in sync with source code changes

@@ -8,6 +8,10 @@ namespace AsyncEndpoints.Redis.UnitTests.Services;
 
 public class JobHashConverterTests
 {
+	/// <summary>
+	/// Verifies that the JobHashConverter correctly converts a job instance to Redis hash entries.
+	/// This test ensures all job properties are properly serialized to hash entries for Redis storage.
+	/// </summary>
 	[Fact]
 	public void ConvertToHashEntries_WithValidJob_ReturnsCorrectHashEntries()
 	{
@@ -60,6 +64,10 @@ public class JobHashConverterTests
 		Assert.Contains(hashEntries, entry => entry.Name == "WorkerId" && entry.Value == job.WorkerId.ToString());
 	}
 
+	/// <summary>
+	/// Verifies that the JobHashConverter correctly converts Redis hash entries back to a job instance.
+	/// This test ensures all job properties are properly deserialized from hash entries retrieved from Redis.
+	/// </summary>
 	[Fact]
 	public void ConvertFromHashEntries_WithValidHashEntries_ReturnsCorrectJob()
 	{

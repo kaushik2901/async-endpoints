@@ -11,6 +11,10 @@ namespace AsyncEndpoints.UnitTests.Services;
 
 public class JobConsumerServiceTests
 {
+	/// <summary>
+	/// Verifies that the JobConsumerService can be constructed with valid dependencies without throwing an exception.
+	/// This ensures the constructor properly accepts and stores the required dependencies.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
 		[Frozen] Mock<IServiceScopeFactory> mockScopeFactory,
@@ -23,6 +27,10 @@ public class JobConsumerServiceTests
 		Assert.NotNull(service);
 	}
 
+	/// <summary>
+	/// Verifies that the JobConsumerService properly consumes available jobs from the channel and processes them.
+	/// This test ensures the consumer service correctly handles jobs available in the channel and delegates them to the processor.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ConsumeJobsAsync_ProcessesAvailableJobs(
 		[Frozen] Mock<IServiceProvider> mockServiceProvider,

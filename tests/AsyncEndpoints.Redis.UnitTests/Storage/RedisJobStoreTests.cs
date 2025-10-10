@@ -28,6 +28,10 @@ public class RedisJobStoreTests
 		_redisJobStore = new RedisJobStore(_mockLogger.Object, _mockDatabase.Object, mockDateTimeProvider.Object, _mockJobHashConverter.Object, _mockSerializer.Object, mockRedisLuaScriptService.Object);
 	}
 
+	/// <summary>
+	/// Verifies that the RedisJobStore can successfully create a new job when the job ID doesn't already exist.
+	/// This test ensures proper job storage functionality in Redis.
+	/// </summary>
 	[Fact]
 	public async Task CreateJob_ValidJob_ReturnsSuccess()
 	{
@@ -48,6 +52,10 @@ public class RedisJobStoreTests
 		_mockJobHashConverter.Verify(x => x.ConvertToHashEntries(job), Times.Once);
 	}
 
+	/// <summary>
+	/// Verifies that the RedisJobStore returns a failure when attempting to create a null job.
+	/// This test ensures proper validation of input parameters.
+	/// </summary>
 	[Fact]
 	public async Task CreateJob_NullJob_ReturnsFailure()
 	{
@@ -59,6 +67,10 @@ public class RedisJobStoreTests
 		Assert.Contains("Job cannot be null", result.Error.Message);
 	}
 
+	/// <summary>
+	/// Verifies that the RedisJobStore returns a failure when attempting to create a job with an empty GUID.
+	/// This test ensures proper validation of job ID requirements.
+	/// </summary>
 	[Fact]
 	public async Task CreateJob_EmptyGuidJob_ReturnsFailure()
 	{
@@ -73,6 +85,10 @@ public class RedisJobStoreTests
 		Assert.Contains("Job ID cannot be empty", result.Error.Message);
 	}
 
+	/// <summary>
+	/// Verifies that the RedisJobStore can successfully retrieve an existing job by its ID.
+	/// This test ensures proper job retrieval functionality from Redis storage.
+	/// </summary>
 	[Fact]
 	public async Task GetJobById_ExistingJob_ReturnsJob()
 	{
@@ -94,6 +110,10 @@ public class RedisJobStoreTests
 		_mockJobHashConverter.Verify(x => x.ConvertFromHashEntries(hashEntries), Times.Once);
 	}
 
+	/// <summary>
+	/// Verifies that the RedisJobStore returns a failure when attempting to retrieve a non-existing job.
+	/// This test ensures proper handling of missing job scenarios.
+	/// </summary>
 	[Fact]
 	public async Task GetJobById_NonExistingJob_ReturnsFailure()
 	{
@@ -110,6 +130,10 @@ public class RedisJobStoreTests
 		Assert.Contains("not found", result.Error.Message);
 	}
 
+	/// <summary>
+	/// Verifies that the RedisJobStore can successfully update an existing job.
+	/// This test ensures proper job update functionality in Redis storage.
+	/// </summary>
 	[Fact]
 	public async Task UpdateJob_ExistingJob_ReturnsSuccess()
 	{
@@ -138,6 +162,10 @@ public class RedisJobStoreTests
 		_mockDatabase.Verify(db => db.HashSetAsync($"ae:job:{job.Id}", hashEntries, CommandFlags.None), Times.Once);
 	}
 
+	/// <summary>
+	/// Verifies that the RedisJobStore returns a failure when attempting to update a non-existing job.
+	/// This test ensures proper validation when updating jobs that don't exist in storage.
+	/// </summary>
 	[Fact]
 	public async Task UpdateJob_NonExistingJob_ReturnsFailure()
 	{

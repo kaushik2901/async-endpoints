@@ -12,6 +12,10 @@ namespace AsyncEndpoints.Redis.UnitTests.Storage;
 
 public class RedisJobStoreExceptionTests
 {
+	/// <summary>
+	/// Verifies that when Redis operations fail during job creation, the RedisJobStore properly handles the exception and returns an error result.
+	/// This test ensures robust error handling when the underlying Redis service is unavailable.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task CreateJob_WhenRedisOperationFails_ShouldReturnErrorResult(
 		Mock<ILogger<RedisJobStore>> mockLogger,
@@ -45,6 +49,10 @@ public class RedisJobStoreExceptionTests
 		Assert.Contains("Redis operation failed", result.Error.Message);
 	}
 
+	/// <summary>
+	/// Verifies that when Redis operations fail during job retrieval, the RedisJobStore properly handles the exception and returns an error result.
+	/// This test ensures robust error handling when the underlying Redis service is unavailable.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task GetJobById_WhenRedisOperationFails_ShouldReturnErrorResult(
 		Mock<ILogger<RedisJobStore>> mockLogger,
@@ -71,6 +79,10 @@ public class RedisJobStoreExceptionTests
 		Assert.Contains("Redis operation failed", result.Error.Message);
 	}
 
+	/// <summary>
+	/// Verifies that when Redis operations fail during job update, the RedisJobStore properly handles the exception and returns an error result.
+	/// This test ensures robust error handling when the underlying Redis service is unavailable.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task UpdateJob_WhenRedisOperationFails_ShouldReturnErrorResult(
 		Mock<ILogger<RedisJobStore>> mockLogger,

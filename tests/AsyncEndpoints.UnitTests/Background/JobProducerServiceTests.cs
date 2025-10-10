@@ -12,6 +12,10 @@ namespace AsyncEndpoints.UnitTests.Background;
 
 public class JobProducerServiceTests
 {
+	/// <summary>
+	/// Verifies that the JobProducerService can be constructed with valid dependencies without throwing an exception.
+	/// This test ensures the constructor properly accepts and stores all required dependencies.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
 		Mock<ILogger<JobProducerService>> mockLogger,
@@ -36,6 +40,10 @@ public class JobProducerServiceTests
 		Assert.NotNull(service);
 	}
 
+	/// <summary>
+	/// Verifies that when cancellation is requested, the job producer service properly completes the channel.
+	/// This ensures clean shutdown when the service is stopped.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProduceJobsAsync_CompletesChannel_WhenCancellationRequested(
 		Mock<ILogger<JobProducerService>> mockLogger,
@@ -74,6 +82,10 @@ public class JobProducerServiceTests
 		Assert.True(channel.Reader.Completion.IsCompleted);
 	}
 
+	/// <summary>
+	/// Verifies that the job producer service calls the job claiming service and delay calculator during operation.
+	/// This test ensures the core functionality of claiming jobs and calculating delays works as expected.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProduceJobsAsync_CallsJobClaimingServiceAndDelayCalculator(
 		Mock<ILogger<JobProducerService>> mockLogger,
@@ -135,6 +147,11 @@ public class JobProducerServiceTests
 		mockDelayCalculatorService.Verify(x => x.CalculateDelay(result, workerConfigurations), Times.AtLeastOnce);
 	}
 
+	/// <summary>
+	/// Verifies that when the job claiming service throws an exception, the job producer service handles it gracefully 
+	/// and uses the appropriate error delay from the delay calculator.
+	/// This ensures resilience when external dependencies fail.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProduceJobsAsync_HandlesExceptionAndUsesErrorDelay(
 		Mock<ILogger<JobProducerService>> mockLogger,

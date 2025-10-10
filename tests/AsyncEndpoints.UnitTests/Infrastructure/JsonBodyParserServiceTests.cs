@@ -21,6 +21,11 @@ public class JsonBodyParserServiceTests
 		_jsonBodyParserService = _serviceProvider.GetRequiredService<IJsonBodyParserService>();
 	}
 
+	/// <summary>
+	/// Verifies that when valid JSON is provided in the request body with the correct content type,
+	/// the JsonBodyParserService correctly deserializes it to the target object type.
+	/// This ensures proper JSON parsing functionality for valid inputs.
+	/// </summary>
 	[Fact]
 	public async Task ParseAsync_WithValidJson_ReturnsDeserializedObject()
 	{
@@ -39,6 +44,10 @@ public class JsonBodyParserServiceTests
 		Assert.Equal(123, result.Data.Value);
 	}
 
+	/// <summary>
+	/// Verifies that when an empty request body is provided, the JsonBodyParserService returns a failure result.
+	/// This ensures proper error handling for empty content.
+	/// </summary>
 	[Fact]
 	public async Task ParseAsync_WithEmptyBody_ReturnsFailure()
 	{
@@ -54,6 +63,10 @@ public class JsonBodyParserServiceTests
 		Assert.NotNull(result.Error);
 	}
 
+	/// <summary>
+	/// Verifies that when a non-JSON content type is provided, the JsonBodyParserService returns a failure result.
+	/// This ensures proper validation of content types before attempting deserialization.
+	/// </summary>
 	[Fact]
 	public async Task ParseAsync_WithNonJsonContentType_ReturnsFailure()
 	{
@@ -68,6 +81,10 @@ public class JsonBodyParserServiceTests
 		Assert.NotNull(result.Error);
 	}
 
+	/// <summary>
+	/// Verifies that when a null request body is provided, the JsonBodyParserService returns a failure result.
+	/// This ensures proper error handling for null content.
+	/// </summary>
 	[Fact]
 	public async Task ParseAsync_WithNullBody_ReturnsFailure()
 	{

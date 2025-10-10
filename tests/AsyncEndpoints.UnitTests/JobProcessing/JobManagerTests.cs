@@ -14,6 +14,10 @@ namespace AsyncEndpoints.UnitTests.Services;
 
 public class JobManagerTests
 {
+	/// <summary>
+	/// Verifies that the JobManager can be constructed with valid dependencies without throwing an exception.
+	/// This test ensures the constructor properly accepts and stores all required dependencies.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
 		Mock<IJobStore> mockJobStore,
@@ -30,6 +34,10 @@ public class JobManagerTests
 		Assert.NotNull(manager);
 	}
 
+	/// <summary>
+	/// Verifies that when a job ID is not provided in the request headers, the JobManager creates a new job.
+	/// This test ensures new job creation works correctly when no existing job with the same ID exists.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task SubmitJob_CreatesNewJob_WhenJobDoesNotExist(
 		[Frozen] Mock<IJobStore> mockJobStore,
@@ -61,6 +69,11 @@ public class JobManagerTests
 		mockJobStore.Verify(x => x.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()), Times.Once);
 	}
 
+	/// <summary>
+	/// Verifies that when a job ID is provided in the request headers and the job already exists, 
+	/// the JobManager returns the existing job instead of creating a new one.
+	/// This ensures idempotent behavior for job submissions with duplicate IDs.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task SubmitJob_ReturnsExistingJob_WhenJobAlreadyExists(
 		[Frozen] Mock<IJobStore> mockJobStore,
@@ -92,6 +105,10 @@ public class JobManagerTests
 		mockJobStore.Verify(x => x.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()), Times.Never);
 	}
 
+	/// <summary>
+	/// Verifies that the JobManager can claim the next available job for a worker when one is available.
+	/// This test ensures the job claiming functionality works correctly for worker assignment.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ClaimNextAvailableJob_ReturnsJob_WhenJobAvailable(
 		[Frozen] Mock<IJobStore> mockJobStore,
@@ -117,6 +134,11 @@ public class JobManagerTests
 		Assert.Same(job, result.Data);
 	}
 
+	/// <summary>
+	/// Verifies that when a job completes successfully, the JobManager updates the job status to Completed 
+	/// and stores the result data.
+	/// This ensures successful job completion is properly recorded.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProcessJobSuccess_UpdatesJobWithResult_WhenJobExists(
 		[Frozen] Mock<IJobStore> mockJobStore,
@@ -147,6 +169,10 @@ public class JobManagerTests
 		Assert.Equal(resultData, job.Result);
 	}
 
+	/// <summary>
+	/// Verifies that when a job doesn't exist, the JobManager returns a failure when trying to process job success.
+	/// This ensures appropriate error handling when attempting to update non-existent jobs.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProcessJobSuccess_ReturnsFailure_WhenJobDoesNotExist(
 		[Frozen] Mock<IJobStore> mockJobStore,
@@ -171,6 +197,10 @@ public class JobManagerTests
 		Assert.False(result.IsSuccess);
 	}
 
+	/// <summary>
+	/// Verifies that when maximum retries are reached, the JobManager sets the job status to Failed and records the error.
+	/// This ensures failed jobs with exhausted retries are properly marked as permanently failed.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProcessJobFailure_SetsError_WhenMaxRetriesReached(
 		[Frozen] Mock<IJobStore> mockJobStore,
@@ -202,6 +232,11 @@ public class JobManagerTests
 		Assert.Equal(error, job.Error?.Message);
 	}
 
+	/// <summary>
+	/// Verifies that when retries are available, the JobManager schedules a retry by setting the job status to Scheduled 
+	/// and incrementing the retry count.
+	/// This ensures failed jobs with remaining retries are properly queued for retry attempts.
+	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProcessJobFailure_SchedulesRetry_WhenRetriesAvailable(
 		[Frozen] Mock<IJobStore> mockJobStore,
