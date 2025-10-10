@@ -13,8 +13,6 @@
 
 ## In progress
 
-- Ensure all interface have proper documentation comments
-- Write unit tests for RedisLuaScriptService
 
 ## Completed
 
@@ -26,3 +24,5 @@
 - AsyncEndpoints should return proper Result.Problem in case of error
 - AsyncEndpoints should allow developers to configure custom response (both success and error)
 - AsyncEndpoints must not return serialized result as part of job response
+- Ensure all interface have proper documentation comments
+- Write unit tests for RedisLuaScriptService
