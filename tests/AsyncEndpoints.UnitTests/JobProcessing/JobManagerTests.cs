@@ -123,11 +123,11 @@ public class JobManagerTests
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		Guid jobId,
-		string resultData)
+		string resultData,
+		Job job)
 	{
 		// Arrange
 		var options = Options.Create(new AsyncEndpointsConfigurations());
-		var job = new Fixture().Create<Job>();
 
 		mockJobStore
 			.Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
@@ -177,11 +177,11 @@ public class JobManagerTests
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		Guid jobId,
-		string error)
+		string error,
+		Job job)
 	{
 		// Arrange
 		var options = Options.Create(new AsyncEndpointsConfigurations());
-		var job = new Fixture().Create<Job>();
 
 		job.MaxRetries = 0; // Force max retries to be reached
 		mockJobStore
@@ -208,11 +208,11 @@ public class JobManagerTests
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		Guid jobId,
-		string error)
+		string error,
+		Job job)
 	{
 		// Arrange
 		var options = Options.Create(new AsyncEndpointsConfigurations());
-		var job = new Fixture().Create<Job>();
 
 		job.MaxRetries = 3;
 		job.RetryCount = 0;
