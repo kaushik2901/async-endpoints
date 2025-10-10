@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.Infrastructure.Serialization;
 
+/// <inheritdoc />
 public class JsonBodyParserService : IJsonBodyParserService
 {
 	private readonly ISerializer _serializer;
@@ -15,6 +16,7 @@ public class JsonBodyParserService : IJsonBodyParserService
 		_serializer = serializer;
 	}
 
+	/// <inheritdoc />
 	public async Task<MethodResult<T?>> ParseAsync<T>(HttpContext httpContext, CancellationToken cancellationToken = default)
 	{
 		try

@@ -6,25 +6,13 @@ using StackExchange.Redis;
 
 namespace AsyncEndpoints.Redis.Services;
 
-/// <summary>
-/// Provides functionality to execute Redis Lua scripts for job operations.
-/// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="RedisLuaScriptService"/> class.
-/// </remarks>
-/// <param name="logger">The logger instance.</param>
+/// <inheritdoc />
 public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateTimeProvider dateTimeProvider) : IRedisLuaScriptService
 {
 	private readonly ILogger<RedisLuaScriptService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
 
-	/// <summary>
-	/// Atomically claims a single job for a specific worker using a Redis Lua script.
-	/// </summary>
-	/// <param name="database">The Redis database instance.</param>
-	/// <param name="jobId">The unique identifier of the job to claim.</param>
-	/// <param name="workerId">The unique identifier of the worker claiming the job.</param>
-	/// <returns>A <see cref="MethodResult{RedisValue[]}"/> containing the raw Redis values of the claimed job or an error if the operation failed.</returns>
+	/// <inheritdoc />
 	public async Task<MethodResult<RedisValue[]>> ClaimSingleJob(IDatabase database, Guid jobId, Guid workerId)
 	{
 		var jobKey = GetJobKey(jobId);
@@ -152,13 +140,7 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
 		}
 	}
 
-	/// <summary>
-	/// Recovers stuck jobs that have been in progress longer than the specified timeout using a Redis Lua script.
-	/// </summary>
-	/// <param name="database">The Redis database instance.</param>
-	/// <param name="timeoutUnixTime">The Unix timestamp after which jobs are considered stuck.</param>
-	/// <param name="maxRetries">The maximum number of retries allowed for a job.</param>
-	/// <returns>The number of jobs that were successfully recovered.</returns>
+	/// <inheritdoc />
 	public async Task<int> RecoverStuckJobs(IDatabase database, long timeoutUnixTime, int maxRetries)
 	{
 		var luaScript = @"

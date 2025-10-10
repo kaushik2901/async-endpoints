@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.JobProcessing;
 
+/// <inheritdoc />
 public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions<AsyncEndpointsConfigurations> options, IDateTimeProvider dateTimeProvider) : IJobManager
 {
 	private readonly ILogger<JobManager> _logger = logger;
@@ -18,6 +19,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
 	private readonly AsyncEndpointsJobManagerConfiguration _jobManagerConfiguration = options.Value.JobManagerConfiguration;
 
+	/// <inheritdoc />
 	public async Task<MethodResult<Job>> SubmitJob(string jobName, string payload, HttpContext httpContext, CancellationToken cancellationToken)
 	{
 		_logger.LogDebug("Processing job creation for: {JobName}", jobName);
@@ -47,12 +49,14 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		return MethodResult<Job>.Success(job);
 	}
 
+	/// <inheritdoc />
 	public async Task<MethodResult<Job>> ClaimNextAvailableJob(Guid workerId, CancellationToken cancellationToken)
 	{
 		var claimedJob = await _jobStore.ClaimNextJobForWorker(workerId, cancellationToken);
 		return claimedJob;
 	}
 
+	/// <inheritdoc />
 	public async Task<MethodResult> ProcessJobSuccess(Guid jobId, string result, CancellationToken cancellationToken)
 	{
 		var jobResult = await _jobStore.GetJobById(jobId, cancellationToken);
@@ -66,6 +70,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		return await _jobStore.UpdateJob(job, cancellationToken);
 	}
 
+	/// <inheritdoc />
 	public async Task<MethodResult> ProcessJobFailure(Guid jobId, AsyncEndpointError error, CancellationToken cancellationToken)
 	{
 		var jobResult = await _jobStore.GetJobById(jobId, cancellationToken);
@@ -92,6 +97,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		return await _jobStore.UpdateJob(job, cancellationToken);
 	}
 
+	/// <inheritdoc />
 	public async Task<MethodResult<Job>> GetJobById(Guid jobId, CancellationToken cancellationToken)
 	{
 		return await _jobStore.GetJobById(jobId, cancellationToken);

@@ -8,22 +8,13 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Background;
 
-/// <summary>
-/// Implements the IJobConsumerService interface to consume jobs from a channel and process them.
-/// Uses a semaphore to control the level of concurrency for job processing.
-/// </summary>
+/// <inheritdoc />
 public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScopeFactory serviceScopeFactory) : IJobConsumerService
 {
 	private readonly ILogger<JobConsumerService> _logger = logger;
 	private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
-	/// <summary>
-	/// Consumes jobs from the provided channel and processes them asynchronously.
-	/// </summary>
-	/// <param name="readerJobChannel">The channel reader to read jobs from.</param>
-	/// <param name="semaphoreSlim">The semaphore to control concurrency.</param>
-	/// <param name="stoppingToken">A cancellation token to stop the consumption process.</param>
-	/// <returns>A task representing the asynchronous operation.</returns>
+	/// <inheritdoc />
 	public async Task ConsumeJobsAsync(ChannelReader<Job> readerJobChannel, SemaphoreSlim semaphoreSlim, CancellationToken stoppingToken)
 	{
 		try

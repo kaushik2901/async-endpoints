@@ -9,9 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Handlers;
 
-/// <summary>
-/// Handles asynchronous endpoint requests by creating background jobs for processing.
-/// </summary>
+/// <inheritdoc />
 public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer, AsyncEndpointsConfigurations configurations) : IAsyncEndpointRequestDelegate
 {
 	private readonly ILogger<AsyncEndpointRequestDelegate> _logger = logger;
@@ -19,16 +17,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 	private readonly ISerializer _serializer = serializer;
 	private readonly AsyncEndpointsConfigurations _configurations = configurations;
 
-	/// <summary>
-	/// Handles an asynchronous request by creating a job and returning an immediate response.
-	/// </summary>
-	/// <typeparam name="TRequest">The type of the request object.</typeparam>
-	/// <param name="jobName">The unique name of the job, used to identify the specific handler.</param>
-	/// <param name="httpContext">The HTTP context containing the request information.</param>
-	/// <param name="request">The request object to process asynchronously.</param>
-	/// <param name="handler">Optional custom handler function to process the request.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>An <see cref="IResult"/> representing the HTTP response.</returns>
+	/// <inheritdoc />
 	public async Task<IResult> HandleAsync<TRequest>(
 		string jobName,
 		HttpContext httpContext,

@@ -8,10 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Background;
 
+/// <inheritdoc />
 /// <summary>
-/// Implements the IJobProcessorService interface to process individual jobs.
-/// Handles the execution of job payloads, serialization/deserialization of requests and responses,
-/// and updates job status and results in the job manager.
+/// Provides functionality for processing individual jobs by executing their handlers and managing job lifecycle updates.
 /// </summary>
 public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManager jobManager, IHandlerExecutionService handlerExecutionService, ISerializer serializer) : IJobProcessorService
 {
@@ -20,12 +19,7 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 	private readonly IHandlerExecutionService _handlerExecutionService = handlerExecutionService;
 	private readonly ISerializer _serializer = serializer;
 
-	/// <summary>
-	/// Processes a single job asynchronously.
-	/// </summary>
-	/// <param name="job">The job to process.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A task representing the asynchronous operation.</returns>
+	/// <inheritdoc />
 	public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
 	{
 		try

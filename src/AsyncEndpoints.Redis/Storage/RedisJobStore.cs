@@ -8,9 +8,10 @@ using StackExchange.Redis;
 
 namespace AsyncEndpoints.Redis.Storage;
 
+/// <inheritdoc />
 /// <summary>
-/// A Redis-based implementation of the IJobStore interface.
-/// This implementation stores jobs in Redis and is suitable for distributed deployments.
+/// A Redis-based implementation of IJobStore that provides distributed job storage suitable for multi-instance deployments.
+/// This implementation uses Redis for persistence and supports job recovery operations.
 /// </summary>
 public class RedisJobStore : IJobStore
 {
@@ -67,12 +68,7 @@ public class RedisJobStore : IJobStore
 		_database = database ?? throw new ArgumentNullException(nameof(database));
 	}
 
-	/// <summary>
-	/// Creates a new job in the store.
-	/// </summary>
-	/// <param name="job">The job to create.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A <see cref="MethodResult"/> indicating the result of the operation.</returns>
+	/// <inheritdoc />
 	public async Task<MethodResult> CreateJob(Job job, CancellationToken cancellationToken)
 	{
 		try
@@ -129,12 +125,7 @@ public class RedisJobStore : IJobStore
 		}
 	}
 
-	/// <summary>
-	/// Retrieves a job by its unique identifier.
-	/// </summary>
-	/// <param name="id">The unique identifier of the job to retrieve.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A <see cref="MethodResult{T}"/> containing the job if found, or an error if not found.</returns>
+	/// <inheritdoc />
 	public async Task<MethodResult<Job>> GetJobById(Guid id, CancellationToken cancellationToken)
 	{
 		try
@@ -182,12 +173,7 @@ public class RedisJobStore : IJobStore
 		}
 	}
 
-	/// <summary>
-	/// Updates the complete job entity.
-	/// </summary>
-	/// <param name="job">The updated job entity.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A <see cref="MethodResult"/> indicating the result of the operation.</returns>
+	/// <inheritdoc />
 	public async Task<MethodResult> UpdateJob(Job job, CancellationToken cancellationToken)
 	{
 		try
@@ -258,12 +244,7 @@ public class RedisJobStore : IJobStore
 		}
 	}
 
-	/// <summary>
-	/// Atomically claims the next available job for a specific worker.
-	/// </summary>
-	/// <param name="workerId">The unique identifier of the worker claiming the job.</param>
-	/// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-	/// <returns>A <see cref="MethodResult{T}"/> containing the claimed job or null if no jobs available.</returns>
+	/// <inheritdoc />
 	public async Task<MethodResult<Job>> ClaimNextJobForWorker(Guid workerId, CancellationToken cancellationToken)
 	{
 		try

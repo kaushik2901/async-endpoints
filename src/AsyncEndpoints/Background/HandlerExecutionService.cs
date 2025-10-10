@@ -8,8 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Background;
 
+/// <inheritdoc />
 /// <summary>
-/// Implements the IHandlerExecutionService interface to execute registered handlers for specific jobs.
 /// Creates a service scope for handler execution to ensure proper dependency injection and disposal.
 /// </summary>
 public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IServiceScopeFactory serviceScopeFactory) : IHandlerExecutionService
@@ -17,6 +17,7 @@ public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IS
 	private readonly ILogger<HandlerExecutionService> _logger = logger;
 	private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
+	/// <inheritdoc />
 	public async Task<MethodResult<object>> ExecuteHandlerAsync(string jobName, object request, Job job, CancellationToken cancellationToken)
 	{
 		_logger.LogDebug("Executing handler for job: {JobName}, JobId: {JobId}", jobName, job.Id);

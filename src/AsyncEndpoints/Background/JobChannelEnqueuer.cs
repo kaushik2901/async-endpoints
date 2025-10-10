@@ -8,20 +8,12 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Background;
 
-/// <summary>
-/// Implements the IJobChannelEnqueuer interface to handle enqueuing jobs to a channel writer
-/// </summary>
+/// <inheritdoc />
 public class JobChannelEnqueuer(ILogger<JobChannelEnqueuer> logger) : IJobChannelEnqueuer
 {
 	private readonly ILogger<JobChannelEnqueuer> _logger = logger;
 
-	/// <summary>
-	/// Attempts to enqueue a job to the provided channel writer with both non-blocking and timeout-based approaches
-	/// </summary>
-	/// <param name="writerJobChannel">The channel writer to write the job to</param>
-	/// <param name="job">The job to enqueue</param>
-	/// <param name="stoppingToken">Cancellation token</param>
-	/// <returns>True if successfully enqueued, false otherwise</returns>
+	/// <inheritdoc />
 	public async Task<bool> Enqueue(ChannelWriter<Job> writerJobChannel, Job job, CancellationToken stoppingToken)
 	{
 		// Try non-blocking write first
