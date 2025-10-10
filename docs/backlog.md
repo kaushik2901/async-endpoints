@@ -2,7 +2,6 @@
 
 ## Pending
 
-- Fix all the issues from exception-handling-analysis.md
 - AsyncEndpoints should support both AOT and JIT compilation
 - AsyncEndpoints should record individual job runs
 - AsyncEndpoints should support EF core as job storage
@@ -13,6 +12,7 @@
 
 ## In progress
 
+- Fix all the issues from exception-handling-analysis.md
 
 ## Completed
 

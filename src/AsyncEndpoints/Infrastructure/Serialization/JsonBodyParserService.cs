@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncEndpoints.Utilities;
@@ -44,9 +45,17 @@ public class JsonBodyParserService : IJsonBodyParserService
 
 			return MethodResult<T?>.Success(result);
 		}
+		catch (JsonException jsonEx)
+		{
+			return MethodResult<T?>.Failure(new InvalidOperationException($"Invalid JSON format in request body for type {typeof(T).Name}", jsonEx));
+		}
+		catch (NotSupportedException notSupportedEx)
+		{
+			return MethodResult<T?>.Failure(new InvalidOperationException($"JSON deserialization not supported for type: {typeof(T).Name}", notSupportedEx));
+		}
 		catch (Exception ex)
 		{
-			return MethodResult<T?>.Failure(ex);
+			return MethodResult<T?>.Failure(new InvalidOperationException($"Unexpected error during JSON parsing for type {typeof(T).Name}", ex));
 		}
 	}
 }

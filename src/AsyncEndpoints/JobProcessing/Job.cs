@@ -174,6 +174,12 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
 	public void UpdateStatus(JobStatus status, IDateTimeProvider dateTimeProvider)
 	{
+		// Validate legal state transitions
+		if (!IsValidStateTransition(Status, status))
+		{
+			throw new InvalidOperationException($"Invalid state transition from {Status} to {status}");
+		}
+
 		Status = status;
 		var now = dateTimeProvider.DateTimeOffsetNow;
 		LastUpdatedAt = now;
@@ -189,6 +195,36 @@ public sealed class Job(DateTimeOffset currentTime)
 				CompletedAt = now;
 				break;
 		}
+	}
+
+	/// <summary>
+	/// Validates if a state transition is legal.
+	/// </summary>
+	/// <param name="from">The current status of the job.</param>
+	/// <param name="to">The target status to transition to.</param>
+	/// <returns>True if the state transition is valid, otherwise false.</returns>
+	private static bool IsValidStateTransition(JobStatus from, JobStatus to)
+	{
+		// Define legal state transitions
+		return (from, to) switch
+		{
+			// Allow jobs to transition directly to completed/failed from queued (e.g. for immediate processing)
+			(JobStatus.Queued, JobStatus.Completed) => true,
+			(JobStatus.Queued, JobStatus.Failed) => true,
+			(JobStatus.Queued, JobStatus.Canceled) => true,
+			(JobStatus.Queued, JobStatus.InProgress) => true,
+			(JobStatus.Queued, JobStatus.Scheduled) => true, // For retries with delay
+			(JobStatus.Scheduled, JobStatus.Queued) => true, // When scheduled job becomes available
+			(JobStatus.Scheduled, JobStatus.Canceled) => true,
+			(JobStatus.InProgress, JobStatus.Completed) => true,
+			(JobStatus.InProgress, JobStatus.Failed) => true,
+			(JobStatus.InProgress, JobStatus.Canceled) => true,
+			(JobStatus.Failed, JobStatus.Queued) => true, // For retries without delay
+			(JobStatus.Failed, JobStatus.Scheduled) => true, // For retries with delay
+			(JobStatus.Failed, JobStatus.Canceled) => true,
+			(JobStatus.Completed, JobStatus.Canceled) => true, // Completed jobs can be canceled if needed
+			_ => from == to // Allow same state updates for timestamp refreshes
+		};
 	}
 
 	/// <summary>

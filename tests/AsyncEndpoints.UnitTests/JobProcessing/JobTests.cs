@@ -266,4 +266,66 @@ public class JobTests
 		Assert.NotNull(job.RouteParams);
 		Assert.NotNull(job.QueryParams);
 	}
+
+	[Fact]
+	public void UpdateStatus_WithValidStateTransition_Succeeds()
+	{
+		// Arrange
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var expectedTime = DateTimeOffset.UtcNow;
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+
+		// Act & Assert - Different valid transitions
+		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
+		Assert.Equal(JobStatus.InProgress, job.Status);
+
+		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object);
+		Assert.Equal(JobStatus.Completed, job.Status);
+	}
+
+	[Fact]
+	public void UpdateStatus_WithValidRetryTransition_Succeeds()
+	{
+		// Arrange
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var expectedTime = DateTimeOffset.UtcNow;
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object); // First transition to failed
+
+		// Act & Assert - Transition from Failed to Queued for retry
+		job.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
+		Assert.Equal(JobStatus.Queued, job.Status);
+	}
+
+	[Fact]
+	public void UpdateStatus_WithInvalidStateTransition_ThrowsInvalidOperationException()
+	{
+		// Arrange
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var expectedTime = DateTimeOffset.UtcNow;
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object); // Start in Completed state
+
+		// Act & Assert - Attempt invalid transition from Completed to InProgress
+		var exception = Assert.Throws<InvalidOperationException>(() =>
+			job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object));
+		Assert.Contains("Invalid state transition", exception.Message);
+	}
+
+	[Fact]
+	public void UpdateStatus_WithSameState_DoesNotThrow()
+	{
+		// Arrange
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var expectedTime = DateTimeOffset.UtcNow;
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+
+		// Act & Assert - Same state transition should be allowed
+		job.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object); // Same as initial state
+		Assert.Equal(JobStatus.Queued, job.Status);
+	}
 }

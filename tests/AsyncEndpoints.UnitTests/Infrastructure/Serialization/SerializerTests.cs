@@ -194,6 +194,116 @@ public class SerializerTests
 		Assert.IsType<JsonException>(exception);
 	}
 
+	/// <summary>
+	/// Verifies that the stream-based Deserialize method correctly deserializes valid JSON from a stream.
+	/// This test ensures proper deserialization functionality from stream input.
+	/// </summary>
+	[Fact]
+	public void Deserialize_Stream_Succeeds_WithValidJson()
+	{
+		// Arrange
+		var jsonOptions = Options.Create(new JsonOptions());
+		var serializer = new Serializer(jsonOptions);
+		var json = "{\"name\":\"Test\",\"value\":123}";
+		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+
+		// Act
+		var result = serializer.Deserialize<TestDto>(stream);
+
+		// Assert
+		Assert.NotNull(result);
+		Assert.Equal("Test", result.Name);
+		Assert.Equal(123, result.Value);
+	}
+
+	/// <summary>
+	/// Verifies that the stream-based Deserialize method handles invalid JSON appropriately.
+	/// This test ensures proper exception handling when malformed JSON is provided via stream.
+	/// </summary>
+	[Fact]
+	public void Deserialize_Stream_HandlesInvalidJson_Gracefully()
+	{
+		// Arrange
+		var jsonOptions = Options.Create(new JsonOptions());
+		var serializer = new Serializer(jsonOptions);
+		var invalidJson = "{invalid json}";
+		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
+
+		// Act & Assert
+		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(stream));
+
+		Assert.NotNull(exception);
+		Assert.IsType<JsonException>(exception);
+	}
+
+	/// <summary>
+	/// Verifies that the stream-based Deserialize method handles IOException appropriately.
+	/// This test ensures proper error handling when stream reading issues occur.
+	/// </summary>
+	[Fact]
+	public void Deserialize_Stream_HandlesIOException_Gracefully()
+	{
+		// Arrange
+		var jsonOptions = Options.Create(new JsonOptions());
+		var serializer = new Serializer(jsonOptions);
+		var stream = new MockStreamThatThrowsIOException();
+		var validJson = "{\"name\":\"Test\",\"value\":123}";
+		var jsonBytes = System.Text.Encoding.UTF8.GetBytes(validJson);
+
+		// We'll write the bytes to the stream but the mock will throw IOException on read
+		stream.Write(jsonBytes, 0, jsonBytes.Length);
+		stream.Seek(0, SeekOrigin.Begin);
+
+		// Act & Assert
+		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(stream));
+
+		Assert.NotNull(exception);
+		Assert.IsType<InvalidOperationException>(exception);
+		Assert.Contains("Error reading from stream", exception.Message);
+	}
+
+	/// <summary>
+	/// Verifies that the async stream-based DeserializeAsync method correctly deserializes valid JSON from a stream.
+	/// This test ensures proper async deserialization functionality from stream input.
+	/// </summary>
+	[Fact]
+	public async Task DeserializeAsync_Stream_Succeeds_WithValidJson()
+	{
+		// Arrange
+		var jsonOptions = Options.Create(new JsonOptions());
+		var serializer = new Serializer(jsonOptions);
+		var json = "{\"name\":\"Test\",\"value\":123}";
+		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+
+		// Act
+		var result = await serializer.DeserializeAsync<TestDto>(stream);
+
+		// Assert
+		Assert.NotNull(result);
+		Assert.Equal("Test", result.Name);
+		Assert.Equal(123, result.Value);
+	}
+
+	/// <summary>
+	/// Verifies that the async stream-based DeserializeAsync method handles invalid JSON appropriately.
+	/// This test ensures proper exception handling when malformed JSON is provided via stream in async context.
+	/// </summary>
+	[Fact]
+	public async Task DeserializeAsync_Stream_HandlesInvalidJson_Gracefully()
+	{
+		// Arrange
+		var jsonOptions = Options.Create(new JsonOptions());
+		var serializer = new Serializer(jsonOptions);
+		var invalidJson = "{invalid json}";
+		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
+
+		// Act & Assert
+		var exception = await Record.ExceptionAsync(() => serializer.DeserializeAsync<TestDto>(stream));
+
+		Assert.NotNull(exception);
+		Assert.IsType<JsonException>(exception);
+	}
+
 	private class TestClass
 	{
 		public string? PropertyName { get; set; }
@@ -203,5 +313,29 @@ public class SerializerTests
 	{
 		public string? Name { get; set; }
 		public int Value { get; set; }
+	}
+
+	private class MockStreamThatThrowsIOException : Stream
+	{
+		private readonly MemoryStream _innerStream = new();
+		private bool _throwOnRead = true;
+
+		public override bool CanRead => true;
+		public override bool CanSeek => true;
+		public override bool CanWrite => true;
+		public override long Length => _innerStream.Length;
+		public override long Position { get => _innerStream.Position; set => _innerStream.Position = value; }
+
+		public override void Flush() => _innerStream.Flush();
+		public override int Read(byte[] buffer, int offset, int count)
+		{
+			if (_throwOnRead)
+				throw new IOException("Simulated IO exception");
+			return _innerStream.Read(buffer, offset, count);
+		}
+
+		public override long Seek(long offset, SeekOrigin origin) => _innerStream.Seek(offset, origin);
+		public override void SetLength(long value) => _innerStream.SetLength(value);
+		public override void Write(byte[] buffer, int offset, int count) => _innerStream.Write(buffer, offset, count);
 	}
 }

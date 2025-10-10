@@ -69,7 +69,23 @@ public class Serializer(IOptions<JsonOptions> jsonOptions) : ISerializer
 		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
 #pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 #pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
-		return JsonSerializer.Deserialize<T>(stream, serializerOptions);
+		try
+		{
+			return JsonSerializer.Deserialize<T>(stream, serializerOptions);
+		}
+		catch (JsonException)
+		{
+			// Reset stream position if possible and re-throw with context
+			if (stream.CanSeek)
+			{
+				stream.Seek(0, SeekOrigin.Begin);
+			}
+			throw;
+		}
+		catch (IOException ioEx)
+		{
+			throw new InvalidOperationException("Error reading from stream during deserialization", ioEx);
+		}
 #pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 	}
@@ -80,7 +96,23 @@ public class Serializer(IOptions<JsonOptions> jsonOptions) : ISerializer
 		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
 #pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 #pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
-		return JsonSerializer.Deserialize(stream, type, serializerOptions);
+		try
+		{
+			return JsonSerializer.Deserialize(stream, type, serializerOptions);
+		}
+		catch (JsonException)
+		{
+			// Reset stream position if possible and re-throw with context
+			if (stream.CanSeek)
+			{
+				stream.Seek(0, SeekOrigin.Begin);
+			}
+			throw;
+		}
+		catch (IOException ioEx)
+		{
+			throw new InvalidOperationException("Error reading from stream during deserialization", ioEx);
+		}
 #pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 	}
@@ -91,7 +123,23 @@ public class Serializer(IOptions<JsonOptions> jsonOptions) : ISerializer
 		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
 #pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 #pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
-		return await JsonSerializer.DeserializeAsync<T>(stream, serializerOptions, cancellationToken);
+		try
+		{
+			return await JsonSerializer.DeserializeAsync<T>(stream, serializerOptions, cancellationToken);
+		}
+		catch (JsonException)
+		{
+			// Reset stream position if possible and re-throw with context
+			if (stream.CanSeek)
+			{
+				stream.Seek(0, SeekOrigin.Begin);
+			}
+			throw;
+		}
+		catch (IOException ioEx)
+		{
+			throw new InvalidOperationException("Error reading from stream during deserialization", ioEx);
+		}
 #pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 	}
@@ -102,7 +150,23 @@ public class Serializer(IOptions<JsonOptions> jsonOptions) : ISerializer
 		var serializerOptions = options ?? _jsonOptions.SerializerOptions;
 #pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 #pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
-		return await JsonSerializer.DeserializeAsync(stream, type, serializerOptions, cancellationToken);
+		try
+		{
+			return await JsonSerializer.DeserializeAsync(stream, type, serializerOptions, cancellationToken);
+		}
+		catch (JsonException)
+		{
+			// Reset stream position if possible and re-throw with context
+			if (stream.CanSeek)
+			{
+				stream.Seek(0, SeekOrigin.Begin);
+			}
+			throw;
+		}
+		catch (IOException ioEx)
+		{
+			throw new InvalidOperationException("Error reading from stream during deserialization", ioEx);
+		}
 #pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 #pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 	}
