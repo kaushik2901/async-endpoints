@@ -4,7 +4,7 @@ using AsyncEndpoints.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AsyncEndpoints.UnitTests.Services;
+namespace AsyncEndpoints.UnitTests.Infrastructure;
 
 public class JsonBodyParserServiceTests
 {
@@ -162,6 +162,6 @@ public class JsonBodyParserServiceTests
 	private class UnsupportedType
 	{
 		// Using an unusual type to potentially trigger NotSupportedException
-		public IntPtr SomeIntPtr { get; set; }
+		public nint SomeIntPtr { get; set; }
 	}
 }

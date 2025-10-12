@@ -2,7 +2,6 @@ using System.Text.Json;
 using AsyncEndpoints.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Options;
-using Moq;
 
 namespace AsyncEndpoints.UnitTests.Infrastructure.Serialization;
 

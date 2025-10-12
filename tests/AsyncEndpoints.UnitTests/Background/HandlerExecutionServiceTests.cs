@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Services;
+namespace AsyncEndpoints.UnitTests.Background;
 
 public class HandlerExecutionServiceTests
 {

@@ -5,7 +5,7 @@ using AutoFixture.Xunit2;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.InMemoryStore;
+namespace AsyncEndpoints.UnitTests.JobProcessing;
 
 public class InMemoryJobStoreTests
 {

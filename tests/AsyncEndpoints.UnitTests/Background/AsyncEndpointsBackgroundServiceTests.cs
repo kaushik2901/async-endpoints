@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.BackgroundWorker;
+namespace AsyncEndpoints.UnitTests.Background;
 
 public class AsyncEndpointsBackgroundServiceTests
 {

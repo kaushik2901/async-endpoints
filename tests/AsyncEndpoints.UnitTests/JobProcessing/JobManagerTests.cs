@@ -3,14 +3,13 @@ using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
-using AutoFixture;
 using AutoFixture.Xunit2;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Services;
+namespace AsyncEndpoints.UnitTests.JobProcessing;
 
 public class JobManagerTests
 {

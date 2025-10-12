@@ -1,6 +1,6 @@
 using AsyncEndpoints.Handlers;
 
-namespace AsyncEndpoints.UnitTests.Entities;
+namespace AsyncEndpoints.UnitTests.Handlers;
 
 public class HandlerRegistrationTests
 {

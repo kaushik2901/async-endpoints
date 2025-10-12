@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Services;
+namespace AsyncEndpoints.UnitTests.Configuration;
 
 public class ConfigurableResponseTests
 {

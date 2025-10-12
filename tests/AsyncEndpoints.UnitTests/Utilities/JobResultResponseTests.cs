@@ -1,12 +1,10 @@
+using System.Text.Json;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
 using Moq;
-using System.Text.Json;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
 
