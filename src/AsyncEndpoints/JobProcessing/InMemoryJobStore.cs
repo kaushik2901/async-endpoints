@@ -132,6 +132,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				return Task.FromCanceled<MethodResult>(cancellationToken);
 			}
 
+			// Use the immutable objects pattern to ensure atomic update
 			if (!jobs.TryGetValue(job.Id, out var existingJob))
 			{
 				_logger.LogWarning("Attempted to update non-existent job {JobId}", job.Id);
@@ -139,9 +140,27 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 					AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {job.Id} not found")));
 			}
 
-			// Update the job in the store
-			jobs[job.Id] = job;
-			job.LastUpdatedAt = _dateTimeProvider.DateTimeOffsetNow;
+			// Create a new job instance with updated properties using the existing job as base
+			var updatedJob = existingJob.CreateCopy(
+				status: job.Status,
+				workerId: job.WorkerId,
+				startedAt: job.StartedAt,
+				completedAt: job.CompletedAt,
+				result: job.Result,
+				error: job.Error,
+				retryCount: job.RetryCount,
+				retryDelayUntil: job.RetryDelayUntil,
+				lastUpdatedAt: _dateTimeProvider.DateTimeOffsetNow
+			);
+
+			// Perform atomic update using TryUpdate once (no loop needed with immutable pattern)
+			if (!jobs.TryUpdate(job.Id, updatedJob, existingJob))
+			{
+				// If TryUpdate fails, it means another thread modified the job between our read and update
+				_logger.LogWarning("Job {JobId} was modified by another thread during update", job.Id);
+				return Task.FromResult(MethodResult.Failure(
+					AsyncEndpointError.FromCode("JOB_UPDATE_CONFLICT", "Job was modified by another thread")));
+			}
 
 			_logger.LogDebug("Updated job {JobId}", job.Id);
 			return Task.FromResult(MethodResult.Success());
@@ -178,19 +197,42 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				.OrderBy(job => job.CreatedAt) // Claim the oldest job first
 				.FirstOrDefault();
 
-			if (availableJob != null)
+			if (availableJob == null)
 			{
-				availableJob.WorkerId = workerId;
-				availableJob.Status = JobStatus.InProgress;
-				availableJob.StartedAt = _dateTimeProvider.DateTimeOffsetNow;
-
-				_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", availableJob.Id, workerId);
-				return Task.FromResult(MethodResult<Job>.Success(availableJob));
+				_logger.LogDebug("No available jobs to claim for worker {WorkerId}", workerId);
+				// Return successful result with null data to indicate no jobs available (not an error)
+				return Task.FromResult(MethodResult<Job>.Success(default));
 			}
 
-			_logger.LogDebug("No available jobs to claim for worker {WorkerId}", workerId);
-			// Return successful result with null data to indicate no jobs available (not an error)
-			return Task.FromResult(MethodResult<Job>.Success(default));
+			// Use the immutable objects pattern to ensure atomic update of the job
+			Job? currentJob;
+			Job updatedJob;
+			do
+			{
+				if (!jobs.TryGetValue(availableJob.Id, out currentJob))
+				{
+					_logger.LogDebug("Job {JobId} no longer exists", availableJob.Id);
+					return Task.FromResult(MethodResult<Job>.Success(default));
+				}
+
+				// Check if the job was already claimed by another worker
+				if (currentJob.WorkerId != null)
+				{
+					_logger.LogDebug("Job {JobId} was already claimed by another worker", availableJob.Id);
+					return Task.FromResult(MethodResult<Job>.Success(default));
+				}
+
+				// Create a copy of the job with updated properties using the CreateCopy method
+				updatedJob = currentJob.CreateCopy(
+					status: JobStatus.InProgress,
+					workerId: workerId,
+					startedAt: _dateTimeProvider.DateTimeOffsetNow,
+					lastUpdatedAt: _dateTimeProvider.DateTimeOffsetNow
+				);
+			} while (!jobs.TryUpdate(availableJob.Id, updatedJob, currentJob));
+
+			_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", availableJob.Id, workerId);
+			return Task.FromResult(MethodResult<Job>.Success(updatedJob));
 		}
 		catch (Exception ex)
 		{

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Utilities;
@@ -275,5 +276,54 @@ public sealed class Job(DateTimeOffset currentTime)
 	public void SetRetryTime(DateTime delayUntil)
 	{
 		RetryDelayUntil = delayUntil;
+	}
+
+	/// <summary>
+	/// Creates a deep copy of the current job with updated properties.
+	/// </summary>
+	/// <param name="status">Optional new status for the job.</param>
+	/// <param name="workerId">Optional new worker ID for the job.</param>
+	/// <param name="startedAt">Optional new started time for the job.</param>
+	/// <param name="completedAt">Optional new completed time for the job.</param>
+	/// <param name="lastUpdatedAt">Optional new last updated time for the job.</param>
+	/// <param name="result">Optional new result for the job.</param>
+	/// <param name="error">Optional new error for the job.</param>
+	/// <param name="retryCount">Optional new retry count for the job.</param>
+	/// <param name="retryDelayUntil">Optional new retry delay time for the job.</param>
+	/// <param name="dateTimeProvider">Provider for current date and time.</param>
+	/// <returns>A new job instance with copied properties and any specified updates.</returns>
+	public Job CreateCopy(
+		JobStatus? status = null,
+		Guid? workerId = null,
+		DateTimeOffset? startedAt = null,
+		DateTimeOffset? completedAt = null,
+		DateTimeOffset? lastUpdatedAt = null,
+		string? result = null,
+		AsyncEndpointError? error = null,
+		int? retryCount = null,
+		DateTime? retryDelayUntil = null,
+		IDateTimeProvider? dateTimeProvider = null)
+	{
+		return new Job
+		{
+			Id = this.Id,
+			Name = this.Name,
+			Status = status ?? this.Status,
+			Headers = new Dictionary<string, List<string?>>(this.Headers), // Deep copy
+			RouteParams = new Dictionary<string, object?>(this.RouteParams), // Deep copy
+			QueryParams = new List<KeyValuePair<string, List<string?>>>(this.QueryParams.Select(kvp =>
+				new KeyValuePair<string, List<string?>>(kvp.Key, new List<string?>(kvp.Value)))), // Deep copy
+			Payload = this.Payload, // String is immutable
+			Result = result ?? this.Result,
+			Error = error ?? this.Error, // AsyncEndpointError should be immutable or treated as such
+			RetryCount = retryCount ?? this.RetryCount,
+			MaxRetries = this.MaxRetries,
+			RetryDelayUntil = retryDelayUntil ?? this.RetryDelayUntil,
+			WorkerId = workerId ?? this.WorkerId,
+			CreatedAt = this.CreatedAt,
+			StartedAt = startedAt ?? this.StartedAt,
+			CompletedAt = completedAt ?? this.CompletedAt,
+			LastUpdatedAt = lastUpdatedAt ?? (dateTimeProvider?.DateTimeOffsetNow ?? this.LastUpdatedAt)
+		};
 	}
 }
