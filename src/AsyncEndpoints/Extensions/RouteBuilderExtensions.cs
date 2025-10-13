@@ -56,6 +56,35 @@ public static class RouteBuilderExtensions
 	}
 
 	/// <summary>
+	/// Maps an asynchronous POST endpoint that processes requests without body in the background.
+	/// </summary>
+	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="pattern">The URL pattern for the endpoint.</param>
+	/// <param name="handler">Optional custom handler function to process the request.</param>
+	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+	public static IEndpointConventionBuilder MapAsyncPost(
+		this IEndpointRouteBuilder endpoints,
+		string jobName,
+		string pattern,
+		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null)
+	{
+		return endpoints
+			.MapPost(pattern, async (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+			{
+				try
+				{
+					return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, NoBodyRequest.CreateInstance(), handler, cancellationToken);
+				}
+				catch (Exception ex)
+				{
+					return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+				}
+			})
+			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+	}
+
+	/// <summary>
 	/// Maps an asynchronous GET endpoint that fetches job responses by job ID.
 	/// </summary>
 	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>

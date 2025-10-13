@@ -19,3 +19,18 @@ public interface IAsyncEndpointRequestHandler<TRequest, TResponse>
 	/// <returns>A <see cref="MethodResult{TResponse}"/> containing the result of the operation.</returns>
 	Task<MethodResult<TResponse>> HandleAsync(AsyncContext<TRequest> context, CancellationToken token);
 }
+
+/// <summary>
+/// Defines a contract for handling asynchronous endpoint requests without body data, returning responses of type TResponse.
+/// </summary>
+/// <typeparam name="TResponse">The type of the response object.</typeparam>
+public interface IAsyncEndpointRequestHandler<TResponse>
+{
+	/// <summary>
+	/// Handles the asynchronous request without body data and returns a result.
+	/// </summary>
+	/// <param name="context">The context containing HTTP context information.</param>
+	/// <param name="token">A cancellation token to cancel the operation.</param>
+	/// <returns>A <see cref="MethodResult{TResponse}"/> containing the result of the operation.</returns>
+	Task<MethodResult<TResponse>> HandleAsync(AsyncContext context, CancellationToken token);
+}

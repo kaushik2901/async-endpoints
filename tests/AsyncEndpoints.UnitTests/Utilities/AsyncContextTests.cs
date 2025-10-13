@@ -1,4 +1,5 @@
 using AsyncEndpoints.Handlers;
+using AsyncEndpoints.UnitTests.TestSupport;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
 
@@ -58,9 +59,48 @@ public class AsyncContextTests
 		// Assert
 		Assert.Equal("newValue", context.RouteParams["newParam"]);
 	}
-}
 
-public class TestRequest
-{
-	public string? Value { get; set; }
+	/// <summary>
+	/// Verifies that the base AsyncContext class can be instantiated and its properties are set correctly.
+	/// This tests the non-generic base class that is used for no-body requests.
+	/// </summary>
+	[Fact]
+	public void BaseAsyncContext_Constructor_SetsPropertiesCorrectly()
+	{
+		// Arrange
+		var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
+		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
+		var query = new List<KeyValuePair<string, List<string?>>> { new("query1", ["value1"]) };
+
+		// Act
+		var context = new AsyncContext(headers, routeParams, query);
+
+		// Assert
+		Assert.Equal(headers, context.Headers);
+		Assert.Equal(routeParams, context.RouteParams);
+		Assert.Equal(query, context.QueryParams);
+	}
+
+	/// <summary>
+	/// Verifies that the base AsyncContext inherits correctly from the generic version.
+	/// This ensures that both classes have the same base properties available.
+	/// </summary>
+	[Fact]
+	public void BaseAsyncContext_Inheritance_EnablesPolymorphism()
+	{
+		// Arrange
+		var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
+		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
+		var query = new List<KeyValuePair<string, List<string?>>> { new("query1", ["value1"]) };
+
+		// Act
+		var baseContext = new AsyncContext(headers, routeParams, query);
+		var genericContext = new AsyncContext<TestRequest>(new TestRequest(), headers, routeParams, query);
+
+		// Assert
+		// Both contexts should have the same base properties
+		Assert.Equal(baseContext.Headers, genericContext.Headers);
+		Assert.Equal(baseContext.RouteParams, genericContext.RouteParams);
+		Assert.Equal(baseContext.QueryParams, genericContext.QueryParams);
+	}
 }

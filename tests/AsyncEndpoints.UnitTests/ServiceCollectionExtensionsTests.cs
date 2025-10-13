@@ -129,4 +129,28 @@ public class ServiceCollectionExtensionsTests
 		Assert.NotNull(handler);
 		Assert.IsType<TestAsyncEndpointRequestHandler>(handler);
 	}
+
+	/// <summary>
+	/// Verifies that the AddAsyncEndpointHandler method for no-body requests registers the handler correctly.
+	/// This ensures handlers without request body can be registered and resolved from the service container.
+	/// </summary>
+	[Fact]
+	public void AddAsyncEndpointHandler_NoBody_RegistersHandlerCorrectly()
+	{
+		// Arrange
+		var services = new ServiceCollection();
+		services.AddLogging();
+		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
+		services.AddAsyncEndpointsInMemoryStore(); // Required for the request delegate
+
+		// Act
+		services.AddAsyncEndpointHandler<TestNoBodyRequestHandler, string>("no-body-test-job");
+
+		// Assert
+		var provider = services.BuildServiceProvider();
+		var handler = provider.GetKeyedService<IAsyncEndpointRequestHandler<string>>("no-body-test-job");
+
+		Assert.NotNull(handler);
+		Assert.IsType<TestNoBodyRequestHandler>(handler);
+	}
 }

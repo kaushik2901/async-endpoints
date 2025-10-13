@@ -93,9 +93,9 @@ public static class ServiceCollectionExtensions
 		services.AddTransient<IJobProducerService, JobProducerService>();
 		services.AddTransient<IJobProcessorService, JobProcessorService>();
 		services.AddTransient<IJobChannelEnqueuer, JobChannelEnqueuer>();
+		services.AddTransient<IJobClaimingService, JobClaimingService>();
 		services.AddTransient<IHandlerExecutionService, HandlerExecutionService>();
 		services.AddTransient<IDelayCalculatorService, DelayCalculatorService>();
-		services.AddTransient<IJobClaimingService, JobClaimingService>();
 
 		// Always register the main background service
 		services.AddHostedService<AsyncEndpointsBackgroundService>();
@@ -112,7 +112,7 @@ public static class ServiceCollectionExtensions
 	/// <summary>
 	/// Registers an asynchronous endpoint handler for processing requests of type TRequest and returning responses of type TResponse.
 	/// </summary>
-	/// <typeparam name="TAsyncEndpointRequestHandler">The type of the handler that implements IAsyncEndpointRequestHandler.</typeparam>
+	/// <typeparam name="TAsyncEndpointRequestHandler">The type of the handler that implements IAsyncEndpointRequestHandler<TRequest, TResponse>.</typeparam>
 	/// <typeparam name="TRequest">The type of the request object.</typeparam>
 	/// <typeparam name="TResponse">The type of the response object.</typeparam>
 	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
@@ -129,6 +129,32 @@ public static class ServiceCollectionExtensions
 				var handler = serviceProvider.GetRequiredKeyedService<IAsyncEndpointRequestHandler<TRequest, TResponse>>(jobName);
 				var context = AsyncContextBuilder.Build(request, job);
 				return handler.HandleAsync(context, cancellationToken);
+			});
+
+		return services;
+	}
+
+	/// <summary>
+	/// Adds an asynchronous endpoint handler for requests without body to the service collection.
+	/// </summary>
+	/// <typeparam name="TAsyncEndpointRequestHandler">The type of the handler that implements IAsyncEndpointRequestHandler<TResponse>.</typeparam>
+	/// <typeparam name="TResponse">The type of the response object.</typeparam>
+	/// <param name="services">The service collection to add the handler to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <returns>The service collection for method chaining.</returns>
+	public static IServiceCollection AddAsyncEndpointHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TAsyncEndpointRequestHandler, TResponse>(
+		this IServiceCollection services,
+		string jobName)
+		where TAsyncEndpointRequestHandler : class, IAsyncEndpointRequestHandler<TResponse>
+	{
+		services.AddKeyedScoped<IAsyncEndpointRequestHandler<TResponse>, TAsyncEndpointRequestHandler>(jobName);
+
+		HandlerRegistrationTracker.Register<NoBodyRequest, TResponse>(jobName,
+			(serviceProvider, request, job, cancellationToken) =>
+			{
+				var handler = serviceProvider.GetRequiredKeyedService<IAsyncEndpointRequestHandler<TResponse>>(jobName);
+				var genericContext = AsyncContextBuilder.Build(request, job);
+				return handler.HandleAsync(genericContext, cancellationToken);
 			});
 
 		return services;
