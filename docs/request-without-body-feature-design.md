@@ -10,62 +10,13 @@ Currently, AsyncEndpoints requires a request body to be present when processing 
 
 We need a base `AsyncContext` type for requests without body data that will be inherited by the generic version. The base context should have consistent property names with the existing implementation:
 
-```csharp
-/// <summary>
-/// Represents the context for an asynchronous request without a body, containing HTTP context information.
-/// </summary>
-/// <param name="headers">The HTTP headers from the original request.</param>
-/// <param name="routeParams">The route parameters from the original request.</param>
-/// <param name="queryParams">The query parameters from the original request.</param>
-public class AsyncContext(
-    IDictionary<string, List<string?>> headers,
-    IDictionary<string, object?> routeParams,
-    IEnumerable<KeyValuePair<string, List<string?>>> queryParams)
-{
-    /// <summary>
-    /// Gets the HTTP headers from the original request.
-    /// </summary>
-    public IDictionary<string, List<string?>> Headers { get; init; } = headers;
-
-    /// <summary>
-    /// Gets or sets the route parameters from the original request.
-    /// </summary>
-    public IDictionary<string, object?> RouteParams { get; set; } = routeParams;
-
-    /// <summary>
-    /// Gets the query parameters from the original request.
-    /// </summary>
-    public IEnumerable<KeyValuePair<string, List<string?>>> QueryParams { get; init; } = queryParams;
-}
-```
+Check `src\AsyncEndpoints\Handlers\AsyncContext.cs` path and create a new AsyncContext class with all fields except request
 
 **Note**: This base class allows us to use the same method names for both with-body and without-body operations since the generic and non-generic versions can coexist without conflict.
 
 ### 2. Updated Generic AsyncContext Type
 
-The existing generic `AsyncContext<TRequest>` will inherit from the base `AsyncContext` to reuse common properties:
-
-```csharp
-/// <summary>
-/// Represents the context for an asynchronous request, containing the request object and associated HTTP context information.
-/// </summary>
-/// <typeparam name="TRequest">The type of the request object.</typeparam>
-/// <param name="request">The original request object.</param>
-/// <param name="headers">The HTTP headers from the original request.</param>
-/// <param name="routeParams">The route parameters from the original request.</param>
-/// <param name="queryParams">The query parameters from the original request.</param>
-public sealed class AsyncContext<TRequest>(
-    TRequest request,
-    IDictionary<string, List<string?>> headers,
-    IDictionary<string, object?> routeParams,
-    IEnumerable<KeyValuePair<string, List<string?>>> queryParams) : AsyncContext(headers, routeParams, queryParams)
-{
-    /// <summary>
-    /// Gets the original request object.
-    /// </summary>
-    public TRequest Request { get; init; } = request;
-}
-```
+The existing generic `AsyncContext<TRequest>` will inherit from the base `AsyncContext` to reuse common properties with request field.
 
 ### 3. Updated Route Mapping Extensions
 
@@ -114,19 +65,7 @@ We need to update the interface to include a method for handling no-body request
 /// Defines a contract for handling asynchronous endpoint requests and managing their lifecycle.
 /// </summary>
 public interface IAsyncEndpointRequestDelegate
-{
-    /// <summary>
-    /// Handles an asynchronous request by creating a job and returning an immediate response.
-    /// </summary>
-    /// <typeparam name="TRequest">The type of the request object.</typeparam>
-    /// <param name="jobName">The unique name of the job, used to identify the specific handler.</param>
-    /// <param name="httpContext">The HTTP context containing the request information.</param>
-    /// <param name="request">The request object to process asynchronously.</param>
-    /// <param name="handler">Optional custom handler function to process the request.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>An <see cref="IResult"/> representing the HTTP response.</returns>
-    Task<IResult> HandleAsync<TRequest>(string jobName, HttpContext httpContext, TRequest request, Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null, CancellationToken cancellationToken = default);
-    
+{  
     /// <summary>
     /// Handles an asynchronous request without body data by creating a job and returning an immediate response.
     /// </summary>
@@ -219,8 +158,7 @@ builder.Services
     .AddAsyncEndpoints()
     .AddAsyncEndpointsInMemoryStore()
     .AddAsyncEndpointsWorker()
-    // Register the no-body handler
-    .AddAsyncEndpointHandler<NoBodyRequestHandler, string>("simple-job");
+    .AddAsyncEndpointHandler<NoBodyRequestHandler, string>("simple-job"); // Register the no-body handler
 
 var app = builder.Build();
 
