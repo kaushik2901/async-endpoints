@@ -14,6 +14,10 @@ builder.Services
 var app = builder.Build();
 
 app.MapAsyncGetJobDetails();
-app.MapAsyncPost<ExampleJobRequest>("ExampleJob", "/jobs/submit");
+
+app.MapAsyncPost("empty-body-success", "/empty-body/success");
+app.MapAsyncPost("empty-body-failure", "/empty-body/failure");
+app.MapAsyncPost<ExampleRequest>("with-body-success", "/with-body/success");
+app.MapAsyncPost<ExampleRequest>("with-body-failure", "/with-body/failure");
 
 await app.RunAsync();

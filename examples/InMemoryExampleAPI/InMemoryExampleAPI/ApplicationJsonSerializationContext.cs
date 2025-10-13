@@ -3,8 +3,8 @@ using InMemoryExampleAPI.Models;
 
 namespace AsyncEndpoints.API;
 
-[JsonSerializable(typeof(SampleRequest))]
-[JsonSerializable(typeof(SampleResponse))]
+[JsonSerializable(typeof(ExampleRequest))]
+[JsonSerializable(typeof(ExampleResponse))]
 public partial class ApplicationJsonSerializationContext : JsonSerializerContext
 {
 

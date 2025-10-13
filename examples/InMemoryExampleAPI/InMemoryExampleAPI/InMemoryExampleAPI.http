@@ -1,22 +1,43 @@
 @InMemoryExampleAPI_HostAddress = http://localhost:5003
 
-POST {{InMemoryExampleAPI_HostAddress}}/async-operation
-Accept: application/json
+### Success operation with request body
+POST {{InMemoryExampleAPI_HostAddress}}/with-body/success
 Content-Type: application/json
-Async-Job-Id: e827fa2f-1882-45e3-b6b7-97c0d45b122f
 
 {
     "id": 1,
-    "title": "Ok"
+    "name": "Success Test",
+    "description": "This operation will succeed",
+    "processingDelaySeconds": 1
 }
 
 ###
 
-POST {{InMemoryExampleAPI_HostAddress}}/async-operation
-Accept: application/json
+### Failure operation with request body
+POST {{InMemoryExampleAPI_HostAddress}}/with-body/failure
 Content-Type: application/json
 
 {
-    "id": 1,
-    "title": "Ok"
+    "id": 2,
+    "name": "Failure Test",
+    "description": "This operation will fail",
+    "processingDelaySeconds": 1
 }
+
+###
+
+### Success operation without request body
+POST {{InMemoryExampleAPI_HostAddress}}/empty-body/success?action=cleanup&delay=1
+
+###
+
+### Failure operation without request body
+POST {{InMemoryExampleAPI_HostAddress}}/empty-body/failure?action=test&delay=1
+
+###
+
+### Check job status (replace {jobId} with actual job ID from previous requests)
+GET {{InMemoryExampleAPI_HostAddress}}/jobs/{jobId}
+Accept: application/json
+
+###

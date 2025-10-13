@@ -220,6 +220,7 @@ public sealed class Job(DateTimeOffset currentTime)
 			(JobStatus.InProgress, JobStatus.Completed) => true,
 			(JobStatus.InProgress, JobStatus.Failed) => true,
 			(JobStatus.InProgress, JobStatus.Canceled) => true,
+			(JobStatus.InProgress, JobStatus.Scheduled) => true,
 			(JobStatus.Failed, JobStatus.Queued) => true, // For retries without delay
 			(JobStatus.Failed, JobStatus.Scheduled) => true, // For retries with delay
 			(JobStatus.Failed, JobStatus.Canceled) => true,

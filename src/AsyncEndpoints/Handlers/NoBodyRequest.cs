@@ -8,7 +8,5 @@ public class NoBodyRequest
 	// This class serves as a placeholder for endpoints without request body
 	// It contains no properties as no body data is expected
 
-	private NoBodyRequest() { }
-
 	public static NoBodyRequest CreateInstance() => new();
 }
