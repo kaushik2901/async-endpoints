@@ -1,45 +1,49 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-		<Nullable>enable</Nullable>
-		<AssemblyTitle>AsyncEndpoints</AssemblyTitle>
-		<PackageId>AsyncEndpoints</PackageId>
-		<Title>AsyncEndpoints</Title>
-		<PackageVersion>1.0.0-alpha</PackageVersion>
-		<Authors>Kaushik Jadav</Authors>
-		<Description>A .NET library for handling long running async operations with built-in queuing, status tracking, and multiple storage backends. Features clean fluent API, and seamless integration for tasks like file processing and data exports.</Description>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageTags>async;endpoints;background-jobs;queue</PackageTags>
-		<RepositoryUrl>https://github.com/kaushik2901/async-endpoints</RepositoryUrl>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<IsAotCompatible>true</IsAotCompatible>
-		<EnableAotAnalyzer>true</EnableAotAnalyzer>
-		<TrimmerRemoveIsolatedAssemblyAttributes>false</TrimmerRemoveIsolatedAssemblyAttributes>
-		<PackageIcon>async-endpoints.png</PackageIcon>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
-		<InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.AspNetCore.Http.Generated</InterceptorsPreviewNamespaces>
-	</PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <AssemblyTitle>AsyncEndpoints</AssemblyTitle>
+    <PackageId>AsyncEndpoints</PackageId>
+    <Title>AsyncEndpoints</Title>
+    <PackageVersion>1.1.1-alpha</PackageVersion>
+    <Authors>Kaushik Jadav</Authors>
+    <Description>A .NET library for handling long running async operations with built-in queuing, status tracking, and multiple storage backends. Features clean fluent API, and seamless integration for tasks like file processing and data exports.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>async;endpoints;background-jobs;queue</PackageTags>
+    <RepositoryUrl>https://github.com/kaushik2901/async-endpoints</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <IsAotCompatible>true</IsAotCompatible>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <TrimmerRemoveIsolatedAssemblyAttributes>false</TrimmerRemoveIsolatedAssemblyAttributes>
+    <PackageIcon>async-endpoints.png</PackageIcon>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
+    <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Microsoft.AspNetCore.Http.Generated</InterceptorsPreviewNamespaces>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-			<_Parameter1>AsyncEndpoints.UnitTests</_Parameter1>
-		</AssemblyAttribute>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-			<_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
-		</AssemblyAttribute>
-	</ItemGroup>
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
-	<ItemGroup>
-		<None Include="..\..\async-endpoints.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\..\README.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-	</ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>AsyncEndpoints.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\async-endpoints.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 </Project>

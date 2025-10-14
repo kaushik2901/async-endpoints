@@ -1,38 +1,42 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<PackageId>AsyncEndpoints.Redis</PackageId>
-		<Title>AsyncEndpoints.Redis</Title>
-		<PackageVersion>1.0.0-alpha</PackageVersion>
-		<Authors>Kaushik Jadav</Authors>
-		<Description>Redis integration for AsyncEndpoints library with distributed job storage capabilities.</Description>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageTags>async;endpoints;background-jobs;queue;redis</PackageTags>
-		<RepositoryUrl>https://github.com/kaushik2901/async-endpoints</RepositoryUrl>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<IsAotCompatible>true</IsAotCompatible>
-		<PackageIcon>async-endpoints.png</PackageIcon>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	</PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>AsyncEndpoints.Redis</PackageId>
+    <Title>AsyncEndpoints.Redis</Title>
+    <PackageVersion>1.1.1-alpha</PackageVersion>
+    <Authors>Kaushik Jadav</Authors>
+    <Description>Redis integration for AsyncEndpoints library with distributed job storage capabilities.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>async;endpoints;background-jobs;queue;redis</PackageTags>
+    <RepositoryUrl>https://github.com/kaushik2901/async-endpoints</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <IsAotCompatible>true</IsAotCompatible>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PackageIcon>async-endpoints.png</PackageIcon>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-		<None Include="..\..\async-endpoints.png">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<None Include="..\..\README.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-		</None>
-		<PackageReference Include="StackExchange.Redis" Version="2.7.4" />
-	</ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <None Include="..\..\async-endpoints.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <PackageReference Include="StackExchange.Redis" Version="2.7.4" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\AsyncEndpoints\AsyncEndpoints.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsyncEndpoints\AsyncEndpoints.csproj" />
+  </ItemGroup>
 
 </Project>
