@@ -1,33 +1,40 @@
 # AsyncEndpoints
 
-AsyncEndpoints is a .NET library that enables developers to easily build asynchronous APIs for processing long-running operations in the background. Instead of blocking the client while waiting for a task to complete, AsyncEndpoints queues the request and immediately responds with a 202 (Accepted) status containing a job ID and metadata for tracking the request's progress.
+![AsyncEndpoints Logo](async-endpoints-banner.png "AsyncEndpoints")
 
-## Features
+A modern .NET library for building asynchronous APIs that handle long-running operations in the background. AsyncEndpoints provides a clean, efficient solution for processing time-consuming tasks without blocking the client, using a producer-consumer pattern with configurable storage and retry mechanisms.
 
-- **Asynchronous Processing**: Long-running operations are processed in the background without blocking the client
-- **Job Status Tracking**: Monitor the status of your asynchronous jobs through dedicated endpoints
-- **Retry Logic**: Failed jobs are retried automatically based on configured settings
-- **Multiple Storage Options**: Support for in-memory and Redis storage backends
-- **Background Workers**: Built-in background service for processing queued jobs
-- **Cancellation Support**: Ability to cancel jobs in progress
+## Key Features
+
+- **Asynchronous Processing**: Execute long-running operations in the background without blocking clients
+- **Job Status Tracking**: Monitor job progress through dedicated endpoints with rich metadata
+- **Configurable Retry Logic**: Automatic retries with exponential backoff for failed jobs
+- **Multiple Storage Backends**: Support for in-memory (development) and Redis (production) storage
+- **Background Workers**: Built-in hosted service with configurable concurrency and queue limits
+- **Distributed Recovery**: Automatic recovery of stuck jobs in multi-instance deployments
+- **HTTP Context Preservation**: Maintains headers, route parameters, and query parameters through job lifecycle
+- **Structured Error Handling**: Comprehensive error reporting and exception serialization
+- **Circuit Breaker Pattern**: Prevents system overload with configurable queue limits
 
 ## Installation
 
-Install the core AsyncEndpoints NuGet package (Yet to be published in public):
+Install the core AsyncEndpoints package:
 
 ```bash
 dotnet add package AsyncEndpoints
 ```
 
-For Redis support, also install the Redis extension package:
+For Redis support, also install the Redis extension:
 
 ```bash
 dotnet add package AsyncEndpoints.Redis
 ```
 
-## Quick Start
+## Getting Started
 
-### 1. Setup in Program.cs
+### 1. Basic Setup
+
+Configure services in your `Program.cs`:
 
 ```csharp
 using AsyncEndpoints;
@@ -35,230 +42,307 @@ using AsyncEndpoints;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddAsyncEndpoints()
-    .AddAsyncEndpointsInMemoryStore() // Use in-memory store for development
-    .AddAsyncEndpointsWorker() // Add background worker
-    .AddAsyncEndpointHandler<AsyncEndpointHandler<Request, Response>, Request, Response>("MyJobName"); // Register handlers
+    .AddAsyncEndpoints() // Core services
+    .AddAsyncEndpointsInMemoryStore() // Development storage
+    .AddAsyncEndpointsWorker(); // Background processing
+
+// Register job handlers
+builder.Services.AddAsyncEndpointHandler<ProcessDataHandler, DataRequest, ProcessResult>("ProcessData");
 
 var app = builder.Build();
 
-// Define an async endpoint
-app.MapAsyncPost<Request>("MyJobName", "/api/async-operation");
+// Define async endpoints
+app.MapAsyncPost<DataRequest>("ProcessData", "/api/process-data");
+app.MapAsyncGetJobDetails("/jobs/{jobId:guid}"); // Job status endpoint
 
 await app.RunAsync();
 ```
 
-### 2. Create Request and Response Models
+### 2. Define Request and Response Models
 
 ```csharp
-public class Request
+public class DataRequest
 {
     public string Data { get; set; } = string.Empty;
+    public int ProcessingPriority { get; set; } = 1;
 }
 
-public class Response
+public class ProcessResult
 {
     public string ProcessedData { get; set; } = string.Empty;
+    public DateTime ProcessedAt { get; set; } = DateTime.UtcNow;
+    public int CharacterCount { get; set; }
 }
 ```
 
-### 3. Create a Handler
+### 3. Create Request Handler
+
+Implement your business logic with access to full HTTP context:
 
 ```csharp
-using AsyncEndpoints.Contracts;
+using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Utilities;
 
-public class AsyncEndpointHandler<Request, Response>(ILogger<AsyncEndpointHandler<Request, Response>> logger) 
-    : IAsyncEndpointRequestHandler<Request, Response>
+public class ProcessDataHandler(ILogger<ProcessDataHandler> logger) 
+    : IAsyncEndpointRequestHandler<DataRequest, ProcessResult>
 {
-    public async Task<MethodResult<Response>> HandleAsync(AsyncContext<Request> context, CancellationToken token)
+    public async Task<MethodResult<ProcessResult>> HandleAsync(AsyncContext<DataRequest> context, CancellationToken token)
     {
-        var requestData = context.Request;
+        var request = context.Request;
+        
+        // Access HTTP context information
         var headers = context.Headers;
-        var queryParams = context.QueryParams;
         var routeParams = context.RouteParams;
+        var queryParams = context.QueryParams;
+        
+        logger.LogInformation("Processing data request: {Data} with priority {Priority}", 
+            request.Data, request.ProcessingPriority);
 
-        logger.LogInformation("Processing request with data: {Data}", requestData.Data);
-
-        // Simulate async processing
-        await Task.Delay(5000, token);
-
-        var result = new Response 
-        { 
-            ProcessedData = $"Processed: {requestData.Data}" 
-        };
-
-        logger.LogInformation("Request processed successfully.");
-        return MethodResult<Response>.Success(result);
+        try
+        {
+            // Simulate processing time
+            await Task.Delay(TimeSpan.FromSeconds(5), token);
+            
+            // Perform actual processing
+            var result = new ProcessResult
+            {
+                ProcessedData = $"Processed: {request.Data.ToUpper()}",
+                ProcessedAt = DateTime.UtcNow,
+                CharacterCount = request.Data.Length
+            };
+            
+            logger.LogInformation("Successfully processed request with ID");
+            return MethodResult<ProcessResult>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error processing request: {Data}", request.Data);
+            return MethodResult<ProcessResult>.Failure(ex);
+        }
     }
 }
 ```
 
-### 4. Make an Async Request
+### 4. Client Integration
 
-Send a POST request to your async endpoint:
+Submit jobs and track their status with a single POST request:
 
 ```bash
-curl -X POST http://localhost:5000/api/async-operation \\
-  -H \"Content-Type: application/json\" \\
-  -d '{\"data\": \"Hello Async World\"}'
+# Submit a job
+curl -X POST http://localhost:5000/api/process-data \
+  -H "Content-Type: application/json" \
+  -d '{"data": "Hello, AsyncEndpoints!", "processingPriority": 2}'
+
+# Response immediately returns 202 Accepted with job details:
+# {
+#   "id": "5b7e0e4a-8f8b-4c8a-9f1f-8d8f8e8f8e8f",
+#   "name": "ProcessData",
+#   "status": "Queued",
+#   "retryCount": 0,
+#   "maxRetries": 3,
+#   "createdAt": "2025-10-14T10:30:00.000Z",
+#   "startedAt": null,
+#   "completedAt": null,
+#   "lastUpdatedAt": "2025-10-14T10:30:00.000Z",
+#   "result": null
+# }
 ```
 
-You'll receive a 202 (Accepted) response immediately with job details:
+Monitor job status using the provided job ID:
 
-```json
-{
-    "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-    "name": "MyJobName",
-    "status": "Queued",
-    "retryCount": 0,
-    "maxRetries": 3,
-    "createdAt": "2025-09-25T10:30:00.000Z",
-    "startedAt": null,
-    "completedAt": null,
-    "lastUpdatedAt": "2025-09-25T10:30:00.000Z",
-    "result": null,
-    "exception": null
-}
+```bash
+# Check job status
+curl http://localhost:5000/jobs/5b7e0e4a-8f8b-4c8a-9f1f-8d8f8e8f8e8f
 ```
 
 ## Configuration
 
-You can customize AsyncEndpoints behavior by configuring options:
+### Core Settings
 
 ```csharp
 builder.Services.AddAsyncEndpoints(options =>
 {
-    // Job Manager Configuration
-    options.JobManagerConfiguration.DefaultMaxRetries = 5; // Set default maximum retry attempts
-    options.JobManagerConfiguration.RetryDelayBaseSeconds = 3.0; // Set base delay for retry exponential backoff
-    options.JobManagerConfiguration.MaxConcurrentJobs = 20; // Set maximum number of concurrent jobs
-    options.JobManagerConfiguration.JobPollingIntervalMs = 2000; // Set polling interval for job polling
+    // Worker configuration (background processing)
+    options.WorkerConfigurations.MaximumConcurrency = Environment.ProcessorCount; // Default: CPU count
+    options.WorkerConfigurations.PollingIntervalMs = 1000; // Default: 1 second
+    options.WorkerConfigurations.JobTimeoutMinutes = 30; // Default: 30 minutes
+    options.WorkerConfigurations.BatchSize = 5; // Default: 5 jobs per batch
+    options.WorkerConfigurations.MaximumQueueSize = 50; // Default: 50 jobs max
     
-    // Worker Configuration
-    options.WorkerConfigurations.MaximumConcurrency = 10; // Set max concurrent jobs
-    options.WorkerConfigurations.PollingIntervalMs = 500; // Set polling interval
-    options.WorkerConfigurations.JobTimeoutMinutes = 60; // Set job timeout
-    options.WorkerConfigurations.BatchSize = 10; // Set maximum number of jobs to process in a single batch
-    options.WorkerConfigurations.MaximumQueueSize = 100; // Set maximum size of the job queue
+    // Job manager configuration (retry and processing logic)
+    options.JobManagerConfiguration.DefaultMaxRetries = 3; // Default: 3 retries
+    options.JobManagerConfiguration.RetryDelayBaseSeconds = 2.0; // Default: 2s (exponential backoff)
+    options.JobManagerConfiguration.MaxConcurrentJobs = 10; // Default: 10 concurrent jobs
+    options.JobManagerConfiguration.JobPollingIntervalMs = 1000; // Default: 1 second
+    options.JobManagerConfiguration.MaxClaimBatchSize = 10; // Default: 10 jobs per claim batch
+    options.JobManagerConfiguration.JobClaimTimeout = TimeSpan.FromMinutes(5); // Default: 5 minutes
+    options.JobManagerConfiguration.StaleJobClaimCheckInterval = TimeSpan.FromMinutes(1); // Default: 1 minute
 });
 ```
 
-## Storage Providers
+### Distributed Recovery Configuration
 
-AsyncEndpoints supports multiple storage backends:
+Enable automatic recovery for stuck jobs in distributed environments:
 
-### In-Memory Store (Development)
+```csharp
+builder.Services.AddAsyncEndpointsWorker(recoveryConfiguration =>
+{
+    recoveryConfiguration.EnableDistributedJobRecovery = true; // Default: true
+    recoveryConfiguration.JobTimeoutMinutes = 30; // Default: 30 minutes
+    recoveryConfiguration.RecoveryCheckIntervalSeconds = 300; // Default: 5 minutes
+    recoveryConfiguration.MaximumRetries = 3; // Default: 3 retries
+});
+```
+
+### Response Customization
+
+Customize response formatting for different scenarios:
+
+```csharp
+builder.Services.AddAsyncEndpoints(options =>
+{
+    options.ResponseConfigurations.JobSubmittedResponseFactory = async (job, context) =>
+    {
+        context.Response.Headers.Append("Async-Job-Id", job.Id.ToString());
+        return Results.Accepted($"/jobs/{job.Id}", job);
+    };
+    
+    options.ResponseConfigurations.JobStatusResponseFactory = async (jobResult, context) =>
+    {
+        if (jobResult.IsSuccess)
+        {
+            return Results.Ok(jobResult.Data);
+        }
+        return Results.Problem("Job not found", statusCode: 404);
+    };
+});
+```
+
+## Storage Options
+
+### In-Memory Storage (Development)
+
+Suitable for single-instance deployments and development:
 
 ```csharp
 builder.Services.AddAsyncEndpointsInMemoryStore();
 ```
 
-> Note: In-memory store is only suitable for development or single-instance deployments.
+> **Note**: Data is lost when the application restarts. Use only for development.
 
-### Redis Store (Production)
+### Redis Storage (Production)
 
-For production applications that require persistence and distributed processing, add the Redis store:
+Distributed storage with persistence and multi-instance support:
 
 ```csharp
-// Option 1: Using connection string
+// Option 1: Connection string
 builder.Services.AddAsyncEndpointsRedisStore("localhost:6379");
 
-// Option 2: Using IConnectionMultiplexer
-var connectionMultiplexer = ConnectionMultiplexer.Connect("localhost:6379");
-builder.Services.AddAsyncEndpointsRedisStore(connectionMultiplexer);
+// Option 2: Connection multiplexer
+var connection = ConnectionMultiplexer.Connect("localhost:6379");
+builder.Services.AddAsyncEndpointsRedisStore(connection);
 
-// Option 3: Using configuration action
+// Option 3: Configuration object
 builder.Services.AddAsyncEndpointsRedisStore(config =>
 {
     config.ConnectionString = "localhost:6379";
-    config.ConfigurationOptions = new ConfigurationOptions
-    {
-        AbortOnConnectFail = false,
-        ConnectRetry = 3,
-        ConnectTimeout = 5000,
-        SyncTimeout = 5000
-    };
+    // Additional configuration options can be set here
 });
 ```
 
-> Note: To use Redis store, you need to install the `AsyncEndpoints.Redis` package separately.
+## Job Status Lifecycle
 
-### Job Status
+Jobs progress through the following states:
 
-When a job is submitted, you'll receive a 202 (Accepted) response with job details including the job ID. You can then monitor the status of your job using the returned job information.
+- `Queued`: Job created and waiting for processing
+- `Scheduled`: Job scheduled for delayed execution (with retry delays)
+- `InProgress`: Currently being processed by a worker
+- `Completed`: Successfully completed with result available
+- `Failed`: Failed after all retry attempts exhausted
+- `Canceled`: Explicitly canceled before completion
 
-The response includes these properties:
+## Request Validation Middleware
 
-- `id`: Unique identifier for the job
-- `name`: Name of the job type
-- `status`: Current status of the job
-- `retryCount`: Number of retry attempts made
-- `maxRetries`: Maximum number of retry attempts allowed
-- `createdAt`: When the job was created
-- `startedAt`: When the job started processing (nullable)
-- `completedAt`: When the job completed (nullable)
-- `lastUpdatedAt`: When the job status was last updated
-- `result`: The result of the job after completion (nullable)
-- `exception`: Exception information if the job failed (nullable)
-
-### Possible Job States
-
-- `Queued`: Job is waiting to be processed
-- `Scheduled`: Job is scheduled for delayed execution
-- `InProgress`: Job is currently being executed
-- `Completed`: Job completed successfully
-- `Failed`: Job failed after all retry attempts
-- `Canceled`: Job was canceled before completion
-
-## Middleware Support
-
-You can execute custom logic before a job is queued using middleware functions:
+Apply custom validation before jobs are queued:
 
 ```csharp
-app.MapAsyncPost<Request>("MyJobName", "/api/async-operation", 
-    async (httpContext, request, token) => 
+app.MapAsyncPost<DataRequest>("ProcessData", "/api/process-data", 
+    async (HttpContext context, DataRequest request, CancellationToken token) => 
     {
-        // Perform validation, authentication, or other synchronous tasks
-        // Return a specific result to prevent queuing (non-null value)
-        // Return null to continue queuing the job
-        if (string.IsNullOrEmpty(request.Data))
+        // Validate request before queuing
+        if (string.IsNullOrWhiteSpace(request.Data))
         {
-            return Results.BadRequest("Data is required");
+            return Results.BadRequest("Data field is required");
         }
         
-        return null; // Continue to queue the job
+        if (request.ProcessingPriority < 1 || request.ProcessingPriority > 5)
+        {
+            return Results.BadRequest("Priority must be between 1 and 5");
+        }
+        
+        // Return null to continue queuing the job
+        return null;
     });
+```
+
+## No-Body Request Handlers
+
+For endpoints that don't require a request body:
+
+```csharp
+// Register handler without request body
+builder.Services.AddAsyncEndpointHandler<GenerateReportHandler, ReportResult>("GenerateReport");
+
+// Handler implementation
+public class GenerateReportHandler(ILogger<GenerateReportHandler> logger)
+    : IAsyncEndpointRequestHandler<ReportResult>
+{
+    public async Task<MethodResult<ReportResult>> HandleAsync(AsyncContext context, CancellationToken token)
+    {
+        // Access headers, route parameters, and query parameters
+        var headers = context.Headers;
+        var routeParams = context.RouteParams;
+        var queryParams = context.QueryParams;
+        
+        // Process request without body data
+        var result = new ReportResult 
+        { 
+            ReportData = "Generated report data...",
+            GeneratedAt = DateTime.UtcNow
+        };
+        
+        return MethodResult<ReportResult>.Success(result);
+    }
+}
+
+// Map endpoint without type parameter
+app.MapAsyncPost("GenerateReport", "/api/generate-report");
 ```
 
 ## Best Practices
 
-1. **Use Appropriate Storage**: For production applications, use Redis storage instead of the in-memory store
-2. **Handle Errors Gracefully**: Implement proper error handling in your handlers
-3. **Validate Requests**: Use middleware to validate requests before queuing
-4. **Set Appropriate Timeouts**: Configure job timeouts based on your expected processing times
-5. **Monitor and Log**: Use structured logging to track job processing
+1. **Production Deployment**: Use Redis storage with proper connection configuration
+2. **Error Handling**: Implement comprehensive error handling in handlers using `MethodResult`
+3. **Resource Management**: Configure appropriate concurrency and queue limits based on system capacity
+4. **Timeout Configuration**: Set job timeouts based on expected processing times
+5. **Monitoring**: Enable structured logging to track job processing and system health
+6. **Security**: Validate and sanitize input data before queuing jobs
+7. **Testing**: Test handlers with realistic data and failure scenarios
+8. **Performance**: Monitor queue sizes and processing times to optimize configuration
 
-## Project Structure
+## Architecture Overview
 
-The library is organized into two main projects:
+AsyncEndpoints follows a clean architectural pattern:
 
-- **AsyncEndpoints**: Core functionality including job management, background workers, and in-memory storage
-- **AsyncEndpoints.Redis**: Redis-based job storage implementation for distributed environments
-
-## Architecture
-
-AsyncEndpoints is built with the following components:
-
-- **Job Producer**: Queues requests to be processed asynchronously
-- **Background Workers**: Process queued jobs in the background
-- **Job Store**: Persists job information and state (with implementations for in-memory and Redis)
-- **Handlers**: Business logic for processing requests
-- **Endpoints**: API endpoints for submitting jobs
+- **Job Store**: Abstracts persistence layer (In-Memory/Redis)
+- **Job Manager**: Coordinates job state and retry logic
+- **Background Service**: Producer-consumer pattern with configurable concurrency
+- **Request Handlers**: Business logic with full HTTP context access
+- **Endpoint Mappers**: Minimal API integration with ASP.NET Core
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for more details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on development setup, coding standards, and submission process.
 
 ## License
 
