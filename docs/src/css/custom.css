@@ -1,30 +1,426 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * async-endpoints Docusaurus Custom CSS
+ * Based on accurate Docusaurus/Infima CSS variables
+ * Supports both light and dark modes with brand colors
  */
 
-/* You can override the default Infima variables here. */
+/* Import developer-focused fonts */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* Custom site helpers (merge into existing src/css/custom.css) */
+
+/* Improve font rendering across platforms */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Soft focus visible for keyboard nav */
+:focus { outline: none; }
+:focus-visible { outline: 3px solid rgba(26, 58, 92, 0.14); outline-offset: 2px; }
+
+/* Provide consistent pre/code background fallback */
+pre { background-clip: padding-box; }
+
+/* ==================== LIGHT MODE (ROOT) ==================== */
+
 :root {
-  --ifm-color-primary: #097bed; /* .NET blue */
-  --ifm-color-primary-dark: #086dd1;
-  --ifm-color-primary-darker: #0865c3;
-  --ifm-color-primary-darkest: #0754a1;
-  --ifm-color-primary-light: #288bee;
-  --ifm-color-primary-lighter: #3997f0;
-  --ifm-color-primary-lightest: #62acef;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* ========== PRIMARY BRAND COLORS ========== */
+  /* Navy Blue Theme - Matching your logo */
+  --ifm-color-primary: #1a3a5c;
+  --ifm-color-primary-dark: #17334f;
+  --ifm-color-primary-darker: #15304a;
+  --ifm-color-primary-darkest: #11273d;
+  --ifm-color-primary-light: #1d4169;
+  --ifm-color-primary-lighter: #1f446e;
+  --ifm-color-primary-lightest: #244d7b;
+  --ifm-color-primary-contrast-background: #ebf2fc;
+  --ifm-color-primary-contrast-foreground: #0a1a2e;
+
+  /* ========== SECONDARY COLORS ========== */
+  --ifm-color-secondary: #e8edf2;
+  --ifm-color-secondary-dark: #d1dae4;
+  --ifm-color-secondary-darker: #c4cfd9;
+  --ifm-color-secondary-darkest: #a0b0bd;
+  --ifm-color-secondary-light: #f0f4f7;
+  --ifm-color-secondary-lighter: #f5f7fa;
+  --ifm-color-secondary-lightest: #fafbfc;
+
+  /* ========== SEMANTIC COLORS ========== */
+  --ifm-color-success: #10b981;
+  --ifm-color-success-dark: #0e9f6e;
+  --ifm-color-success-darker: #0d9668;
+  --ifm-color-success-darkest: #0a7c56;
+  --ifm-color-success-light: #34d399;
+  --ifm-color-success-lighter: #6ee7b7;
+  --ifm-color-success-lightest: #a7f3d0;
+
+  --ifm-color-info: #3b82f6;
+  --ifm-color-info-dark: #2563eb;
+  --ifm-color-info-darker: #1d4ed8;
+  --ifm-color-info-darkest: #1e40af;
+  --ifm-color-info-light: #60a5fa;
+  --ifm-color-info-lighter: #93c5fd;
+  --ifm-color-info-lightest: #bfdbfe;
+
+  --ifm-color-warning: #f59e0b;
+  --ifm-color-warning-dark: #d97706;
+  --ifm-color-warning-darker: #b45309;
+  --ifm-color-warning-darkest: #92400e;
+  --ifm-color-warning-light: #fbbf24;
+  --ifm-color-warning-lighter: #fcd34d;
+  --ifm-color-warning-lightest: #fde68a;
+
+  --ifm-color-danger: #ef4444;
+  --ifm-color-danger-dark: #dc2626;
+  --ifm-color-danger-darker: #b91c1c;
+  --ifm-color-danger-darkest: #991b1b;
+  --ifm-color-danger-light: #f87171;
+  --ifm-color-danger-lighter: #fca5a5;
+  --ifm-color-danger-lightest: #fecaca;
+
+  /* ========== GRAY SCALE ========== */
+  --ifm-color-gray-0: #ffffff;
+  --ifm-color-gray-100: #f8fafc;
+  --ifm-color-gray-200: #f1f5f9;
+  --ifm-color-gray-300: #e2e8f0;
+  --ifm-color-gray-400: #cbd5e1;
+  --ifm-color-gray-500: #94a3b8;
+  --ifm-color-gray-600: #64748b;
+  --ifm-color-gray-700: #475569;
+  --ifm-color-gray-800: #334155;
+  --ifm-color-gray-900: #1e293b;
+  --ifm-color-gray-1000: #0f172a;
+
+  /* ========== EMPHASIS COLORS ========== */
+  --ifm-color-emphasis-0: var(--ifm-color-gray-0);
+  --ifm-color-emphasis-100: var(--ifm-color-gray-100);
+  --ifm-color-emphasis-200: var(--ifm-color-gray-200);
+  --ifm-color-emphasis-300: var(--ifm-color-gray-300);
+  --ifm-color-emphasis-400: var(--ifm-color-gray-400);
+  --ifm-color-emphasis-500: var(--ifm-color-gray-500);
+  --ifm-color-emphasis-600: var(--ifm-color-gray-600);
+  --ifm-color-emphasis-700: var(--ifm-color-gray-700);
+  --ifm-color-emphasis-800: var(--ifm-color-gray-800);
+  --ifm-color-emphasis-900: var(--ifm-color-gray-900);
+  --ifm-color-emphasis-1000: var(--ifm-color-gray-1000);
+
+  /* ========== BACKGROUND & CONTENT ========== */
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-font-color-base: var(--ifm-color-gray-900);
+  --ifm-font-color-base-inverse: var(--ifm-color-gray-0);
+  --ifm-font-color-secondary: var(--ifm-color-gray-700);
+  --ifm-color-content: var(--ifm-color-gray-900);
+  --ifm-color-content-secondary: var(--ifm-color-gray-700);
+
+  /* ========== TYPOGRAPHY ========== */
+  --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --ifm-font-size-base: 100%;
+  --ifm-font-weight-light: 300;
+  --ifm-font-weight-normal: 400;
+  --ifm-font-weight-semibold: 500;
+  --ifm-font-weight-bold: 700;
+  --ifm-line-height-base: 1.65;
+
+  /* ========== HEADING STYLES ========== */
+  --ifm-heading-color: var(--ifm-color-gray-900);
+  --ifm-heading-font-weight: 700;
+  --ifm-h1-font-size: 2.5rem;
+  --ifm-h2-font-size: 2rem;
+  --ifm-h3-font-size: 1.5rem;
+  --ifm-h4-font-size: 1.25rem;
+  --ifm-h5-font-size: 1rem;
+  --ifm-h6-font-size: 0.875rem;
+
+  /* ========== CODE BLOCKS ========== */
+  --ifm-code-background: var(--ifm-color-gray-100);
+  --ifm-code-font-size: 90%;
+  --ifm-code-border-radius: 0.375rem;
+  --ifm-pre-background: var(--ifm-color-gray-100);
+  --ifm-pre-color: var(--ifm-color-gray-900);
+
+  /* ========== LINKS ========== */
+  --ifm-link-color: var(--ifm-color-primary);
+  --ifm-link-hover-color: var(--ifm-color-primary-dark);
+  --ifm-link-decoration: none;
+  --ifm-link-hover-decoration: underline;
+
+  /* ========== NAVBAR ========== */
+  --ifm-navbar-background-color: var(--ifm-background-surface-color);
+  --ifm-navbar-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --ifm-navbar-height: 3.75rem;
+  --ifm-navbar-link-color: var(--ifm-font-color-base);
+  --ifm-navbar-link-active-color: var(--ifm-color-primary);
+
+  /* ========== MENU/SIDEBAR ========== */
+  --ifm-menu-color: var(--ifm-color-emphasis-700);
+  --ifm-menu-color-active: var(--ifm-color-primary);
+  --ifm-menu-color-background-active: rgba(26, 58, 92, 0.08);
+  --ifm-menu-color-background-hover: rgba(26, 58, 92, 0.05);
+
+  /* ========== FOOTER ========== */
+  --ifm-footer-background-color: var(--ifm-color-primary);
+  --ifm-footer-color: rgba(255, 255, 255, 0.9);
+  --ifm-footer-link-color: rgba(255, 255, 255, 0.75);
+  --ifm-footer-link-hover-color: #ffffff;
+  --ifm-footer-padding-vertical: 3rem;
+  --ifm-footer-padding-horizontal: 2rem;
+
+  /* ========== HERO SECTION ========== */
+  --ifm-hero-background-color: var(--ifm-color-primary);
+  --ifm-hero-text-color: #ffffff;
+
+  /* ========== TABLE OF CONTENTS ========== */
+  --ifm-toc-border-color: var(--ifm-color-emphasis-300);
+  --ifm-toc-link-color: var(--ifm-color-content-secondary);
+
+  /* ========== CARDS ========== */
+  --ifm-card-background-color: var(--ifm-background-surface-color);
+  --ifm-card-border-radius: 0.75rem;
+
+  /* ========== GLOBAL SETTINGS ========== */
+  --ifm-global-radius: 0.5rem;
+  --ifm-global-spacing: 1rem;
+  --ifm-spacing-horizontal: 1.5rem;
+  --ifm-spacing-vertical: 1rem;
+  --ifm-transition-fast: 200ms;
+  --ifm-transition-slow: 400ms;
+  --ifm-hover-overlay: rgba(0, 0, 0, 0.05);
+
+  /* ========== ALERTS/ADMONITIONS ========== */
+  --ifm-alert-border-radius: var(--ifm-global-radius);
+  --ifm-alert-border-left-width: 4px;
+  --ifm-alert-padding-horizontal: var(--ifm-spacing-horizontal);
+  --ifm-alert-padding-vertical: var(--ifm-spacing-vertical);
+
+  /* ========== BLOCKQUOTES ========== */
+  --ifm-blockquote-color: var(--ifm-color-emphasis-800);
+  --ifm-blockquote-border-color: var(--ifm-color-emphasis-300);
+  --ifm-blockquote-border-left-width: 2px;
+
+  /* ========== TABLE STYLES ========== */
+  --ifm-table-stripe-background: var(--ifm-color-emphasis-100);
+  --ifm-table-border-color: var(--ifm-color-emphasis-300);
+
+  /* ========== SCROLLBAR ========== */
+  --ifm-scrollbar-size: 7px;
+  --ifm-scrollbar-track-background-color: #f1f5f9;
+  --ifm-scrollbar-thumb-background-color: #cbd5e1;
+  --ifm-scrollbar-thumb-hover-background-color: #94a3b8;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* ==================== DARK MODE ==================== */
+
 [data-theme='dark'] {
-  --ifm-color-primary: #4da6ff; /* Lighter .NET blue for dark mode */
-  --ifm-color-primary-dark: #3a99ff;
-  --ifm-color-primary-darker: #288bee;
-  --ifm-color-primary-darkest: #1a7de4;
-  --ifm-color-primary-light: #62b4ff;
-  --ifm-color-primary-lighter: #75c0ff;
-  --ifm-color-primary-lightest: #9bd7ff;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  /* ========== PRIMARY COLORS - DARK MODE ========== */
+  --ifm-color-primary: #4a6a94;
+  --ifm-color-primary-dark: #3f5c81;
+  --ifm-color-primary-darker: #3a5679;
+  --ifm-color-primary-darkest: #2f4763;
+  --ifm-color-primary-light: #5578a7;
+  --ifm-color-primary-lighter: #5a7eaf;
+  --ifm-color-primary-lightest: #6f8dbb;
+  --ifm-color-primary-contrast-background: #1a2f4a;
+  --ifm-color-primary-contrast-foreground: #d4e3f7;
+
+  /* ========== BACKGROUND & CONTENT - DARK MODE ========== */
+  --ifm-background-color: #0a1628;
+  --ifm-background-surface-color: #112240;
+  --ifm-font-color-base: #e2e8f0;
+  --ifm-font-color-base-inverse: #0f172a;
+  --ifm-font-color-secondary: #94a3b8;
+  --ifm-color-content: #e2e8f0;
+  --ifm-color-content-secondary: #94a3b8;
+
+  /* ========== EMPHASIS COLORS - DARK MODE ========== */
+  --ifm-color-emphasis-0: #0f172a;
+  --ifm-color-emphasis-100: #1e293b;
+  --ifm-color-emphasis-200: #334155;
+  --ifm-color-emphasis-300: #475569;
+  --ifm-color-emphasis-400: #64748b;
+  --ifm-color-emphasis-500: #94a3b8;
+  --ifm-color-emphasis-600: #cbd5e1;
+  --ifm-color-emphasis-700: #e2e8f0;
+  --ifm-color-emphasis-800: #f1f5f9;
+  --ifm-color-emphasis-900: #f8fafc;
+  --ifm-color-emphasis-1000: #ffffff;
+
+  /* ========== HEADING STYLES - DARK MODE ========== */
+  --ifm-heading-color: #f1f5f9;
+
+  /* ========== CODE BLOCKS - DARK MODE ========== */
+  --ifm-code-background: #1e293b;
+  --ifm-pre-background: #1e293b;
+  --ifm-pre-color: #e2e8f0;
+
+  /* ========== LINKS - DARK MODE ========== */
+  --ifm-link-color: #60a5fa;
+  --ifm-link-hover-color: #93c5fd;
+
+  /* ========== NAVBAR - DARK MODE ========== */
+  --ifm-navbar-background-color: #0f1f35;
+  --ifm-navbar-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --ifm-navbar-link-color: var(--ifm-font-color-base);
+  --ifm-navbar-link-active-color: var(--ifm-color-primary-lighter);
+
+  /* ========== MENU/SIDEBAR - DARK MODE ========== */
+  --ifm-menu-color: var(--ifm-color-emphasis-700);
+  --ifm-menu-color-active: var(--ifm-color-primary-lighter);
+  --ifm-menu-color-background-active: rgba(74, 106, 148, 0.15);
+  --ifm-menu-color-background-hover: rgba(74, 106, 148, 0.08);
+
+  /* ========== FOOTER - DARK MODE ========== */
+  --ifm-footer-background-color: #081527;
+  --ifm-footer-color: rgba(255, 255, 255, 0.85);
+  --ifm-footer-link-color: rgba(255, 255, 255, 0.7);
+  --ifm-footer-link-hover-color: #ffffff;
+
+  /* ========== HERO - DARK MODE ========== */
+  --ifm-hero-background-color: #0f2438;
+  --ifm-hero-text-color: #f1f5f9;
+
+  /* ========== CARDS - DARK MODE ========== */
+  --ifm-card-background-color: #1a2f4a;
+
+  /* ========== TABLE OF CONTENTS - DARK MODE ========== */
+  --ifm-toc-border-color: var(--ifm-color-emphasis-300);
+  --ifm-toc-link-color: var(--ifm-color-content-secondary);
+
+  /* ========== BLOCKQUOTES - DARK MODE ========== */
+  --ifm-blockquote-color: var(--ifm-color-emphasis-700);
+  --ifm-blockquote-border-color: var(--ifm-color-emphasis-400);
+
+  /* ========== TABLE STYLES - DARK MODE ========== */
+  --ifm-table-stripe-background: #1a2f4a;
+  --ifm-table-border-color: var(--ifm-color-emphasis-300);
+
+  /* ========== SCROLLBAR - DARK MODE ========== */
+  --ifm-scrollbar-track-background-color: #1e293b;
+  --ifm-scrollbar-thumb-background-color: #475569;
+  --ifm-scrollbar-thumb-hover-background-color: #64748b;
+
+  /* ========== HOVER OVERLAY - DARK MODE ========== */
+  --ifm-hover-overlay: rgba(255, 255, 255, 0.05);
+}
+
+/* ==================== CUSTOM COMPONENT STYLES ==================== */
+
+.hero__title::before {
+  content: '/';
+  color: #06b6d4;
+  margin-right: 0.125rem;
+}
+
+/* ========== NAVBAR BRANDING ========== */
+.navbar__title::before {
+  content: '/';
+  color: var(--ifm-color-primary);
+  font-family: var(--ifm-font-family-monospace);
+  margin-right: 0.125rem;
+}
+
+[data-theme='dark'] .navbar__title::before {
+  color: var(--ifm-color-primary-lighter);
+}
+
+/* ========== BUTTON ENHANCEMENTS ========== */
+.button {
+  transition: all var(--ifm-transition-fast) ease;
+  font-weight: 600;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button--primary:hover {
+  box-shadow: 0 4px 12px rgba(26, 58, 92, 0.2);
+}
+
+[data-theme='dark'] .button--primary:hover {
+  box-shadow: 0 4px 12px rgba(74, 106, 148, 0.3);
+}
+
+/* ========== CARD ENHANCEMENTS ========== */
+.card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  transition: all var(--ifm-transition-slow) ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.15);
+  border-color: var(--ifm-color-primary);
+}
+
+[data-theme='dark'] .card:hover {
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
+}
+
+/* ========== ACTIVE MENU LINK STYLING ========== */
+.menu__link--active {
+  font-weight: 600;
+  padding-left: calc(var(--ifm-menu-link-padding-horizontal) - 3px);
+}
+
+[data-theme='dark'] .menu__link--active {
+  border-left-color: var(--ifm-color-primary-lighter);
+}
+
+/* ========== TABLE OF CONTENTS ACTIVE LINK ========== */
+.table-of-contents__link--active {
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+}
+
+[data-theme='dark'] .table-of-contents__link--active {
+  color: var(--ifm-color-primary-lighter);
+}
+
+/* ========== CODE BLOCK ENHANCEMENTS ========== */
+code {
+  font-family: var(--ifm-font-family-monospace);
+  border: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.prism-code {
+  border-radius: var(--ifm-global-radius);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== MARKDOWN CONTENT ENHANCEMENTS ========== */
+.markdown h2 {
+  border-bottom: 2px solid var(--ifm-color-emphasis-300);
+  padding-bottom: 0.5rem;
+  margin-top: 2.5rem;
+}
+
+/* ========== GLOBAL UTILITIES ========== */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========== FOOTER TITLE STYLING ========== */
+.footer__title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS ========== */
+@media (max-width: 996px) {
+  .hero__title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero__title {
+    font-size: 2rem;
+  }
 }

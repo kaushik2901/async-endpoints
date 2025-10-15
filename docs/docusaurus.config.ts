@@ -1,39 +1,28 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
+// --- AsyncEndpoints official site configuration ---
 const config: Config = {
-  title: 'AsyncEndpoints',
-  tagline: 'Modern asynchronous endpoint framework for .NET',
+  title: 'async-endpoints',
+  tagline: 'Enterprise-Grade Asynchronous Processing for .NET',
   favicon: 'img/favicon.ico',
 
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
-  future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
-  },
-
-  // Set the production url of your site here
   url: 'https://asyncendpoints.com',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'kaushik2901', // Usually your GitHub org/user name.
-  projectName: 'async-endpoints', // Usually your repo name.
+  organizationName: 'kaushik2901',
+  projectName: 'async-endpoints',
 
   onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'warn',
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  future: { v4: true },
 
   presets: [
     [
@@ -41,7 +30,6 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/kaushik2901/async-endpoints/edit/main/docs/',
         },
@@ -54,40 +42,63 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
     image: 'img/async-endpoints-banner.png',
+
     colorMode: {
+      defaultMode: 'light',
       respectPrefersColorScheme: true,
     },
+
     navbar: {
-      title: 'AsyncEndpoints',
-      logo: {
-        alt: 'AsyncEndpoints Logo',
-        src: 'img/async-endpoints.png',
-      },
+      title: 'async-endpoints',
       items: [
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
-          position: 'left',
-          label: 'Documentation',
+          position: 'right',
+          label: 'Docs',
         },
         {
-          href: 'https://github.com/kaushik2901/async-endpoints',
           label: 'GitHub',
+          href: 'https://github.com/kaushik2901/async-endpoints',
           position: 'right',
         },
       ],
+      hideOnScroll: false,
     },
     footer: {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Project',
+          items: [
+            {
+              html: `
+                <p style="max-width:280px; opacity:0.85; font-size:0.9rem;">
+                  A modern .NET library for asynchronous API processing — offload long-running tasks to background workers with full visibility and reliability.
+                </p>
+              `,
+            },
+          ],
+        },
+        {
+          title: 'Documentation',
           items: [
             {
               label: 'Getting Started',
               to: '/docs/intro',
+            },
+            {
+              label: 'API Reference',
+              to: '/docs/category/api-reference',
+            },
+            {
+              label: 'Configuration',
+              to: '/docs/category/configuration',
+            },
+            {
+              label: 'Contributing Guide',
+              to: '/docs/contributing',
             },
           ],
         },
@@ -95,31 +106,48 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'GitHub Discussions',
-              href: 'https://github.com/kaushik2901/async-endpoints/discussions',
+              label: 'GitHub Repository',
+              href: 'https://github.com/kaushik2901/async-endpoints',
             },
             {
-              label: 'Issues',
+              label: 'Report Issues',
               href: 'https://github.com/kaushik2901/async-endpoints/issues',
+            },
+            {
+              label: 'Discussions',
+              href: 'https://github.com/kaushik2901/async-endpoints/discussions',
             },
           ],
         },
         {
-          title: 'More',
+          title: 'Legal',
           items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/kaushik2901/async-endpoints',
-            },
+            { label: 'License', to: '/docs/license' },
+            { label: 'Privacy Policy', href: '#' },
+            { label: 'Terms of Use', href: '#' },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} AsyncEndpoints. Built with Docusaurus.`,
+
+      // Footer copyright section
+      copyright: `
+        <div style="text-align:center; margin-top:1rem; line-height:1.6;">
+          <p>© ${new Date().getFullYear()} <strong>AsyncEndpoints</strong>. Built with Docusaurus.</p>
+          <p style="opacity:0.75; font-size:0.85rem;">Designed for developers building scalable, background job-enabled APIs.</p>
+        </div>
+      `,
     },
+
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
     },
+
+    // Optional: add smooth scroll and better metadata
+    metadata: [
+      { name: 'keywords', content: 'async, endpoints, dotnet, background jobs, c#, api performance, queue processing' },
+      { name: 'theme-color', content: '#1a3a5c' },
+    ],
   } satisfies Preset.ThemeConfig,
 };
 
