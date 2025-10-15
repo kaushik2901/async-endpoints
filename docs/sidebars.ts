@@ -22,6 +22,62 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'intro',
+        'category/installation',
+        'category/quick-start',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Core Concepts',
+      collapsible: true,
+      collapsed: false,
+      items: [
+        'category/architecture',
+        'category/endpoint-mapping',
+        'category/handlers',
+        'category/job-lifecycle',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Configuration',
+      collapsible: true,
+      collapsed: false,
+      items: [
+        'category/configuration',
+        'category/storage',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Advanced Topics',
+      collapsible: true,
+      collapsed: false,
+      items: [
+        'category/advanced-features',
+        'category/error-handling',
+        'category/testing',
+        'category/performance',
+        'category/deployment',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Reference',
+      collapsible: true,
+      collapsed: false,
+      items: [
+        'category/api-reference',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Community',
+      collapsible: true,
+      collapsed: false,
+      items: [
+        'category/contributing',
+        'category/license',
       ],
     },
   ],

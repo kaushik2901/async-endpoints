@@ -132,8 +132,8 @@ const config: Config = {
       // Footer copyright section
       copyright: `
         <div style="text-align:center; margin-top:1rem; line-height:1.6;">
-          <p>© ${new Date().getFullYear()} <strong>AsyncEndpoints</strong>. Built with Docusaurus.</p>
-          <p style="opacity:0.75; font-size:0.85rem;">Designed for developers building scalable, background job-enabled APIs.</p>
+          <p>© ${new Date().getFullYear()} <strong>AsyncEndpoints</strong>. MIT Licensed.</p>
+          <p style="opacity:0.75; font-size:0.85rem;">Open source project designed for developers building scalable, background job-enabled APIs.</p>
         </div>
       `,
     },

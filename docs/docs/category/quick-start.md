@@ -1,32 +1,16 @@
 ---
-sidebar_position: 1
+sidebar_position: 3
 ---
 
-# Introduction to AsyncEndpoints
+# Quick Start
 
-**AsyncEndpoints** is a modern .NET library for building asynchronous APIs that handle long-running operations in the background with built-in queuing, status tracking, and multiple storage backends. It provides a clean, efficient solution for processing time-consuming tasks without blocking the client.
+This guide will walk you through creating a simple application using AsyncEndpoints in 5 minutes.
 
-## What is AsyncEndpoints?
+## 1. Setup Services
 
-AsyncEndpoints allows you to build APIs that immediately respond to requests while processing them in the background. Instead of keeping clients waiting for long-running operations to complete, AsyncEndpoints accepts requests, returns a job ID immediately, and processes the work in background workers. Clients can then check the status of their job using the returned ID.
-
-## Core Benefits
-
-- **Non-blocking**: Return responses immediately without waiting for long operations
-- **Job Status Tracking**: Monitor job progress with rich metadata through dedicated endpoints
-- **Configurable Retry Logic**: Automatic retries with exponential backoff for failed jobs
-- **Multiple Storage Backends**: Support for in-memory (development) and Redis (production) storage
-- **Background Workers**: Built-in hosted service with configurable concurrency and queue limits
-- **Distributed Recovery**: Automatic recovery of stuck jobs in multi-instance deployments
-- **HTTP Context Preservation**: Maintains headers, route parameters, and query parameters through job lifecycle
-- **Structured Error Handling**: Comprehensive error reporting and exception serialization
-
-## Quick Example
-
-Here's how to set up AsyncEndpoints in your application:
+First, configure AsyncEndpoints services in your `Program.cs`:
 
 ```csharp
-using AsyncEndpoints;
 using AsyncEndpoints.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,19 +20,21 @@ builder.Services
     .AddAsyncEndpointsInMemoryStore() // Development storage
     .AddAsyncEndpointsWorker(); // Background processing
 
-// Register job handlers
+// Register your job handlers
 builder.Services.AddAsyncEndpointHandler<ProcessDataHandler, DataRequest, ProcessResult>("ProcessData");
 
 var app = builder.Build();
 
-// Define async endpoints
+// Map async endpoints
 app.MapAsyncPost<DataRequest>("ProcessData", "/api/process-data");
 app.MapAsyncGetJobDetails("/jobs/{jobId:guid}"); // Job status endpoint
 
 await app.RunAsync();
 ```
 
-Define your request and response models:
+## 2. Define Request and Response Models
+
+Create your request and response models:
 
 ```csharp
 public class DataRequest
@@ -65,7 +51,9 @@ public class ProcessResult
 }
 ```
 
-Create your handler implementation:
+## 3. Create Request Handler
+
+Implement your business logic:
 
 ```csharp
 using AsyncEndpoints.Handlers;
@@ -77,11 +65,6 @@ public class ProcessDataHandler(ILogger<ProcessDataHandler> logger)
     public async Task<MethodResult<ProcessResult>> HandleAsync(AsyncContext<DataRequest> context, CancellationToken token)
     {
         var request = context.Request;
-        
-        // Access HTTP context information
-        var headers = context.Headers;
-        var routeParams = context.RouteParams;
-        var queryParams = context.QueryParams;
         
         logger.LogInformation("Processing data request: {Data}", request.Data);
 
@@ -110,6 +93,54 @@ public class ProcessDataHandler(ILogger<ProcessDataHandler> logger)
 }
 ```
 
-## Next Steps
+## 4. Test Your Endpoint
 
-Continue to the next sections to learn how to install, configure, and use AsyncEndpoints in your projects.
+Submit a job to your async endpoint:
+
+```bash
+curl -X POST http://localhost:5000/api/process-data \
+  -H "Content-Type: application/json" \
+  -d '{"data": "Hello, AsyncEndpoints!", "processingPriority": 2}'
+```
+
+You'll immediately receive a `202 Accepted` response with job details:
+
+```json
+{
+  "id": "5b7e0e4a-8f8b-4c8a-9f1f-8d8f8e8f8e8f",
+  "name": "ProcessData",
+  "status": "Queued",
+  "retryCount": 0,
+  "maxRetries": 3,
+  "createdAt": "2025-10-15T10:30:00.000Z",
+  "startedAt": null,
+  "completedAt": null,
+  "lastUpdatedAt": "2025-10-15T10:30:00.000Z",
+  "result": null
+}
+```
+
+Check job status:
+
+```bash
+curl http://localhost:5000/jobs/5b7e0e4a-8f8b-4c8a-9f1f-8d8f8e8f8e8f
+```
+
+## 5. Production Setup
+
+For production, use Redis storage:
+
+```csharp
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+
+builder.Services
+    .AddAsyncEndpoints()
+    .AddAsyncEndpointsRedisStore(redisConnectionString) // Production storage
+    .AddAsyncEndpointsWorker();
+```
+
+## What's Next?
+
+- [Learn about configuration options](/docs/category/configuration)
+- [Explore advanced features](/docs/category/advanced-features)
+- [Check out the API reference](/docs/category/api-reference)
