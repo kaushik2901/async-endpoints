@@ -98,7 +98,7 @@ const config: Config = {
             },
             {
               label: 'Contributing Guide',
-              to: '/docs/contributing',
+              to: '/docs/category/contributing',
             },
           ],
         },
@@ -122,7 +122,7 @@ const config: Config = {
         {
           title: 'Legal',
           items: [
-            { label: 'License', to: '/docs/license' },
+            { label: 'License', to: '/docs/category/license' },
             { label: 'Privacy Policy', href: '#' },
             { label: 'Terms of Use', href: '#' },
           ],
