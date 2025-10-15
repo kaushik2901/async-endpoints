@@ -143,4 +143,3 @@ builder.Services
 
 - [Learn about configuration options](/docs/category/configuration)
 - [Explore advanced features](/docs/category/advanced-features)
-- [Check out the API reference](/docs/category/api-reference)

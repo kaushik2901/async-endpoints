@@ -63,15 +63,6 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Reference',
-      collapsible: true,
-      collapsed: false,
-      items: [
-        'category/api-reference',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Community',
       collapsible: true,
       collapsed: false,

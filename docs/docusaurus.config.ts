@@ -89,10 +89,6 @@ const config: Config = {
               to: '/docs/intro',
             },
             {
-              label: 'API Reference',
-              to: '/docs/category/api-reference',
-            },
-            {
               label: 'Configuration',
               to: '/docs/category/configuration',
             },
