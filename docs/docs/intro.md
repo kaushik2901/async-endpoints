@@ -2,46 +2,38 @@
 sidebar_position: 1
 ---
 
-# Tutorial Intro
+# Introduction to AsyncEndpoints
 
-Let's discover **Docusaurus in less than 5 minutes**.
+**AsyncEndpoints** is a modern, lightweight framework for building asynchronous endpoints in .NET applications with clean architecture and minimal boilerplate.
 
-## Getting Started
+## What is AsyncEndpoints?
 
-Get started by **creating a new site**.
+AsyncEndpoints provides a structured approach to define and execute asynchronous operations in your .NET applications. Unlike traditional controllers, it offers a streamlined way to handle async operations with clear separation of concerns.
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+## Core Benefits
 
-### What you'll need
+- **Async-First**: Designed specifically for asynchronous operations from the ground up
+- **Clean Architecture**: Follows SOLID principles and modern .NET architectural patterns
+- **Minimal Overhead**: Lightweight with no unnecessary dependencies
+- **Testable Design**: Built with testability in mind for reliable code
+- **Flexible Integration**: Easy to integrate with existing .NET applications
 
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+## Quick Example
 
-## Generate a new site
+Here's a simple example of what an AsyncEndpoint looks like:
 
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
+```csharp
+public class GetUserEndpoint : IAsyncEndpoint<int, User>
+{
+    public async Task<User> ExecuteAsync(int userId)
+    {
+        // Your async logic here
+        var user = await userRepository.GetByIdAsync(userId);
+        return user;
+    }
+}
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+## Next Steps
 
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+Continue to the next sections to learn how to install, configure, and use AsyncEndpoints in your projects.

@@ -21,7 +21,12 @@ function HomepageHeader() {
           <Link
             className="button button--secondary button--lg"
             to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
+            Get Started - 5min ⏱️
+          </Link>
+          <Link
+            className="button button--primary button--lg"
+            to="https://github.com/kaushik2901/async-endpoints">
+            GitHub
           </Link>
         </div>
       </div>
@@ -33,8 +38,8 @@ export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`Modern Async Framework for .NET`}
+      description="AsyncEndpoints - Modern asynchronous endpoint framework for .NET">
       <HomepageHeader />
       <main>
         <HomepageFeatures />
