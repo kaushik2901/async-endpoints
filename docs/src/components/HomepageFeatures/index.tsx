@@ -11,32 +11,32 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
+    title: 'Async-First Design',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Purpose-built for asynchronous operations in .NET, enabling non-blocking,
+        high-performance endpoint execution with native async/await support.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Clean Architecture',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Follows modern .NET architectural patterns with clear separation of concerns,
+        making your codebase maintainable and easily testable.
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Lightweight & Fast',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Minimal overhead with focused feature set, designed to be performant and
+        easy to integrate into existing .NET applications.
       </>
     ),
   },

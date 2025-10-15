@@ -1,6 +1,6 @@
-# Website
+# AsyncEndpoints Documentation
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+This website contains the documentation for [AsyncEndpoints](https://github.com/kaushik2901/async-endpoints), a modern asynchronous endpoint framework for .NET.
 
 ## Installation
 
