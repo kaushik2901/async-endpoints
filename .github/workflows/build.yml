@@ -7,16 +7,20 @@ jobs:
   build:
     name: Build and analyze
     runs-on: windows-latest
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
-          distribution: 'zulu' # Alternative distribution options are available.
+          distribution: "zulu" # Alternative distribution options are available.
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
@@ -39,6 +43,21 @@ jobs:
       - name: Build and analyze
         shell: powershell
         run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"AsyncEndpoints" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
-          dotnet build
+          # Begin SonarQube analysis with specific solution and exclusions
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"AsyncEndpoints" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml /d:sonar.exclusions="docs/**,examples/**"
+
+          # Build the specific solution
+          dotnet build AsyncEndpoints.sln
+
+          # Run tests with coverage
+          dotnet test tests\AsyncEndpoints.UnitTests\AsyncEndpoints.UnitTests.csproj --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage --logger "trx;LogFileName=testresults.trx"
+          dotnet test tests\AsyncEndpoints.Redis.UnitTests\AsyncEndpoints.Redis.UnitTests.csproj --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage --logger "trx;LogFileName=testresults.trx"
+
+          # The tests were run with coverlet collector which generates coverage reports automatically
+          # Find and combine coverage reports for SonarQube
+          Get-ChildItem -Path "coverage" -Recurse -Filter "coverage.cobertura.xml" | ForEach-Object {
+            Copy-Item $_.FullName -Destination "coverage.xml" -Force
+          }
+
+          # End SonarQube analysis
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
