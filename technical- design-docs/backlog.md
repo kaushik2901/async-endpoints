@@ -2,10 +2,10 @@
 
 ## Pending
 
+- AsyncEndpoints should have extension to register handlers via assembly scanning (using reflection)
 - AsyncEndpoints should record individual job runs
 - AsyncEndpoints should support PUT, PATCH, and DELETE methods
 - AsyncEndpoints should support EF core as job storage
-- AsyncEndpoints should have extension to register handlers via assembly scanning (using reflection)
 - AsyncEndpoints should not have delay due to cold start
 
 ## In progress
