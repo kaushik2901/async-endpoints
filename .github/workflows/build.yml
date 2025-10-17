@@ -12,21 +12,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.x"
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: "zulu" # Alternative distribution options are available.
+
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}\cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
+
       - name: Cache SonarQube scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
@@ -34,30 +38,48 @@ jobs:
           path: ${{ runner.temp }}\scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
+
       - name: Install SonarQube scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
-      - name: Build and analyze
+
+      - name: Restore dependencies
+        run: dotnet restore AsyncEndpoints.sln
+
+      - name: Begin SonarQube analysis
         shell: powershell
         run: |
-          # Begin SonarQube analysis with specific solution and exclusions
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"AsyncEndpoints" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml /d:sonar.exclusions="docs/**,examples/**"
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
+            /k:"AsyncEndpoints" `
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
+            /d:sonar.cs.opencover.reportsPaths="coverage/*.xml" `
+            /d:sonar.exclusions="docs/**,examples/**"
 
-          # Build the specific solution
-          dotnet build AsyncEndpoints.sln
+      - name: Build the solution
+        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore
 
-          # Run tests with coverage
-          dotnet test tests\AsyncEndpoints.UnitTests\AsyncEndpoints.UnitTests.csproj --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage --logger "trx;LogFileName=testresults.trx"
-          dotnet test tests\AsyncEndpoints.Redis.UnitTests\AsyncEndpoints.Redis.UnitTests.csproj --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage --logger "trx;LogFileName=testresults.trx"
+      - name: Run unit tests with coverage
+        shell: powershell
+        run: |
+          dotnet test tests\AsyncEndpoints.UnitTests\AsyncEndpoints.UnitTests.csproj `
+            --configuration Release `
+            --no-build `
+            /p:CollectCoverage=true `
+            /p:CoverletOutputFormat=opencover `
+            /p:CoverletOutput=./coverage/AsyncEndpoints.UnitTests.xml
 
-          # The tests were run with coverlet collector which generates coverage reports automatically
-          # Find and combine coverage reports for SonarQube
-          Get-ChildItem -Path "coverage" -Recurse -Filter "coverage.cobertura.xml" | ForEach-Object {
-            Copy-Item $_.FullName -Destination "coverage.xml" -Force
-          }
+          dotnet test tests\AsyncEndpoints.Redis.UnitTests\AsyncEndpoints.Redis.UnitTests.csproj `
+            --configuration Release `
+            --no-build `
+            /p:CollectCoverage=true `
+            /p:CoverletOutputFormat=opencover `
+            /p:CoverletOutput=./coverage/AsyncEndpoints.Redis.UnitTests.xml
 
-          # End SonarQube analysis
+      - name: End SonarQube analysis
+        shell: powershell
+        run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
