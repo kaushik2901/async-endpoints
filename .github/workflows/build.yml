@@ -44,7 +44,7 @@ jobs:
             /k:"AsyncEndpoints" `
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.cs.coverageReportPaths="tests/**/TestResults/**/*.cobertura.xml"
+            /d:sonar.cs.cobertura.reportsPaths="**/*.cobertura.xml"
       - name: Restore dependencies
         run: dotnet restore AsyncEndpoints.sln
       - name: Build the solution
