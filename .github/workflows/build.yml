@@ -37,6 +37,14 @@ jobs:
         run: |
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+      - name: SonarQube Begin analysis
+        shell: powershell
+        run: |
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
+            /k:"your_project_key" `
+            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.cs.coverageReportPaths="tests/**/TestResults/**/*.cobertura.xml"
       - name: Restore dependencies
         run: dotnet restore AsyncEndpoints.sln
       - name: Build the solution
@@ -44,31 +52,9 @@ jobs:
       - name: Run unit tests with coverage
         shell: powershell
         run: |
-          New-Item -Path coverage -ItemType Directory -Force
-          dotnet test tests\AsyncEndpoints.UnitTests\AsyncEndpoints.UnitTests.csproj `
-            --configuration Release `
-            --no-build `
-            /p:CollectCoverage=true `
-            /p:CoverletOutputFormat=opencover `
-            /p:CoverletOutput="../../coverage/AsyncEndpoints.UnitTests.xml"
-          dotnet test tests\AsyncEndpoints.Redis.UnitTests\AsyncEndpoints.Redis.UnitTests.csproj `
-            --configuration Release `
-            --no-build `
-            /p:CollectCoverage=true `
-            /p:CoverletOutputFormat=opencover `
-            /p:CoverletOutput="../../coverage/AsyncEndpoints.Redis.UnitTests.xml"
-      - name: Begin SonarQube analysis
+          dotnet test AsyncEndpoints.sln --collect "XPlat Code Coverage" --configuration Release --no-build --framework net8.0
+      - name: SonarQube End analysis
         shell: powershell
         run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
-            /k:"AsyncEndpoints" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
-            /d:sonar.cs.opencover.reportsPaths="${{ github.workspace }}\coverage\*.xml" `
-            /d:sonar.exclusions="docs/**,examples/**"
-      - name: Rebuild for SonarQube analysis
-        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore
-      - name: End SonarQube analysis
-        shell: powershell
-        run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
