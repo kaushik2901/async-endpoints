@@ -1,36 +1,29 @@
 name: Build
-
 on:
   workflow_dispatch:
-
 jobs:
   build:
     name: Build and analyze
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.x"
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: "zulu" # Alternative distribution options are available.
-
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}\cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-
       - name: Cache SonarQube scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
@@ -38,17 +31,32 @@ jobs:
           path: ${{ runner.temp }}\scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
-
       - name: Install SonarQube scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
-
       - name: Restore dependencies
         run: dotnet restore AsyncEndpoints.sln
-
+      - name: Build the solution
+        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore
+      - name: Run unit tests with coverage
+        shell: powershell
+        run: |
+          New-Item -Path coverage -ItemType Directory -Force
+          dotnet test tests\AsyncEndpoints.UnitTests\AsyncEndpoints.UnitTests.csproj `
+            --configuration Release `
+            --no-build `
+            /p:CollectCoverage=true `
+            /p:CoverletOutputFormat=opencover `
+            /p:CoverletOutput="../../coverage/AsyncEndpoints.UnitTests.xml"
+          dotnet test tests\AsyncEndpoints.Redis.UnitTests\AsyncEndpoints.Redis.UnitTests.csproj `
+            --configuration Release `
+            --no-build `
+            /p:CollectCoverage=true `
+            /p:CoverletOutputFormat=opencover `
+            /p:CoverletOutput="../../coverage/AsyncEndpoints.Redis.UnitTests.xml"
       - name: Begin SonarQube analysis
         shell: powershell
         run: |
@@ -56,31 +64,11 @@ jobs:
             /k:"AsyncEndpoints" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
-            /d:sonar.cs.opencover.reportsPaths="coverage/*.xml" `
+            /d:sonar.cs.opencover.reportsPaths="${{ github.workspace }}\coverage\*.xml" `
             /d:sonar.exclusions="docs/**,examples/**"
-
-      - name: Build the solution
+      - name: Rebuild for SonarQube analysis
         run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore
-
-      - name: Run unit tests with coverage
-        shell: powershell
-        run: |
-          dotnet test tests\AsyncEndpoints.UnitTests\AsyncEndpoints.UnitTests.csproj `
-            --configuration Release `
-            --no-build `
-            /p:CollectCoverage=true `
-            /p:CoverletOutputFormat=opencover `
-            /p:CoverletOutput="../../coverage/AsyncEndpoints.UnitTests.xml"
-
-          dotnet test tests\AsyncEndpoints.Redis.UnitTests\AsyncEndpoints.Redis.UnitTests.csproj `
-            --configuration Release `
-            --no-build `
-            /p:CollectCoverage=true `
-            /p:CoverletOutputFormat=opencover `
-            /p:CoverletOutput="../../coverage/AsyncEndpoints.Redis.UnitTests.xml"
-
       - name: End SonarQube analysis
         shell: powershell
         run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-
