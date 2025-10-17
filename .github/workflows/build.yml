@@ -70,16 +70,17 @@ jobs:
             --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutputFormat=opencover `
-            /p:CoverletOutput=./coverage/AsyncEndpoints.UnitTests.xml
+            /p:CoverletOutput="../../coverage/AsyncEndpoints.UnitTests.xml"
 
           dotnet test tests\AsyncEndpoints.Redis.UnitTests\AsyncEndpoints.Redis.UnitTests.csproj `
             --configuration Release `
             --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutputFormat=opencover `
-            /p:CoverletOutput=./coverage/AsyncEndpoints.Redis.UnitTests.xml
+            /p:CoverletOutput="../../coverage/AsyncEndpoints.Redis.UnitTests.xml"
 
       - name: End SonarQube analysis
         shell: powershell
         run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
