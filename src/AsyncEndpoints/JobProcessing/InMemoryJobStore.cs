@@ -20,6 +20,8 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
 	private readonly ConcurrentDictionary<Guid, Job> jobs = new();
 
+	private static readonly string _jobStoreErrorCode = "JOB_STORE_ERROR";
+
 	public bool SupportsJobRecovery => false; // In-memory store doesn't support recovery
 
 	public Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, CancellationToken cancellationToken)
@@ -66,7 +68,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 		{
 			_logger.LogError(ex, "Unexpected error creating job: {JobName}", job?.Name);
 			return Task.FromResult(MethodResult.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error creating job: {ex.Message}", ex)));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error creating job: {ex.Message}", ex)));
 		}
 	}
 
@@ -103,7 +105,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 		{
 			_logger.LogError(ex, "Unexpected error retrieving job: {JobId}", id);
 			return Task.FromResult(MethodResult<Job>.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error retrieving job: {ex.Message}", ex)));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error retrieving job: {ex.Message}", ex)));
 		}
 	}
 
@@ -169,7 +171,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 		{
 			_logger.LogError(ex, "Unexpected error updating job: {JobId}", job?.Id);
 			return Task.FromResult(MethodResult.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error updating job: {ex.Message}", ex)));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error updating job: {ex.Message}", ex)));
 		}
 	}
 
@@ -238,7 +240,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 		{
 			_logger.LogError(ex, "Unexpected error claiming next job for worker {WorkerId}", workerId);
 			return Task.FromResult(MethodResult<Job>.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error claiming job: {ex.Message}", ex)));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error claiming job: {ex.Message}", ex)));
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
@@ -22,7 +23,6 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 	private readonly IJobProducerService _jobProducerService;
 	private readonly IJobConsumerService _jobConsumerService;
 	private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations;
-	private readonly Channel<Job> _jobChannel;
 	private readonly ChannelReader<Job> _readerJobChannel;
 	private readonly ChannelWriter<Job> _writerJobChannel;
 	private readonly SemaphoreSlim _semaphoreSlim;
@@ -51,9 +51,9 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 			SingleWriter = false
 		};
 
-		_jobChannel = Channel.CreateBounded<Job>(channelOptions);
-		_readerJobChannel = _jobChannel.Reader;
-		_writerJobChannel = _jobChannel.Writer;
+		var jobChannel = Channel.CreateBounded<Job>(channelOptions);
+		_readerJobChannel = jobChannel.Reader;
+		_writerJobChannel = jobChannel.Writer;
 		_semaphoreSlim = new SemaphoreSlim(
 			_workerConfigurations.MaximumConcurrency,
 			_workerConfigurations.MaximumConcurrency
@@ -126,7 +126,7 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 
 			_logger.LogInformation("Starting graceful shutdown of AsyncEndpoints Background Service");
 
-			_shutdownTokenSource.Cancel();
+			await _shutdownTokenSource.CancelAsync();
 
 			_writerJobChannel.TryComplete();
 
@@ -161,7 +161,8 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 
 		try
 		{
-			await Task.WhenAll([producerTask, .. consumerTasks]);
+			List<Task> tasks = [producerTask, .. consumerTasks];
+			await Task.WhenAll(tasks);
 		}
 		catch (Exception ex)
 		{
@@ -180,7 +181,6 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 			}
 
 			_logger.LogError(ex, "AsyncEndpoints Background Service encountered an unrecoverable error");
-			throw;
 		}
 
 		_logger.LogInformation("AsyncEndpoints Background Service is stopping");

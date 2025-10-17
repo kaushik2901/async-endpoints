@@ -33,7 +33,7 @@ public class JobClaimingService(ILogger<JobClaimingService> logger, IJobManager 
 		var enqueued = await _jobChannelEnqueuer.Enqueue(writerJobChannel, job, stoppingToken);
 		if (!enqueued)
 		{
-			_logger.LogError("Failed to enqueue job for processing: {jobId}", job.Id);
+			_logger.LogError("Failed to enqueue job for processing: {JobId}", job.Id);
 			return JobClaimingState.FailedToEnqueue;
 		}
 

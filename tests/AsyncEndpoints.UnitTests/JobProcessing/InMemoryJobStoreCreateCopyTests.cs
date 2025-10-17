@@ -66,7 +66,7 @@ public class InMemoryJobStoreCreateCopyTests
 	/// This ensures that when jobs are updated, the reference properties are not shared between instances.
 	/// </summary>
 	[Theory, AutoMoqData]
-	public async Task CreateCopy_ProperlyDeepCopiesReferenceTypes(
+	public void CreateCopy_ProperlyDeepCopiesReferenceTypes(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider)
 	{

@@ -21,11 +21,10 @@ public class RedisJobStore : IJobStore
 	private readonly IJobHashConverter _jobHashConverter;
 	private readonly ISerializer _serializer;
 	private readonly IRedisLuaScriptService _redisLuaScriptService;
-	private readonly string? _connectionString;
 
 	private static readonly string _queueKey = "ae:jobs:queue";
 	private static readonly string _inProgressKey = "ae:jobs:inprogress";
-	private static readonly DateTime _unixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+	private static readonly string _jobStoreErrorCode = "JOB_STORE_ERROR";
 
 	public bool SupportsJobRecovery => true; // Redis supports recovery
 
@@ -45,8 +44,7 @@ public class RedisJobStore : IJobStore
 		_jobHashConverter = jobHashConverter ?? throw new ArgumentNullException(nameof(jobHashConverter));
 		_serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
 		_redisLuaScriptService = redisLuaScriptService ?? throw new ArgumentNullException(nameof(redisLuaScriptService));
-		_connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-		_database = InitializeDatabase(_connectionString);
+		_database = InitializeDatabase(connectionString ?? throw new ArgumentNullException(nameof(connectionString)));
 	}
 
 	/// <summary>
@@ -121,7 +119,7 @@ public class RedisJobStore : IJobStore
 		{
 			_logger.LogError(ex, "Unexpected error creating job: {JobName}", job?.Name);
 			return MethodResult.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error creating job: {ex.Message}", ex));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error creating job: {ex.Message}", ex));
 		}
 	}
 
@@ -169,7 +167,7 @@ public class RedisJobStore : IJobStore
 		{
 			_logger.LogError(ex, "Unexpected error retrieving job: {JobId}", id);
 			return MethodResult<Job>.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error retrieving job: {ex.Message}", ex));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error retrieving job: {ex.Message}", ex));
 		}
 	}
 
@@ -240,7 +238,7 @@ public class RedisJobStore : IJobStore
 		{
 			_logger.LogError(ex, "Unexpected error updating job: {JobId}", job?.Id);
 			return MethodResult.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error updating job: {ex.Message}", ex));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error updating job: {ex.Message}", ex));
 		}
 	}
 
@@ -278,7 +276,7 @@ public class RedisJobStore : IJobStore
 				return MethodResult<Job>.Success(default);
 			}
 
-			var result = await ClaimSingleJob(jobId, workerId, cancellationToken);
+			var result = await ClaimSingleJob(jobId, workerId);
 			if (!result.IsSuccess)
 			{
 				_logger.LogDebug("Failed to claim job for worker {WorkerId}", workerId);
@@ -292,11 +290,11 @@ public class RedisJobStore : IJobStore
 		{
 			_logger.LogError(ex, "Unexpected error claiming next job for worker {WorkerId}", workerId);
 			return MethodResult<Job>.Failure(
-				AsyncEndpointError.FromCode("JOB_STORE_ERROR", $"Unexpected error claiming job: {ex.Message}", ex));
+				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error claiming job: {ex.Message}", ex));
 		}
 	}
 
-	private async Task<MethodResult<Job>> ClaimSingleJob(Guid jobId, Guid workerId, CancellationToken cancellationToken)
+	private async Task<MethodResult<Job>> ClaimSingleJob(Guid jobId, Guid workerId)
 	{
 		var result = await _redisLuaScriptService.ClaimSingleJob(_database, jobId, workerId);
 
@@ -342,23 +340,15 @@ public class RedisJobStore : IJobStore
 
 	private IDatabase InitializeDatabase(string connectionString)
 	{
-		try
-		{
-			var redis = ConnectionMultiplexer.Connect(connectionString);
+		var redis = ConnectionMultiplexer.Connect(connectionString);
 
-			// Register for connection events to handle reconnection
-			redis.ConnectionFailed += (sender, e) =>
-				_logger.LogError(e.Exception, "Redis connection failed: {ErrorMessage}", e.Exception?.Message);
-			redis.ConnectionRestored += (sender, e) =>
-				_logger.LogInformation("Redis connection restored");
+		// Register for connection events to handle reconnection
+		redis.ConnectionFailed += (sender, e) =>
+			_logger.LogError(e.Exception, "Redis connection failed: {ErrorMessage}", e.Exception?.Message);
+		redis.ConnectionRestored += (sender, e) =>
+			_logger.LogInformation("Redis connection restored");
 
-			return redis.GetDatabase();
-		}
-		catch (Exception ex)
-		{
-			_logger.LogCritical(ex, "Failed to connect to Redis with connection string: {ConnectionString}", connectionString);
-			throw;
-		}
+		return redis.GetDatabase();
 	}
 
 	private static string GetJobKey(Guid jobId) => $"ae:job:{jobId}";
@@ -373,7 +363,7 @@ public class RedisJobStore : IJobStore
 
 	private static double GetScoreForTime(DateTime dateTime)
 	{
-		return (dateTime - _unixEpoch).TotalSeconds;
+		return (dateTime - DateTime.UnixEpoch).TotalSeconds;
 	}
 
 	private T? Deserialize<T>(string value)
