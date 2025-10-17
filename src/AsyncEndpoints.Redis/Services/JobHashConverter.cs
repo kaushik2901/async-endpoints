@@ -59,12 +59,12 @@ public class JobHashConverter(ISerializer serializer) : IJobHashConverter
 			Error = string.IsNullOrEmpty(dict[nameof(Job.Error)]) ? null : Deserialize<AsyncEndpointError>(dict[nameof(Job.Error)]),
 			RetryCount = int.Parse(dict[nameof(Job.RetryCount)]),
 			MaxRetries = int.Parse(dict[nameof(Job.MaxRetries)]),
-			RetryDelayUntil = string.IsNullOrEmpty(dict[nameof(Job.RetryDelayUntil)]) ? null : DateTime.Parse(dict[nameof(Job.RetryDelayUntil)]),
+			RetryDelayUntil = string.IsNullOrEmpty(dict[nameof(Job.RetryDelayUntil)]) ? null : DateTime.ParseExact(dict[nameof(Job.RetryDelayUntil)], "O", null),
 			WorkerId = string.IsNullOrEmpty(dict[nameof(Job.WorkerId)]) ? null : Guid.Parse(dict[nameof(Job.WorkerId)]),
-			CreatedAt = DateTimeOffset.Parse(dict[nameof(Job.CreatedAt)]),
-			StartedAt = string.IsNullOrEmpty(dict[nameof(Job.StartedAt)]) ? null : DateTimeOffset.Parse(dict[nameof(Job.StartedAt)]),
-			CompletedAt = string.IsNullOrEmpty(dict[nameof(Job.CompletedAt)]) ? null : DateTimeOffset.Parse(dict[nameof(Job.CompletedAt)]),
-			LastUpdatedAt = DateTimeOffset.Parse(dict[nameof(Job.LastUpdatedAt)])
+			CreatedAt = DateTimeOffset.ParseExact(dict[nameof(Job.CreatedAt)], "O", null),
+			StartedAt = string.IsNullOrEmpty(dict[nameof(Job.StartedAt)]) ? null : DateTimeOffset.ParseExact(dict[nameof(Job.StartedAt)], "O", null),
+			CompletedAt = string.IsNullOrEmpty(dict[nameof(Job.CompletedAt)]) ? null : DateTimeOffset.ParseExact(dict[nameof(Job.CompletedAt)], "O", null),
+			LastUpdatedAt = DateTimeOffset.ParseExact(dict[nameof(Job.LastUpdatedAt)], "O", null)
 		};
 	}
 

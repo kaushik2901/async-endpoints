@@ -32,18 +32,18 @@ public class JobChannelEnqueuer(ILogger<JobChannelEnqueuer> logger) : IJobChanne
 
 			return true;
 		}
-		catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested)
+		catch (OperationCanceledException ex) when (timeoutCts.Token.IsCancellationRequested)
 		{
-			_logger.LogDebug("Channel write timeout - channel likely full");
+			_logger.LogDebug(ex, "Channel write timeout - channel likely full");
 			// Don't break here since we're only processing one job
 		}
-		catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+		catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested)
 		{
-			_logger.LogDebug("Job producer was cancelled while writing to channel");
+			_logger.LogDebug(ex, "Job producer was cancelled while writing to channel");
 		}
-		catch (ObjectDisposedException)
+		catch (ObjectDisposedException ex)
 		{
-			_logger.LogWarning("Channel was disposed while trying to write job {JobId}", job.Id);
+			_logger.LogWarning(ex, "Channel was disposed while trying to write job {JobId}", job.Id);
 			// Channel was disposed, likely service shutting down
 		}
 		catch (Exception ex)

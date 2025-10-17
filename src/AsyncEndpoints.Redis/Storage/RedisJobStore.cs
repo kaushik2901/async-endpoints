@@ -321,12 +321,12 @@ public class RedisJobStore : IJobStore
 				Error = string.IsNullOrEmpty(resultArray[8].ToString()) ? null : Deserialize<AsyncEndpointError>(resultArray[8].ToString()),
 				RetryCount = int.Parse(resultArray[9].ToString()),
 				MaxRetries = int.Parse(resultArray[10].ToString()),
-				RetryDelayUntil = string.IsNullOrEmpty(resultArray[11].ToString()) ? null : DateTime.Parse(resultArray[11].ToString()),
+				RetryDelayUntil = string.IsNullOrEmpty(resultArray[11].ToString()) ? null : DateTime.ParseExact(resultArray[11].ToString(), "O", null),
 				WorkerId = workerId, // Newly assigned
-				CreatedAt = DateTimeOffset.Parse(resultArray[13].ToString()),
-				StartedAt = DateTimeOffset.Parse(resultArray[14].ToString()), // Newly set
-				CompletedAt = string.IsNullOrEmpty(resultArray[15].ToString()) ? null : DateTimeOffset.Parse(resultArray[15].ToString()),
-				LastUpdatedAt = DateTimeOffset.Parse(resultArray[16].ToString()) // Newly set
+				CreatedAt = DateTimeOffset.ParseExact(resultArray[13].ToString(), "O", null),
+				StartedAt = DateTimeOffset.ParseExact(resultArray[14].ToString(), "O", null), // Newly set
+				CompletedAt = string.IsNullOrEmpty(resultArray[15].ToString()) ? null : DateTimeOffset.ParseExact(resultArray[15].ToString(), "O", null),
+				LastUpdatedAt = DateTimeOffset.ParseExact(resultArray[16].ToString(), "O", null) // Newly set
 			};
 
 			return MethodResult<Job>.Success(claimedJob);

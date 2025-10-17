@@ -46,10 +46,5 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScop
 		{
 			// Expected during shutdown
 		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Consumer task failed");
-			throw;
-		}
 	}
 }

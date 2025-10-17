@@ -17,7 +17,7 @@ namespace AsyncEndpoints.Background;
 /// A background service that manages the processing of asynchronous jobs using producer-consumer pattern.
 /// It coordinates job production and consumption with configurable concurrency and queue limits.
 /// </summary>
-public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposable, IDisposable
+public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposable, IDisposable
 {
 	private readonly ILogger<AsyncEndpointsBackgroundService> _logger;
 	private readonly IJobProducerService _jobProducerService;
@@ -85,7 +85,7 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 	/// Disposes of the resources used by the background service.
 	/// </summary>
 	/// <param name="disposing">True if disposing resources, false if finalizing.</param>
-	protected virtual void Dispose(bool disposing)
+	public void Dispose(bool disposing)
 	{
 		if (!_disposed && disposing)
 		{
@@ -113,7 +113,7 @@ public class AsyncEndpointsBackgroundService : BackgroundService, IAsyncDisposab
 	/// Asynchronously disposes of the resources used by the background service.
 	/// </summary>
 	/// <returns>A task representing the asynchronous disposal operation.</returns>
-	protected virtual async ValueTask DisposeAsyncCore()
+	public async ValueTask DisposeAsyncCore()
 	{
 		if (_disposed)
 			return;
