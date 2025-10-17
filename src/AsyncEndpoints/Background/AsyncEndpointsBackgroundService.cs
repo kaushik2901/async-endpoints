@@ -71,17 +71,6 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 	}
 
 	/// <summary>
-	/// Asynchronously disposes of the resources used by the background service.
-	/// </summary>
-	/// <returns>A task representing the asynchronous disposal operation.</returns>
-	public async ValueTask DisposeAsync()
-	{
-		await DisposeAsyncCore().ConfigureAwait(false);
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	/// <summary>
 	/// Disposes of the resources used by the background service.
 	/// </summary>
 	/// <param name="disposing">True if disposing resources, false if finalizing.</param>
@@ -107,6 +96,17 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 				_disposed = true;
 			}
 		}
+	}
+
+	/// <summary>
+	/// Asynchronously disposes of the resources used by the background service.
+	/// </summary>
+	/// <returns>A task representing the asynchronous disposal operation.</returns>
+	public async ValueTask DisposeAsync()
+	{
+		await DisposeAsyncCore().ConfigureAwait(false);
+		Dispose(true);
+		GC.SuppressFinalize(this);
 	}
 
 	/// <summary>

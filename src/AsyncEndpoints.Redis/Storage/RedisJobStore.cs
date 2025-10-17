@@ -1,3 +1,4 @@
+using System.Globalization;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
@@ -321,12 +322,12 @@ public class RedisJobStore : IJobStore
 				Error = string.IsNullOrEmpty(resultArray[8].ToString()) ? null : Deserialize<AsyncEndpointError>(resultArray[8].ToString()),
 				RetryCount = int.Parse(resultArray[9].ToString()),
 				MaxRetries = int.Parse(resultArray[10].ToString()),
-				RetryDelayUntil = string.IsNullOrEmpty(resultArray[11].ToString()) ? null : DateTime.ParseExact(resultArray[11].ToString(), "O", null),
+				RetryDelayUntil = string.IsNullOrEmpty(resultArray[11].ToString()) ? null : DateTime.ParseExact(resultArray[11].ToString(), "O", CultureInfo.InvariantCulture),
 				WorkerId = workerId, // Newly assigned
-				CreatedAt = DateTimeOffset.ParseExact(resultArray[13].ToString(), "O", null),
-				StartedAt = DateTimeOffset.ParseExact(resultArray[14].ToString(), "O", null), // Newly set
-				CompletedAt = string.IsNullOrEmpty(resultArray[15].ToString()) ? null : DateTimeOffset.ParseExact(resultArray[15].ToString(), "O", null),
-				LastUpdatedAt = DateTimeOffset.ParseExact(resultArray[16].ToString(), "O", null) // Newly set
+				CreatedAt = DateTimeOffset.ParseExact(resultArray[13].ToString(), "O", CultureInfo.InvariantCulture),
+				StartedAt = DateTimeOffset.ParseExact(resultArray[14].ToString(), "O", CultureInfo.InvariantCulture), // Newly set
+				CompletedAt = string.IsNullOrEmpty(resultArray[15].ToString()) ? null : DateTimeOffset.ParseExact(resultArray[15].ToString(), "O", CultureInfo.InvariantCulture),
+				LastUpdatedAt = DateTimeOffset.ParseExact(resultArray[16].ToString(), "O", CultureInfo.InvariantCulture) // Newly set
 			};
 
 			return MethodResult<Job>.Success(claimedJob);
