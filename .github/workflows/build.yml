@@ -41,7 +41,7 @@ jobs:
         shell: powershell
         run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
-            /k:"your_project_key" `
+            /k:"AsyncEndpoints" `
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.cs.coverageReportPaths="tests/**/TestResults/**/*.cobertura.xml"
