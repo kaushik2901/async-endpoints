@@ -6,7 +6,7 @@
 
 A modern .NET library for building asynchronous APIs that handle long-running operations in the background. AsyncEndpoints provides a clean, efficient solution for processing time-consuming tasks without blocking the client, using a producer-consumer pattern with configurable storage and retry mechanisms.
 
-For complete documentation and more details, visit [asyncendpoints.com](https://asyncendpoints.com).
+For complete documentation and more details, visit <a href="https://asyncendpoints.com" target="_blank">asyncendpoints.com</a>.
 
 ## Key Features
 
