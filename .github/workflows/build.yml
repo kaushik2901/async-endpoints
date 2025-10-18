@@ -44,17 +44,17 @@ jobs:
             /k:"AsyncEndpoints" `
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.cs.cobertura.reportsPaths="**/*.cobertura.xml"
+            /d:sonar.exclusions="docs/**,examples/**" `
+            /d:sonar.cs.opencover.reportsPaths="tests/*/TestResults/*/coverage.opencover.xml"
       - name: Restore dependencies
         run: dotnet restore AsyncEndpoints.sln
       - name: Build the solution
-        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore
+        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore --framework net8.0
       - name: Run unit tests with coverage
-        shell: powershell
-        run: |
-          dotnet test AsyncEndpoints.sln --collect "XPlat Code Coverage" --configuration Release --no-build --framework net8.0
+        run: dotnet test AsyncEndpoints.sln --collect "XPlat Code Coverage;Format=opencover" --configuration Release --no-build --framework net8.0
       - name: SonarQube End analysis
         shell: powershell
         run: |
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
