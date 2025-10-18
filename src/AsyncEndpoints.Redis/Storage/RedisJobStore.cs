@@ -219,8 +219,7 @@ public class RedisJobStore : IJobStore
 			await _database.SortedSetRemoveAsync(_inProgressKey, job.Id.ToString());
 
 			// Only add back to queue if it's queued or scheduled for retry
-			if (job.Status == JobStatus.Queued ||
-				job.Status == JobStatus.Scheduled && (job.RetryDelayUntil == null || job.RetryDelayUntil <= _dateTimeProvider.UtcNow))
+			if (job.Status == JobStatus.Queued || job.Status == JobStatus.Scheduled)
 			{
 				await _database.SortedSetAddAsync(_queueKey, job.Id.ToString(), GetJobScore(job));
 			}
