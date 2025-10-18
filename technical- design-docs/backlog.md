@@ -9,10 +9,9 @@
 
 ## In progress
 
-- AsyncEndpoints should support PUT, PATCH, and DELETE methods
-
 ## Completed
 
+- AsyncEndpoints should support PUT, PATCH, and DELETE methods
 - AsyncEndpoints should support both AOT and JIT compilation
 - AsyncEndpoints should support request without body
 - Fix all the issues from exception-handling-analysis.md

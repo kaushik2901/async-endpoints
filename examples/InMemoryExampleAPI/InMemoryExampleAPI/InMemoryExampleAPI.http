@@ -36,6 +36,114 @@ POST {{InMemoryExampleAPI_HostAddress}}/empty-body/failure?action=test&delay=1
 
 ###
 
+### PUT Success operation with request body
+PUT {{InMemoryExampleAPI_HostAddress}}/with-body/success-put
+Content-Type: application/json
+
+{
+    "id": 3,
+    "name": "PUT Success Test",
+    "description": "This PUT operation will succeed",
+    "processingDelaySeconds": 1
+}
+
+###
+
+### PUT Failure operation with request body
+PUT {{InMemoryExampleAPI_HostAddress}}/with-body/failure-put
+Content-Type: application/json
+
+{
+    "id": 4,
+    "name": "PUT Failure Test",
+    "description": "This PUT operation will fail",
+    "processingDelaySeconds": 1
+}
+
+###
+
+### PUT Success operation without request body
+PUT {{InMemoryExampleAPI_HostAddress}}/empty-body/success-put?action=cleanup&delay=1
+
+###
+
+### PUT Failure operation without request body
+PUT {{InMemoryExampleAPI_HostAddress}}/empty-body/failure-put?action=test&delay=1
+
+###
+
+### PATCH Success operation with request body
+PATCH {{InMemoryExampleAPI_HostAddress}}/with-body/success-patch
+Content-Type: application/json
+
+{
+    "id": 5,
+    "name": "PATCH Success Test",
+    "description": "This PATCH operation will succeed",
+    "processingDelaySeconds": 1
+}
+
+###
+
+### PATCH Failure operation with request body
+PATCH {{InMemoryExampleAPI_HostAddress}}/with-body/failure-patch
+Content-Type: application/json
+
+{
+    "id": 6,
+    "name": "PATCH Failure Test",
+    "description": "This PATCH operation will fail",
+    "processingDelaySeconds": 1
+}
+
+###
+
+### PATCH Success operation without request body
+PATCH {{InMemoryExampleAPI_HostAddress}}/empty-body/success-patch?action=update&delay=1
+
+###
+
+### PATCH Failure operation without request body
+PATCH {{InMemoryExampleAPI_HostAddress}}/empty-body/failure-patch?action=test&delay=1
+
+###
+
+### DELETE Success operation with request body
+DELETE {{InMemoryExampleAPI_HostAddress}}/with-body/success-delete
+Content-Type: application/json
+
+{
+    "id": 7,
+    "name": "DELETE Success Test",
+    "description": "This DELETE operation will succeed",
+    "processingDelaySeconds": 1
+}
+
+###
+
+### DELETE Failure operation with request body
+DELETE {{InMemoryExampleAPI_HostAddress}}/with-body/failure-delete
+Content-Type: application/json
+
+{
+    "id": 8,
+    "name": "DELETE Failure Test",
+    "description": "This DELETE operation will fail",
+    "processingDelaySeconds": 1
+}
+
+###
+
+### DELETE Success operation without request body
+DELETE {{InMemoryExampleAPI_HostAddress}}/empty-body/success-delete?action=remove&delay=1
+
+###
+
+### DELETE Failure operation without request body
+DELETE {{InMemoryExampleAPI_HostAddress}}/empty-body/failure-delete?action=test&delay=1
+
+###
+
 ### Check job status (replace {jobId} with actual job ID from previous requests)
 GET {{InMemoryExampleAPI_HostAddress}}/jobs/{jobId}
 Accept: application/json

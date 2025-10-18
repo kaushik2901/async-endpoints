@@ -49,9 +49,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore AsyncEndpoints.sln
       - name: Build the solution
-        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore --framework net8.0
+        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore
       - name: Run unit tests with coverage
-        run: dotnet test AsyncEndpoints.sln --collect "XPlat Code Coverage;Format=opencover" --configuration Release --no-build --framework net8.0
+        run: dotnet test AsyncEndpoints.sln --collect "XPlat Code Coverage;Format=opencover" --configuration Release --no-build
       - name: SonarQube End analysis
         shell: powershell
         run: |

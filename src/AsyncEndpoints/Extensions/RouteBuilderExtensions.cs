@@ -32,28 +32,10 @@ public static class RouteBuilderExtensions
 		this IEndpointRouteBuilder endpoints,
 		string jobName,
 		string pattern,
-		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null)
-	{
-		return endpoints
-			.MapPost(pattern, async (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-			{
-				try
-				{
-					var result = await jsonBodyParserService.ParseAsync<TRequest>(httpContext, cancellationToken);
-					if (!result.IsSuccess)
-					{
-						return Results.Problem(result.Error.Message);
-					}
-
-					return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, result.Data!, handler, cancellationToken);
-				}
-				catch (Exception ex)
-				{
-					return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
-				}
-			})
+		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapPost(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
-	}
 
 	/// <summary>
 	/// Maps an asynchronous POST endpoint that processes requests without body in the background.
@@ -67,22 +49,121 @@ public static class RouteBuilderExtensions
 		this IEndpointRouteBuilder endpoints,
 		string jobName,
 		string pattern,
-		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null)
-	{
-		return endpoints
-			.MapPost(pattern, async (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-			{
-				try
-				{
-					return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, NoBodyRequest.CreateInstance(), handler, cancellationToken);
-				}
-				catch (Exception ex)
-				{
-					return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
-				}
-			})
+		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapPost(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
-	}
+
+	/// <summary>
+	/// Maps an asynchronous PUT endpoint that processes requests in the background.
+	/// The endpoint accepts a request of type TRequest and processes it asynchronously.
+	/// </summary>
+	/// <typeparam name="TRequest">The type of the request object.</typeparam>
+	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="pattern">The URL pattern for the endpoint.</param>
+	/// <param name="handler">Optional custom handler function to process the request. 
+	/// If not provided, the default handler will be used based on registered IAsyncEndpointRequestHandler services.</param>
+	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+	public static IEndpointConventionBuilder MapAsyncPut<TRequest>(
+		this IEndpointRouteBuilder endpoints,
+		string jobName,
+		string pattern,
+		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapPut(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+
+	/// <summary>
+	/// Maps an asynchronous PUT endpoint that processes requests without body in the background.
+	/// </summary>
+	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="pattern">The URL pattern for the endpoint.</param>
+	/// <param name="handler">Optional custom handler function to process the request.</param>
+	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+	public static IEndpointConventionBuilder MapAsyncPut(
+		this IEndpointRouteBuilder endpoints,
+		string jobName,
+		string pattern,
+		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapPut(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+
+	/// <summary>
+	/// Maps an asynchronous PATCH endpoint that processes requests in the background.
+	/// The endpoint accepts a request of type TRequest and processes it asynchronously.
+	/// </summary>
+	/// <typeparam name="TRequest">The type of the request object.</typeparam>
+	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="pattern">The URL pattern for the endpoint.</param>
+	/// <param name="handler">Optional custom handler function to process the request. 
+	/// If not provided, the default handler will be used based on registered IAsyncEndpointRequestHandler services.</param>
+	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+	public static IEndpointConventionBuilder MapAsyncPatch<TRequest>(
+		this IEndpointRouteBuilder endpoints,
+		string jobName,
+		string pattern,
+		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+
+	/// <summary>
+	/// Maps an asynchronous PATCH endpoint that processes requests without body in the background.
+	/// </summary>
+	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="pattern">The URL pattern for the endpoint.</param>
+	/// <param name="handler">Optional custom handler function to process the request.</param>
+	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+	public static IEndpointConventionBuilder MapAsyncPatch(
+		this IEndpointRouteBuilder endpoints,
+		string jobName,
+		string pattern,
+		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+
+	/// <summary>
+	/// Maps an asynchronous DELETE endpoint that processes requests in the background.
+	/// The endpoint accepts a request of type TRequest and processes it asynchronously.
+	/// </summary>
+	/// <typeparam name="TRequest">The type of the request object.</typeparam>
+	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="pattern">The URL pattern for the endpoint.</param>
+	/// <param name="handler">Optional custom handler function to process the request. 
+	/// If not provided, the default handler will be used based on registered IAsyncEndpointRequestHandler services.</param>
+	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+	public static IEndpointConventionBuilder MapAsyncDelete<TRequest>(
+		this IEndpointRouteBuilder endpoints,
+		string jobName,
+		string pattern,
+		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+
+	/// <summary>
+	/// Maps an asynchronous DELETE endpoint that processes requests without body in the background.
+	/// </summary>
+	/// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add the route to.</param>
+	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
+	/// <param name="pattern">The URL pattern for the endpoint.</param>
+	/// <param name="handler">Optional custom handler function to process the request.</param>
+	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
+	public static IEndpointConventionBuilder MapAsyncDelete(
+		this IEndpointRouteBuilder endpoints,
+		string jobName,
+		string pattern,
+		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
+			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
 	/// Maps an asynchronous GET endpoint that fetches job responses by job ID.
@@ -92,21 +173,51 @@ public static class RouteBuilderExtensions
 	/// <returns>An <see cref="IEndpointConventionBuilder"/> that can be used to further configure the endpoint.</returns>
 	public static IEndpointConventionBuilder MapAsyncGetJobDetails(
 		this IEndpointRouteBuilder endpoints,
-		string pattern = "/jobs/{jobId:guid}")
-	{
-		return endpoints
-			.MapGet(pattern, async (HttpContext httpContext, [FromRoute] Guid jobId, [FromServices] IJobManager jobManager, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-			{
-				try
-				{
-					var result = await jobManager.GetJobById(jobId, cancellationToken);
-					return await asyncEndpointsConfigurations.ResponseConfigurations.JobStatusResponseFactory(result, httpContext);
-				}
-				catch (Exception ex)
-				{
-					return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
-				}
-			})
+		string pattern = "/jobs/{jobId:guid}") => endpoints
+			.MapGet(pattern, (HttpContext httpContext, [FromRoute] Guid jobId, [FromServices] IJobManager jobManager, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
+				HandleGetJobDetailsRequest(httpContext, jobId, jobManager, asyncEndpointsConfigurations, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+
+	private static async Task<IResult> HandleRequestWithBody<TRequest>(string jobName, Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, IJsonBodyParserService jsonBodyParserService, IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken)
+	{
+		try
+		{
+			var result = await jsonBodyParserService.ParseAsync<TRequest>(httpContext, cancellationToken);
+			if (!result.IsSuccess)
+			{
+				return Results.Problem(result.Error.Message);
+			}
+
+			return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, result.Data!, handler, cancellationToken);
+		}
+		catch (Exception ex)
+		{
+			return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+		}
+	}
+
+	private static async Task<IResult> HandleRequestWithoutBody(string jobName, Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken)
+	{
+		try
+		{
+			return await asyncEndpointRequestDelegate.HandleAsync(jobName, httpContext, NoBodyRequest.CreateInstance(), handler, cancellationToken);
+		}
+		catch (Exception ex)
+		{
+			return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+		}
+	}
+
+	private static async Task<IResult> HandleGetJobDetailsRequest(HttpContext httpContext, Guid jobId, IJobManager jobManager, AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken)
+	{
+		try
+		{
+			var result = await jobManager.GetJobById(jobId, cancellationToken);
+			return await asyncEndpointsConfigurations.ResponseConfigurations.JobStatusResponseFactory(result, httpContext);
+		}
+		catch (Exception ex)
+		{
+			return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+		}
 	}
 }
