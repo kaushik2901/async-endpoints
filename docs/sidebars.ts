@@ -22,8 +22,8 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'intro',
-        'category/installation',
-        'category/quick-start',
+        'category/installation/installation',
+        'category/quick-start/quick-start',
       ],
     },
     {
@@ -32,10 +32,10 @@ const sidebars: SidebarsConfig = {
       collapsible: true,
       collapsed: false,
       items: [
-        'category/architecture',
-        'category/endpoint-mapping',
-        'category/handlers',
-        'category/job-lifecycle',
+        'category/architecture/architecture',
+        'category/endpoint-mapping/endpoint-mapping',
+        'category/handlers/handlers',
+        'category/job-lifecycle/job-lifecycle',
       ],
     },
     {
@@ -44,8 +44,12 @@ const sidebars: SidebarsConfig = {
       collapsible: true,
       collapsed: false,
       items: [
-        'category/configuration',
-        'category/storage',
+        'category/configuration/configuration',
+        'category/configuration/worker-configuration',
+        'category/configuration/job-manager-configuration',
+        'category/configuration/response-customization',
+        'category/configuration/distributed-recovery-configuration',
+        'category/storage/storage',
       ],
     },
     {
@@ -54,11 +58,36 @@ const sidebars: SidebarsConfig = {
       collapsible: true,
       collapsed: false,
       items: [
-        'category/advanced-features',
-        'category/error-handling',
-        'category/testing',
-        'category/performance',
-        'category/deployment',
+        'category/advanced-features/advanced-features',
+        'category/error-handling/error-handling',
+        'category/testing/testing',
+        'category/performance/performance',
+        'category/deployment/deployment',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Recipes and Examples',
+      collapsible: true,
+      collapsed: false,
+      items: [
+        'category/file-processing/file-processing',
+        'category/data-export/data-export',
+        'category/integration-patterns/integration-patterns',
+        'category/monitoring-observability/monitoring-observability',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'API Reference',
+      collapsible: true,
+      collapsed: false,
+      items: [
+        'category/api-reference/extension-methods/extension-methods',
+        'category/api-reference/configuration-classes/configuration-classes',
+        'category/api-reference/core-interfaces/core-interfaces',
+        'category/api-reference/core-models/core-models',
+        'category/api-reference/utilities/utilities',
       ],
     },
     {
@@ -67,8 +96,8 @@ const sidebars: SidebarsConfig = {
       collapsible: true,
       collapsed: false,
       items: [
-        'category/contributing',
-        'category/license',
+        'category/contributing/contributing',
+        'category/license/license',
       ],
     },
   ],
