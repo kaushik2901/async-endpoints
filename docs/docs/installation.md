@@ -133,4 +133,4 @@ AsyncEndpoints requires the following .NET components:
 
 ## Next Steps
 
-After successful installation, continue to the [Quick Start](../category/quick-start/quick-start.md) guide to learn how to implement your first async endpoint.
+After successful installation, continue to the [Quick Start](./quick-start.md) guide to learn how to implement your first async endpoint.

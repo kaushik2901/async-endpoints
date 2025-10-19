@@ -197,7 +197,7 @@ function HeroSection() {
             <div className={styles.ctaCluster}>
               <Link
                 className="button button--primary button--lg"
-                to="/docs/intro"
+                to="/docs/introduction"
                 aria-label="Get started with AsyncEndpoints"
               >
                 Get Started
