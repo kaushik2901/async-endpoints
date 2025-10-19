@@ -1,6 +1,8 @@
 ---
+title: "Architecture"
+description: "Complete AsyncEndpoints architecture overview. Learn about system components, data flow, job lifecycle, scalability patterns, and distributed processing design."
+keywords: ["async endpoints architecture", ".NET async processing design", "background job architecture", "distributed processing architecture", "job queue design", "async system components"]
 sidebar_position: 1
-title: Architecture
 ---
 
 # Architecture

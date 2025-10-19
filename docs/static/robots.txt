@@ -1,0 +1,15 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+
+# Allow all pages to be crawled
+Allow: /
+
+# Sitemap location
+Sitemap: https://asyncendpoints.com/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 5
+
+# Host directive for Google Search Console
+Host: asyncendpoints.com
