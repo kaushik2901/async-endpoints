@@ -392,8 +392,9 @@ public class WebAppIntegrationTests : IClassFixture<WebApplicationFactory<Progra
             builder.ConfigureServices(services =>
             {
                 // Replace real services with test doubles
-                services.AddSingleton<IJobStore, TestJobStore>();
-                services.AddTransient<ITestHandler, TestableHandler>();
+                services.AddSingleton<IJobStore, InMemoryJobStore>();
+                // Register actual handlers or mocks as needed for testing
+                // services.AddTransient<IAsyncEndpointRequestHandler<YourRequestType, YourResponseType>, YourHandlerImplementation>();
             });
         });
     }
@@ -454,13 +455,29 @@ public class BackgroundServiceTests
         
         // Add test services
         services.AddLogging();
-        services.AddSingleton<IJobStore, TestJobStore>();
-        services.AddTransient<IJobProducerService, TestJobProducer>();
-        services.AddTransient<IJobConsumerService, TestJobConsumer>();
-        services.AddSingleton<IDateTimeProvider, MockDateTimeProvider>();
+        services.AddSingleton<IJobStore, InMemoryJobStore>();
         
-        // Add the background service
-        services.AddSingleton<IHostedService, TestableBackgroundService>();
+        // Create mocks for job processing services
+        var mockJobProducer = new Mock<IJobProducerService>();
+        var mockJobConsumer = new Mock<IJobConsumerService>();
+        var mockJobClaiming = new Mock<IJobClaimingService>();
+        var mockHandlerExecution = new Mock<IHandlerExecutionService>();
+        var mockDelayCalculator = new Mock<IDelayCalculatorService>();
+        
+        services.AddSingleton(mockJobProducer.Object);
+        services.AddSingleton(mockJobConsumer.Object);
+        services.AddSingleton(mockJobClaiming.Object);
+        services.AddSingleton(mockHandlerExecution.Object);
+        services.AddSingleton(mockDelayCalculator.Object);
+        
+        // Create and register a mock IDateTimeProvider
+        var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+        mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+        mockDateTimeProvider.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
+        services.AddSingleton(mockDateTimeProvider.Object);
+        
+        // Add the actual background service implementation
+        services.AddSingleton<IHostedService, AsyncEndpointsBackgroundService>();
         
         using var serviceProvider = services.BuildServiceProvider();
         
@@ -508,8 +525,8 @@ public class EndToEndTests
         // This test simulates a complete async processing scenario
         
         // 1. Submit job via HTTP
-        using var app = new TestWebApplication();
-        var client = app.CreateClient();
+        var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient();
         
         var requestData = new DataRequest { Data = "Hello AsyncEndpoints!", ProcessingPriority = 2 };
         var submitResponse = await client.PostAsJsonAsync("/api/process-data", requestData);
@@ -671,13 +688,21 @@ public static class TestHelpers
 ```csharp
 public class TestConfiguration
 {
-    public static IServiceCollection ConfigureTestServices(IServiceCollection services)
+    public static IServiceCollection ConfigureTestServices(IServiceCollection services, Mock<IDateTimeProvider>? mockDateTimeProvider = null)
     {
         // Register test doubles
         services.AddSingleton<IJobStore, InMemoryJobStore>();
-        services.AddSingleton<IDateTimeProvider, MockDateTimeProvider>();
-        services.AddSingleton<ISerializer, TestSerializer>();
         
+        // Create and register a mock IDateTimeProvider
+        mockDateTimeProvider ??= new Mock<IDateTimeProvider>();
+        mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+        mockDateTimeProvider.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
+        services.AddSingleton(mockDateTimeProvider.Object);
+        
+        // Note: ISerializer would need to be mocked separately in actual tests
+        // var mockSerializer = new Mock<ISerializer>();
+        // services.AddSingleton(mockSerializer.Object);
+
         // Configure for testing
         services.Configure<AsyncEndpointsConfigurations>(config =>
         {
@@ -689,14 +714,6 @@ public class TestConfiguration
         
         return services;
     }
-}
-
-public class MockDateTimeProvider : IDateTimeProvider
-{
-    public DateTimeOffset DateTimeOffsetNow { get; set; } = DateTimeOffset.UtcNow;
-    public DateTime UtcNow => DateTimeOffsetNow.UtcDateTime;
-    
-    public void SetTime(DateTimeOffset time) => DateTimeOffsetNow = time;
 }
 ```
 

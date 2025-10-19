@@ -123,7 +123,7 @@ public sealed class AsyncEndpointsResponseConfigurations
 
 ## Configuration Validation
 
-The configuration system includes built-in validation to ensure settings are reasonable:
+The library does not include built-in validation for configuration values. The configuration system accepts all values as provided, so it's important to validate configuration values manually during setup:
 
 ```csharp
 // Example validation approach
@@ -141,6 +141,17 @@ public void ValidateConfiguration(AsyncEndpointsConfigurations config)
     if (config.WorkerConfigurations.JobTimeoutMinutes <= 0)
         throw new ArgumentException("JobTimeoutMinutes must be greater than 0");
 }
+
+// Call validation after configuration
+builder.Services.AddAsyncEndpoints(options =>
+{
+    // Configure options
+    options.WorkerConfigurations.MaximumConcurrency = Environment.ProcessorCount;
+    // ... other configuration
+    
+    // Validate the configuration
+    ValidateConfiguration(options);
+});
 ```
 
 ## Common Configuration Patterns

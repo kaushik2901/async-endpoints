@@ -95,24 +95,23 @@ return MethodResult<ProcessResult>.Failure(new AsyncEndpointError
 The system includes error classification to handle different error scenarios appropriately:
 
 ```csharp
-public class ErrorClassifier
+public static class ErrorClassifier
 {
-    public ErrorType ClassifyError(Exception ex)
+    public static ErrorType Classify(Exception ex)
     {
         return ex switch
         {
             // Transient errors - should be retried
+            TaskCanceledException => ErrorType.Transient,
             TimeoutException => ErrorType.Transient,
-            HttpRequestException => ErrorType.Transient,
-            ExternalServiceException => ErrorType.Transient,
+            HttpRequestException httpEx when httpEx.Message.Contains("timeout") => ErrorType.Transient,
             
             // Permanent errors - should not be retried
             ArgumentException => ErrorType.Permanent,
             InvalidOperationException => ErrorType.Permanent,
-            ValidationException => ErrorType.Permanent,
             
-            // Unknown errors - may be retried based on configuration
-            _ => ErrorType.Unknown
+            // All other errors are treated as retriable
+            _ => ErrorType.Retriable
         };
     }
 }
@@ -197,45 +196,38 @@ public class ExceptionSerializer
         return JsonSerializer.Serialize(exceptionInfo, AsyncEndpointsJsonSerializationContext.Default.ExceptionInfo);
     }
     
-    public Exception? Deserialize(string serializedException)
+    public ExceptionInfo? Deserialize(string serializedException)
     {
-        var exceptionInfo = JsonSerializer.Deserialize<ExceptionInfo>(serializedException, AsyncEndpointsJsonSerializationContext.Default.ExceptionInfo);
-        return exceptionInfo?.ToException();
+        return JsonSerializer.Deserialize<ExceptionInfo>(serializedException, AsyncEndpointsJsonSerializationContext.Default.ExceptionInfo);
     }
 }
 
-public class ExceptionInfo
+public sealed class ExceptionInfo
 {
-    public string Type { get; set; } = string.Empty;
-    public string Message { get; set; } = string.Empty;
-    public string StackTrace { get; set; } = string.Empty;
-    public InnerExceptionInfo? InnerException { get; set; }
-    public Dictionary<string, object?> Data { get; set; } = new();
+    public string Type { get; init; } = string.Empty;
+    public string Message { get; init; } = string.Empty;
+    public string? StackTrace { get; init; }
+    public InnerExceptionInfo? InnerException { get; init; }
     
-    public static ExceptionInfo FromException(Exception ex)
+    public static ExceptionInfo FromException(Exception exception)
     {
         return new ExceptionInfo
         {
-            Type = ex.GetType().FullName ?? ex.GetType().Name,
-            Message = ex.Message,
-            StackTrace = ex.StackTrace ?? string.Empty,
-            InnerException = ex.InnerException != null ? FromException(ex.InnerException) : null,
-            Data = new Dictionary<string, object?>(ex.Data.Cast<KeyValuePair<object, object>>()
-                .ToDictionary(kvp => kvp.Key.ToString()!, kvp => kvp.Value))
+            Type = exception.GetType().Name,
+            Message = exception.Message ?? string.Empty,
+            StackTrace = exception.StackTrace,
+            InnerException = exception.InnerException != null ? new InnerExceptionInfo
+            {
+                Type = exception.InnerException.GetType().Name,
+                Message = exception.InnerException.Message ?? string.Empty,
+                StackTrace = exception.InnerException.StackTrace
+            } : null
         };
     }
-    
-    public Exception ToException()
+
+    // Parameterless constructor for JSON deserialization
+    public ExceptionInfo()
     {
-        // Reconstruct exception (simplified implementation)
-        var exception = (Exception)Activator.CreateInstance(Type.GetType(Type) ?? typeof(Exception), Message);
-        exception.Data.Clear();
-        foreach (var kvp in Data)
-        {
-            exception.Data[kvp.Key] = kvp.Value;
-        }
-        
-        return exception;
     }
 }
 ```
@@ -584,7 +576,9 @@ public async Task HandleAsync_WhenExternalServiceFails_ReturnsFailureResult()
     // Assert
     Assert.False(result.IsSuccess);
     Assert.NotNull(result.Error);
-    Assert.Equal(error, result.Error.Exception?.ToException());
+    Assert.NotNull(result.Error.Exception);
+    Assert.Equal(error.GetType().Name, result.Error.Exception.Type);
+    Assert.Equal(error.Message, result.Error.Exception.Message);
 }
 
 [Fact]
