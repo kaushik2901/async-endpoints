@@ -5,6 +5,7 @@ import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 import Heading from "@theme/Heading";
+import SEOHead from "@site/src/components/SEOHead";
 import styles from "./index.module.css";
 
 /* ---------- Data ---------- */
@@ -249,15 +250,22 @@ function KeyFeaturesSection() {
 export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout
-      title={`AsyncEndpoints — ${siteConfig.tagline}`}
-      description="AsyncEndpoints — Modern asynchronous endpoint framework for .NET"
-    >
-      <HeroSection />
-      <main>
-        <KeyFeaturesSection />
-      </main>
-    </Layout>
+    <>
+      <SEOHead 
+        title="AsyncEndpoints - Enterprise-Grade Asynchronous Processing for .NET" 
+        description="Modern .NET library for asynchronous API processing with background jobs, job tracking, and resilience. Offload long-running tasks to background workers with full visibility and control."
+        pathname="/"
+      />
+      <Layout
+        title={`AsyncEndpoints — ${siteConfig.tagline}`}
+        description="AsyncEndpoints — Modern asynchronous endpoint framework for .NET"
+      >
+        <HeroSection />
+        <main>
+          <KeyFeaturesSection />
+        </main>
+      </Layout>
+    </>
   );
 }
 

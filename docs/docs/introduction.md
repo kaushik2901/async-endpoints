@@ -1,4 +1,7 @@
 ---
+title: "Introduction"
+description: "Learn about AsyncEndpoints, a modern .NET library for building asynchronous APIs that handle long-running operations in the background with job tracking and resilience."
+keywords: ["async endpoints", ".NET asynchronous processing", "background jobs", "API queue", "job tracking", "distributed processing", "C# queue"]
 sidebar_position: 1
 ---
 

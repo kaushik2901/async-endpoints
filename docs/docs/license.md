@@ -1,13 +1,15 @@
 ---
+title: "License"
+description: "AsyncEndpoints is released under the MIT License. Learn about the terms and permissions for using and contributing to this open source project."
+keywords: ["async endpoints license", "MIT license", "open source license", ".NET library license", "software license terms"]
 sidebar_position: 2
-title: License
 ---
 
 # License
 
 ## MIT License
 
-**Copyright (c) 2025 Kaushik Jadav**
+**Copyright (c) 2025 AsyncEndpoints**
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -77,7 +79,7 @@ For example, in your project's license file or documentation:
 
 ```
 This product includes software from AsyncEndpoints (https://asyncendpoints.com)
-Copyright (c) 2025 Kaushik Jadav
+Copyright (c) 2025 AsyncEndpoints
 Licensed under the MIT License (see LICENSE file for details)
 ```
 

@@ -1,6 +1,8 @@
 ---
+title: "Contributing"
+description: "Learn how to contribute to AsyncEndpoints open source project. Guidelines for code contributions, documentation, and community participation."
+keywords: ["async endpoints contributing", ".NET open source contribution", "async processing library contribution", "github contribution guide", "open source contribution guidelines"]
 sidebar_position: 1
-title: Contributing
 ---
 
 # Contributing to AsyncEndpoints

@@ -1,0 +1,37 @@
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AsyncEndpoints",
+  "description": "Modern .NET library for asynchronous API processing with background jobs, job tracking, and resilience. Offload long-running tasks to background workers with full visibility and control.",
+  "url": "https://asyncendpoints.com",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Cross-platform",
+  "softwareVersion": "1.1.1-alpha",
+  "softwareHelp": "https://asyncendpoints.com/docs/introduction",
+  "featureList": [
+    "Asynchronous Processing",
+    ".NET Integration",
+    "Background Job Queue",
+    "Job Status Tracking",
+    "Distributed Processing",
+    "Redis Integration",
+    "Job Recovery",
+    "Error Handling"
+  ],
+  "creator": {
+    "@type": "Person",
+    "name": "Kaushik Jadav",
+    "url": "https://github.com/kaushik2901"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  },
+  "isAccessibleForFree": true,
+  "license": "https://github.com/kaushik2901/async-endpoints/blob/main/LICENSE",
+  "downloadUrl": "https://www.nuget.org/packages/AsyncEndpoints",
+  "dateModified": "2025-10-19",
+  "datePublished": "2024-01-01"
+}

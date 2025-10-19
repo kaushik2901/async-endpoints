@@ -1,6 +1,8 @@
 ---
+title: "Installation"
+description: "Install AsyncEndpoints NuGet package in your .NET project. Step-by-step installation guide for async processing with background jobs and job tracking."
+keywords: ["install asyncendpoints", "async endpoints nuget", ".NET async processing", "background job installation", "C# queue setup", "async endpoint setup"]
 sidebar_position: 2
-title: Installation
 ---
 
 # Installation

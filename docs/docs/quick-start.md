@@ -1,6 +1,8 @@
 ---
+title: "Quick Start"
+description: "Step-by-step guide to create your first async endpoint with AsyncEndpoints. Learn how to process requests in the background with job tracking and resilience."
+keywords: ["async endpoints quick start", ".NET async processing tutorial", "background job quick start", "C# async endpoints", "async processing example"]
 sidebar_position: 3
-title: Quick Start
 ---
 
 # Quick Start

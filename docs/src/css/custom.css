@@ -424,3 +424,97 @@ body {
     font-size: 2rem;
   }
 }
+
+/* ========== SEO ENHANCEMENTS ========== */
+/* Semantic structure improvements */
+main {
+  display: block; /* Ensure main element is properly displayed */
+}
+
+/* Heading hierarchy improvements */
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  position: relative;
+}
+
+/* Heading anchor improvements for better UX and SEO */
+.anchor {
+  text-decoration: none !important;
+}
+
+/* Improve content hierarchy for screen readers and SEO */
+.markdown article,
+.markdown section {
+  margin-top: 1.5rem;
+}
+
+/* Code block accessibility improvements */
+.prism-code {
+  position: relative;
+}
+
+/* Table styling for better SEO and readability */
+.markdown table {
+  display: table; /* Ensure proper table role for accessibility */
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.markdown table th,
+.markdown table td {
+  padding: 0.75rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.markdown table th {
+  background-color: var(--ifm-color-emphasis-100);
+  font-weight: 600;
+}
+
+/* Link enhancements */
+.markdown a {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure accessibility for focus states */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+[tabindex]:focus {
+  outline: 3px solid var(--ifm-color-primary-light);
+  outline-offset: 2px;
+}
+
+/* Improve image accessibility */
+.markdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* List styling for better semantic meaning */
+.markdown ul,
+.markdown ol {
+  margin-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.markdown li {
+  margin-bottom: 0.25rem;
+}
+
+/* Breadcrumb styling for navigation context */
+.breadcrumb {
+  margin-bottom: 1.5rem;
+}
+
+/* Better spacing for documentation content */
+.docItemContainer {
+  padding: 1rem 0;
+}
