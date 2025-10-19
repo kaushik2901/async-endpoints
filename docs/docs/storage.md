@@ -96,7 +96,7 @@ builder.Services
     .AddAsyncEndpointsRedisStore(config =>
     {
         config.ConnectionString = "localhost:6379";
-        // Additional Redis configuration options can be set here
+        // Additional Redis configuration can be set directly on the ConnectionMultiplexer if needed
     })
     .AddAsyncEndpointsWorker();
 ```
@@ -107,7 +107,7 @@ builder.Services
 - **Concurrency**: Atomic operations for safe multi-instance usage
 - **Performance**: Optimized Redis operations with Lua scripts
 - **Scalability**: Supports multiple application instances
-- **Recovery**: Supports distributed job recovery
+- **Recovery**: Supports distributed job recovery (when enabled)
 - **Monitoring**: Can leverage Redis monitoring and metrics
 
 ### Redis Connection Management
@@ -139,12 +139,6 @@ When using the configuration object approach:
 public class RedisConfiguration
 {
     public string ConnectionString { get; set; } = string.Empty;
-    public int ConnectRetry { get; set; } = 3;
-    public int ConnectTimeout { get; set; } = 5000;
-    public bool AbortOnConnectFail { get; set; } = false;
-    public string? Password { get; set; }
-    public bool Ssl { get; set; } = false;
-    public string? SslHost { get; set; }
 }
 ```
 

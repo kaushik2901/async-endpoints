@@ -66,7 +66,7 @@ public class ProcessDataHandler(ILogger<ProcessDataHandler> logger)
                 CharacterCount = request.Data.Length
             };
             
-            logger.LogInformation("Successfully processed request with ID {JobId}", context.Request);
+            logger.LogInformation("Successfully processed request for data: {Data}", request.Data);
             return MethodResult<ProcessResult>.Success(result);
         }
         catch (Exception ex)
