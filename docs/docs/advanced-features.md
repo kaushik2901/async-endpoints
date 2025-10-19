@@ -331,6 +331,41 @@ public class CustomDatabaseJobStore : IJobStore
         throw new NotImplementedException("Custom implementation required for atomic claim operation");
     }
 
+    public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Recover jobs that have been in progress beyond the timeout
+            // and haven't exceeded maxRetries
+            var recoverTime = DateTimeOffset.FromUnixTimeSeconds(timeoutUnixTime);
+            var sql = @"
+                UPDATE Jobs 
+                SET Status = @Status, 
+                    WorkerId = NULL, 
+                    RetryCount = RetryCount + 1,
+                    LastUpdatedAt = @LastUpdatedAt
+                WHERE Status = @InProgressStatus 
+                  AND StartedAt < @RecoverTime
+                  AND RetryCount < @MaxRetries";
+
+            var rowsAffected = await _connection.ExecuteAsync(sql, new
+            {
+                Status = JobStatus.Queued.ToString(),
+                LastUpdatedAt = recoverTime,
+                InProgressStatus = JobStatus.InProgress.ToString(),
+                RecoverTime = recoverTime,
+                MaxRetries = maxRetries
+            });
+
+            return rowsAffected;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error recovering stuck jobs with timeoutUnixTime: {TimeoutUnixTime}", timeoutUnixTime);
+            return 0; // Return 0 if recovery failed
+        }
+    }
+
     private string Serialize<T>(T obj)
     {
         return System.Text.Json.JsonSerializer.Serialize(obj);

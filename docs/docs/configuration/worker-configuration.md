@@ -46,12 +46,12 @@ options.WorkerConfigurations.MaximumConcurrency = Environment.ProcessorCount / 2
 
 ### PollingIntervalMs
 - **Type**: `int`
-- **Default**: `5000` (5 seconds)
+- **Default**: `1000` (1 second) - using `AsyncEndpointsConstants.DefaultPollingIntervalMs`
 - **Description**: Frequency in milliseconds for checking new jobs
 - **Impact**: Affects responsiveness vs. resource consumption
 
 ```csharp
-// Check for jobs every 1 second (more responsive but more frequent checks)
+// Check for jobs every 1 second (default)
 options.WorkerConfigurations.PollingIntervalMs = 1000;
 
 // Check for jobs every 10 seconds (less responsive but fewer checks)
@@ -176,8 +176,8 @@ builder.Services.AddAsyncEndpoints(options =>
     // Concurrency based on load and resource availability
     options.WorkerConfigurations.MaximumConcurrency = Math.Min(Environment.ProcessorCount, 16);
     
-    // Balanced polling frequency
-    options.WorkerConfigurations.PollingIntervalMs = 5000;
+    // Balanced polling frequency (default is 1000ms)
+    options.WorkerConfigurations.PollingIntervalMs = 3000; // Example: 3 seconds for production
     
     // Reasonable timeout for most operations
     options.WorkerConfigurations.JobTimeoutMinutes = 60;

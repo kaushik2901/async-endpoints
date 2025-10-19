@@ -119,12 +119,12 @@ public static class ErrorClassifier
 
 ### Custom Error Classification
 
-You can implement custom error classification logic:
+You can implement custom error classification logic using wrapper functions since ErrorClassifier is a static class:
 
 ```csharp
-public class CustomErrorClassifier : ErrorClassifier
+public static class CustomErrorClassifier
 {
-    public override ErrorType ClassifyError(Exception ex)
+    public static ErrorType Classify(Exception ex)
     {
         // Special handling for custom exception types
         if (ex is DataValidationException)
@@ -137,7 +137,8 @@ public class CustomErrorClassifier : ErrorClassifier
             return ErrorType.Transient; // Some network errors are transient
         }
         
-        return base.ClassifyError(ex); // Fall back to default classification
+        // Fall back to default classification
+        return ErrorClassifier.Classify(ex);
     }
 }
 ```
