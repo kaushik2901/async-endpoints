@@ -83,10 +83,10 @@ public sealed class AsyncEndpointsWorkerConfigurations
 {
     public Guid WorkerId { get; set; } = Guid.NewGuid();
     public int MaximumConcurrency { get; set; } = Environment.ProcessorCount;
-    public int PollingIntervalMs { get; set; } = 5000; // 5 seconds
-    public int JobTimeoutMinutes { get; set; } = 30; // 30 minutes
-    public int BatchSize { get; set; } = 5;
-    public int MaximumQueueSize { get; set; } = 50;
+    public int PollingIntervalMs { get; set; } = AsyncEndpointsConstants.DefaultPollingIntervalMs; // 1000 ms
+    public int JobTimeoutMinutes { get; set; } = AsyncEndpointsConstants.DefaultJobTimeoutMinutes; // 30 minutes
+    public int BatchSize { get; set; } = AsyncEndpointsConstants.DefaultBatchSize; // 5
+    public int MaximumQueueSize { get; set; } = AsyncEndpointsConstants.DefaultMaximumQueueSize; // 50
 }
 ```
 
@@ -97,7 +97,7 @@ Configuration for job management and retry logic:
 ```csharp
 public sealed class AsyncEndpointsJobManagerConfiguration
 {
-    public int DefaultMaxRetries { get; set; } = 3;
+    public int DefaultMaxRetries { get; set; } = AsyncEndpointsConstants.MaximumRetries; // 3
     public double RetryDelayBaseSeconds { get; set; } = 2.0;
     public TimeSpan JobClaimTimeout { get; set; } = TimeSpan.FromMinutes(5);
     public int MaxConcurrentJobs { get; set; } = 10;
@@ -179,7 +179,7 @@ builder.Services.AddAsyncEndpoints(options =>
 {
     // Optimized settings for production
     options.WorkerConfigurations.MaximumConcurrency = Math.Min(Environment.ProcessorCount, 16);
-    options.WorkerConfigurations.PollingIntervalMs = 5000; // Balance between responsiveness and resource usage
+    options.WorkerConfigurations.PollingIntervalMs = 3000; // Balance between responsiveness and resource usage (default is 1000ms)
     options.WorkerConfigurations.JobTimeoutMinutes = 60; // Longer timeouts for complex operations
     options.WorkerConfigurations.MaximumQueueSize = 1000; // Larger queue for high throughput
     

@@ -319,27 +319,27 @@ public enum JobStatus
 ### Values
 
 #### Queued
-- **Value:** `0`
+- **Value:** `100`
 - **Description:** Job created and waiting for processing
 
 #### Scheduled
-- **Value:** `1`
+- **Value:** `200`
 - **Description:** Job scheduled for delayed execution (with retry delays)
 
 #### InProgress
-- **Value:** `2`
+- **Value:** `300`
 - **Description:** Currently being processed by a worker
 
 #### Completed
-- **Value:** `3`
+- **Value:** `400`
 - **Description:** Successfully completed with result available
 
 #### Failed
-- **Value:** `4`
+- **Value:** `500`
 - **Description:** Failed after all retry attempts exhausted
 
 #### Canceled
-- **Value:** `5`
+- **Value:** `600`
 - **Description:** Explicitly canceled before completion
 
 ### Example
