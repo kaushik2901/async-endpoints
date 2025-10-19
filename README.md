@@ -3,6 +3,7 @@
 ![AsyncEndpoints Logo](https://raw.githubusercontent.com/kaushik2901/async-endpoints/74749001092f6ee4f4bd52a1f19b376d4a69da2d/async-endpoints-banner.png "AsyncEndpoints")
 
 [![Build](https://github.com/kaushik2901/async-endpoints/actions/workflows/build.yml/badge.svg)](https://github.com/kaushik2901/async-endpoints/actions/workflows/build.yml)
+[![NuGet Version](https://img.shields.io/nuget/vpre/AsyncEndpoints)](https://www.nuget.org/packages/AsyncEndpoints)
 
 A modern .NET library for building asynchronous APIs that handle long-running operations in the background. AsyncEndpoints provides a clean, efficient solution for processing time-consuming tasks without blocking the client, using a producer-consumer pattern with configurable storage and retry mechanisms.
 
