@@ -15,7 +15,13 @@ const config: Config = {
   projectName: 'async-endpoints',
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownImages: 'throw',
+      onBrokenMarkdownLinks: 'throw'
+    }
+  },
 
   i18n: {
     defaultLocale: 'en',
