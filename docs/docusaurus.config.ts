@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // --- AsyncEndpoints official site configuration ---
 const config: Config = {
-  title: 'AsyncEndpoints - Enterprise-Grade Asynchronous Processing for .NET',
+  title: 'async-endpoints',
   tagline: 'Modern .NET library for asynchronous API processing with background jobs, job tracking, and resilience',
   favicon: 'img/favicon.ico',
 
