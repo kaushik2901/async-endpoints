@@ -9,7 +9,7 @@ This guide walks you through creating your first async endpoint using AsyncEndpo
 
 ## Prerequisites
 
-Before starting, make sure you've installed the AsyncEndpoints package as described in the [Installation](../category/installation/installation.md) guide.
+Before starting, make sure you've installed the AsyncEndpoints package as described in the [Installation](./installation.md) guide.
 
 ## Step 1: Create Your Request and Response Models
 
@@ -189,7 +189,7 @@ app.MapAsyncPost<DataRequest>("ProcessData", "/api/process-data",
 
 Now that you've successfully created your first async endpoint, explore these topics:
 
-- **[Core Concepts](../category/architecture/architecture.md)**: Understand the architecture and design patterns
-- **[Configuration](../category/configuration/configuration.md)**: Learn how to configure AsyncEndpoints for your specific needs
-- **[Advanced Features](../category/advanced-features/advanced-features.md)**: Explore advanced usage patterns
-- **[Recipes and Examples](../category/file-processing/file-processing.md)**: Learn implementation patterns for common use cases
+- **[Core Concepts](./architecture.md)**: Understand the architecture and design patterns
+- **[Configuration](./configuration/configuration.md)**: Learn how to configure AsyncEndpoints for your specific needs
+- **[Advanced Features](./advanced-features.md)**: Explore advanced usage patterns
+- **[Recipes and Examples](./file-processing.md)**: Learn implementation patterns for common use cases

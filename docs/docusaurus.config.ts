@@ -15,7 +15,7 @@ const config: Config = {
   projectName: 'async-endpoints',
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenMarkdownLinks: 'throw',
 
   i18n: {
     defaultLocale: 'en',
@@ -86,15 +86,15 @@ const config: Config = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/intro',
+              to: '/docs/introduction',
             },
             {
               label: 'Configuration',
-              to: '/docs/category/configuration',
+              to: '/docs/configuration',
             },
             {
               label: 'Contributing Guide',
-              to: '/docs/category/contributing',
+              to: '/docs/contributing',
             },
           ],
         },
@@ -118,7 +118,7 @@ const config: Config = {
         {
           title: 'Legal',
           items: [
-            { label: 'License', to: '/docs/category/license' },
+            { label: 'License', to: '/docs/license' },
             { label: 'Privacy Policy', href: '#' },
             { label: 'Terms of Use', href: '#' },
           ],
