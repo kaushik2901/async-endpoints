@@ -16,11 +16,18 @@ public class JobChannelEnqueuer(ILogger<JobChannelEnqueuer> logger) : IJobChanne
 	/// <inheritdoc />
 	public async Task<bool> Enqueue(ChannelWriter<Job> writerJobChannel, Job job, CancellationToken stoppingToken)
 	{
+		using var _ = _logger.BeginScope(new { JobId = job.Id });
+		
+		_logger.LogDebug("Attempting to enqueue job {JobId} to channel", job.Id);
+
 		// Try non-blocking write first
 		if (writerJobChannel.TryWrite(job))
 		{
+			_logger.LogDebug("Successfully enqueued job {JobId} using non-blocking write", job.Id);
 			return true;
 		}
+
+		_logger.LogDebug("Channel is full, using async write with timeout for job {JobId}", job.Id);
 
 		// Channel is full - use timeout to avoid indefinite blocking
 		using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(AsyncEndpointsConstants.JobProducerChannelWriteTimeoutSeconds));
@@ -30,6 +37,7 @@ public class JobChannelEnqueuer(ILogger<JobChannelEnqueuer> logger) : IJobChanne
 		{
 			await writerJobChannel.WriteAsync(job, combinedCts.Token);
 
+			_logger.LogDebug("Successfully enqueued job {JobId} using async write", job.Id);
 			return true;
 		}
 		catch (OperationCanceledException ex) when (timeoutCts.Token.IsCancellationRequested)
@@ -51,6 +59,7 @@ public class JobChannelEnqueuer(ILogger<JobChannelEnqueuer> logger) : IJobChanne
 			_logger.LogError(ex, "Unexpected error writing job {JobId} to channel", job.Id);
 		}
 
+		_logger.LogDebug("Failed to enqueue job {JobId} to channel", job.Id);
 		return false;
 	}
 }

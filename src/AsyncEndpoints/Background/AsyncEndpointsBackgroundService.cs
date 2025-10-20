@@ -159,6 +159,8 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 			.Select(_ => _jobConsumerService.ConsumeJobsAsync(_readerJobChannel, _semaphoreSlim, stoppingToken))
 			.ToArray();
 
+		_logger.LogDebug("Started {ConsumerCount} consumer tasks and 1 producer task", consumerTasks.Length);
+
 		try
 		{
 			List<Task> tasks = [producerTask, .. consumerTasks];

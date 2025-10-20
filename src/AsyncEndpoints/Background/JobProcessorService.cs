@@ -22,6 +22,10 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 	/// <inheritdoc />
 	public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
 	{
+		using var _ = _logger.BeginScope(new { JobId = job.Id, JobName = job.Name });
+		
+		_logger.LogDebug("Starting job processing for job {JobId} with name {JobName}", job.Id, job.Name);
+
 		try
 		{
 			var result = await ProcessJobPayloadAsync(job, cancellationToken);
@@ -50,7 +54,7 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Exception occurred during job processing: {JobName}, JobId: {JobId}", job.Name, job.Id);
+			_logger.LogError(ex, "Exception occurred during job processing");
 		}
 	}
 
@@ -62,34 +66,42 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 	/// <returns>A <see cref="MethodResult{T}"/> containing the serialized result of the operation.</returns>
 	private async Task<MethodResult<string>> ProcessJobPayloadAsync(Job job, CancellationToken cancellationToken)
 	{
-		_logger.LogInformation("Processing job {JobId} with name {JobName}", job.Id, job.Name);
-
 		try
 		{
+			_logger.LogDebug("Starting payload processing for job {JobId} with name {JobName}", job.Id, job.Name);
+
 			var handlerRegistration = HandlerRegistrationTracker.GetHandlerRegistration(job.Name);
 			if (handlerRegistration == null)
 			{
+				_logger.LogError("Handler registration not found for job name: {JobName}", job.Name);
 				return MethodResult<string>.Failure(new InvalidOperationException($"Handler registration not found for job name: {job.Name}"));
 			}
 
+			_logger.LogDebug("Deserializing payload for job {JobId}", job.Id);
 			var request = _serializer.Deserialize(job.Payload, handlerRegistration.RequestType);
 			if (request == null)
 			{
+				_logger.LogError("Failed to deserialize request payload for job: {JobName}", job.Name);
 				return MethodResult<string>.Failure(new InvalidOperationException($"Failed to deserialize request payload for job: {job.Name}"));
 			}
 
+			_logger.LogDebug("Executing handler for job {JobId}", job.Id);
 			var result = await _handlerExecutionService.ExecuteHandlerAsync(job.Name, request, job, cancellationToken);
 			if (!result.IsSuccess)
 			{
+				_logger.LogError("Handler execution failed for job {JobId}: {Error}", job.Id, result.Error.Message);
 				return MethodResult<string>.Failure(result.Error);
 			}
 
+			_logger.LogDebug("Serializing result for job {JobId}", job.Id);
 			var serializedResult = _serializer.Serialize(result.Data, handlerRegistration.ResponseType);
 
+			_logger.LogDebug("Successfully processed payload for job {JobId}", job.Id);
 			return MethodResult<string>.Success(serializedResult);
 		}
 		catch (Exception ex)
 		{
+			_logger.LogError(ex, "Exception during payload processing for job {JobId}", job.Id);
 			return MethodResult<string>.Failure(ex);
 		}
 	}

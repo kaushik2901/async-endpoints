@@ -15,6 +15,10 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
 	/// <inheritdoc />
 	public async Task<MethodResult<RedisValue[]>> ClaimSingleJob(IDatabase database, Guid jobId, Guid workerId)
 	{
+		using var _ = _logger.BeginScope(new { JobId = jobId, WorkerId = workerId });
+		
+		_logger.LogDebug("Starting Redis job claim operation for job {JobId} by worker {WorkerId}", jobId, workerId);
+		
 		var jobKey = GetJobKey(jobId);
 
 		// Use atomic Lua script to check and claim the job in one operation
@@ -109,9 +113,12 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
             ]
 		);
 
+		_logger.LogDebug("Redis script execution completed for job claim operation");
+
 		// Handle the script result
 		if (result.IsNull || result.ToString().StartsWith("NOSCRIPT"))
 		{
+			_logger.LogError("Lua script error occurred during job claim operation");
 			// Lua script error occurred
 			return MethodResult<RedisValue[]>.Failure(AsyncEndpointError.FromCode("JOB_CLAIM_ERROR", "Could not claim job due to script error"));
 		}
@@ -122,6 +129,7 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
 			if (result.Resp3Type == ResultType.Error)
 			{
 				var error = result.ToString();
+				_logger.LogError("Redis Lua script returned error: {Error}", error);
 				if (error.Contains("ALREADY_ASSIGNED") || error.Contains("WRONG_STATUS") || error.Contains("RETRY_DELAY"))
 				{
 					return MethodResult<RedisValue[]>.Failure(AsyncEndpointError.FromCode("JOB_NOT_CLAIMED", "Could not claim job"));
@@ -131,6 +139,7 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
 
 			// Return the Redis values array
 			var resultArray = (RedisValue[])result!;
+			_logger.LogDebug("Successfully claimed job {JobId} for worker {WorkerId}, retrieved {FieldCount} fields", jobId, workerId, resultArray.Length);
 			return MethodResult<RedisValue[]>.Success(resultArray);
 		}
 		catch (Exception ex)

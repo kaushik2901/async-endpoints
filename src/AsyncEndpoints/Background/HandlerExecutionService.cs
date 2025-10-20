@@ -20,9 +20,11 @@ public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IS
 	/// <inheritdoc />
 	public async Task<MethodResult<object>> ExecuteHandlerAsync(string jobName, object request, Job job, CancellationToken cancellationToken)
 	{
-		_logger.LogDebug("Executing handler for job: {JobName}, JobId: {JobId}", jobName, job.Id);
+		using var _ = _logger.BeginScope(new { JobId = job.Id, JobName = jobName, RequestType = request.GetType().Name });
+		
+		_logger.LogDebug("Starting handler execution for job: {JobName}, JobId: {JobId}", jobName, job.Id);
 
-		await using var scope = _serviceScopeFactory.CreateAsyncScope();
+		await using var serviceScope = _serviceScopeFactory.CreateAsyncScope();
 
 		var invoker = HandlerRegistrationTracker.GetInvoker(jobName);
 		if (invoker == null)
@@ -35,7 +37,8 @@ public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IS
 
 		try
 		{
-			var result = await invoker(scope.ServiceProvider, request, job, cancellationToken);
+			_logger.LogDebug("Invoking handler for job: {JobName}, JobId: {JobId}", jobName, job.Id);
+			var result = await invoker(serviceScope.ServiceProvider, request, job, cancellationToken);
 
 			if (result.IsSuccess)
 			{

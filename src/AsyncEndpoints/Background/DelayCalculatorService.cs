@@ -1,18 +1,20 @@
 using System;
 using AsyncEndpoints.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Background;
 
 /// <inheritdoc />
-public class DelayCalculatorService(IOptions<AsyncEndpointsConfigurations> configurations) : IDelayCalculatorService
+public class DelayCalculatorService(ILogger<DelayCalculatorService> logger, IOptions<AsyncEndpointsConfigurations> configurations) : IDelayCalculatorService
 {
+	private readonly ILogger<DelayCalculatorService> _logger = logger;
 	private readonly TimeSpan _basePollingInterval = TimeSpan.FromMilliseconds(configurations.Value.WorkerConfigurations.PollingIntervalMs);
 
 	/// <inheritdoc />
 	public TimeSpan CalculateDelay(JobClaimingState state, AsyncEndpointsWorkerConfigurations workerConfigurations)
 	{
-		return state switch
+		var delay = state switch
 		{
 			JobClaimingState.JobSuccessfullyEnqueued => _basePollingInterval,
 			JobClaimingState.NoJobFound => TimeSpan.FromMilliseconds(
@@ -23,5 +25,9 @@ public class DelayCalculatorService(IOptions<AsyncEndpointsConfigurations> confi
 				AsyncEndpointsConstants.JobProducerErrorDelaySeconds),
 			_ => _basePollingInterval // Default case
 		};
+
+		_logger.LogDebug("Calculated delay for state {State}: {Delay}ms", state, delay.TotalMilliseconds);
+
+		return delay;
 	}
 }

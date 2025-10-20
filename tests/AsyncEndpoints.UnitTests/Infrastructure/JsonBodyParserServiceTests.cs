@@ -14,6 +14,7 @@ public class JsonBodyParserServiceTests
 	public JsonBodyParserServiceTests()
 	{
 		var services = new ServiceCollection();
+		services.AddLogging(); // Add logging services to the collection
 		services.AddOptions();
 		services.AddSingleton<ISerializer, Serializer>(); // Register the serializer service
 		services.AddScoped<IJsonBodyParserService, JsonBodyParserService>();

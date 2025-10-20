@@ -245,6 +245,8 @@ public class RedisJobStore : IJobStore
 	/// <inheritdoc />
 	public async Task<MethodResult<Job>> ClaimNextJobForWorker(Guid workerId, CancellationToken cancellationToken)
 	{
+		using var _ = _logger.BeginScope(new { WorkerId = workerId });
+		
 		try
 		{
 			if (cancellationToken.IsCancellationRequested)
@@ -252,6 +254,8 @@ public class RedisJobStore : IJobStore
 				_logger.LogDebug("Claim next job for worker operation cancelled");
 				return await Task.FromCanceled<MethodResult<Job>>(cancellationToken);
 			}
+
+			_logger.LogDebug("Attempting to claim next job for worker {WorkerId}", workerId);
 
 			// Get the next available job from the queue (oldest first), considering retry delays
 			var availableJobIds = await _database.SortedSetRangeByScoreAsync(
@@ -276,6 +280,7 @@ public class RedisJobStore : IJobStore
 				return MethodResult<Job>.Success(default);
 			}
 
+			_logger.LogDebug("Attempting to claim job {JobId} for worker {WorkerId}", jobId, workerId);
 			var result = await ClaimSingleJob(jobId, workerId);
 			if (!result.IsSuccess)
 			{
@@ -283,7 +288,7 @@ public class RedisJobStore : IJobStore
 				return MethodResult<Job>.Success(default);
 			}
 
-			_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", jobId, workerId);
+			_logger.LogInformation("Successfully claimed job {JobId} for worker {WorkerId}", jobId, workerId);
 			return result;
 		}
 		catch (Exception ex)

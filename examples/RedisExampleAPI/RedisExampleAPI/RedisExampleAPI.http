@@ -145,7 +145,7 @@ DELETE {{RedisExampleAPI_HostAddress}}/empty-body/failure-delete?action=test&del
 ###
 
 ### Check job status (replace {jobId} with actual job ID from previous requests)
-GET {{RedisExampleAPI_HostAddress}}/jobs/7e8ed76d-8f01-4804-8f32-7a63cd459733
+GET {{RedisExampleAPI_HostAddress}}/jobs/e885e431-f7ea-40b8-bb4d-fa6b3985d157
 Accept: application/json
 
 ###

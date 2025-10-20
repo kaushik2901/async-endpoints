@@ -206,7 +206,7 @@ public class JobContextLoggingHandler : IAsyncEndpointRequestHandler<DataRequest
     public async Task<MethodResult<ProcessResult>> HandleAsync(AsyncContext<DataRequest> context, CancellationToken token)
     {
         // Extract contextual information and add to logging scope
-        using var scope = _logger.BeginScope(new
+        using var _ = _logger.BeginScope(new
         {
             JobId = context.RouteParams.GetValueOrDefault("jobId", Guid.NewGuid().ToString()),
             UserId = context.Headers.GetValueOrDefault("X-User-Id", new List<string?>())?.FirstOrDefault(),

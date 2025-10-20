@@ -178,6 +178,8 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	/// <inheritdoc />
 	public Task<MethodResult<Job>> ClaimNextJobForWorker(Guid workerId, CancellationToken cancellationToken)
 	{
+		using var _ = _logger.BeginScope(new { WorkerId = workerId });
+		
 		try
 		{
 			if (cancellationToken.IsCancellationRequested)
@@ -186,6 +188,8 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				return Task.FromCanceled<MethodResult<Job>>(cancellationToken);
 			}
 
+			_logger.LogDebug("Attempting to claim next job for worker {WorkerId}", workerId);
+			
 			var now = _dateTimeProvider.UtcNow;
 
 			// Find the next available job (oldest queued/scheduled job)
@@ -205,6 +209,8 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				// Return successful result with null data to indicate no jobs available (not an error)
 				return Task.FromResult(MethodResult<Job>.Success(default));
 			}
+
+			_logger.LogDebug("Found available job {JobId} for worker {WorkerId}, attempting to claim", availableJob.Id, workerId);
 
 			// Use the immutable objects pattern to ensure atomic update of the job
 			Job? currentJob;
@@ -233,7 +239,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				);
 			} while (!jobs.TryUpdate(availableJob.Id, updatedJob, currentJob));
 
-			_logger.LogInformation("Claimed job {JobId} for worker {WorkerId}", availableJob.Id, workerId);
+			_logger.LogInformation("Successfully claimed job {JobId} for worker {WorkerId}", availableJob.Id, workerId);
 			return Task.FromResult(MethodResult<Job>.Success(updatedJob));
 		}
 		catch (Exception ex)

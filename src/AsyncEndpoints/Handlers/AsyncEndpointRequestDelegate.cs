@@ -25,6 +25,8 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null,
 		CancellationToken cancellationToken = default)
 	{
+		using var _ = _logger.BeginScope(new { JobName = jobName, RequestType = typeof(TRequest).Name });
+		
 		_logger.LogInformation("Handling async request for job: {JobName}", jobName);
 
 		var handlerResponse = await HandleRequestDelegate(handler, httpContext, request, cancellationToken);
@@ -34,8 +36,9 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 			return handlerResponse;
 		}
 
+		_logger.LogDebug("Serializing request payload for job: {JobName}", jobName);
 		var payload = _serializer.Serialize(request);
-		_logger.LogDebug("Serialized request payload for job: {JobName}", jobName);
+		_logger.LogDebug("Serialized request payload for job: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
 
 		var submitJobResult = await _jobManager.SubmitJob(jobName, payload, httpContext, cancellationToken);
 		if (!submitJobResult.IsSuccess)
@@ -58,7 +61,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 
 		var job = submitJobResult.Data!;
 
-		_logger.LogInformation("Created job {JobId} for job: {JobName}", job.Id, jobName);
+		_logger.LogInformation("Successfully created job {JobId} for job: {JobName}", job.Id, jobName);
 
 		return await _configurations.ResponseConfigurations.JobSubmittedResponseFactory(job, httpContext);
 	}
