@@ -9,6 +9,8 @@
 
 ## In progress
 
+- AsyncEndpoints should important metrics and traces
+
 ## Completed
 
 - AsyncEndpoints should support PUT, PATCH, and DELETE methods
