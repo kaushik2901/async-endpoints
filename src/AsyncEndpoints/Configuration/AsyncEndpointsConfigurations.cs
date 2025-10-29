@@ -21,6 +21,11 @@ public sealed class AsyncEndpointsConfigurations
 	/// Gets or sets the response-specific configurations.
 	/// </summary>
 	public AsyncEndpointsResponseConfigurations ResponseConfigurations { get; set; } = new();
+	
+	/// <summary>
+	/// Gets or sets the observability-specific configurations.
+	/// </summary>
+	public AsyncEndpointsObservabilityConfigurations ObservabilityConfigurations { get; set; } = new();
 }
 
 /// <summary>

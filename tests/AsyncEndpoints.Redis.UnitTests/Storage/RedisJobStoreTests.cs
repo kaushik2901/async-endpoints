@@ -1,4 +1,5 @@
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Redis.Services;
@@ -25,7 +26,8 @@ public class RedisJobStoreTests
 		_mockJobHashConverter = new Mock<IJobHashConverter>();
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var mockRedisLuaScriptService = new Mock<IRedisLuaScriptService>();
-		_redisJobStore = new RedisJobStore(_mockLogger.Object, _mockDatabase.Object, mockDateTimeProvider.Object, _mockJobHashConverter.Object, _mockSerializer.Object, mockRedisLuaScriptService.Object);
+		var mockMetrics = new Mock<IAsyncEndpointsObservability>();
+		_redisJobStore = new RedisJobStore(_mockLogger.Object, _mockDatabase.Object, mockDateTimeProvider.Object, _mockJobHashConverter.Object, _mockSerializer.Object, mockRedisLuaScriptService.Object, mockMetrics.Object);
 	}
 
 	/// <summary>
@@ -146,7 +148,8 @@ public class RedisJobStoreTests
 
 		// Create a new instance of RedisJobStore with the mock DateTimeProvider
 		var mockRedisLuaScriptService = new Mock<IRedisLuaScriptService>();
-		var redisJobStore = new RedisJobStore(_mockLogger.Object, _mockDatabase.Object, mockDateTimeProvider.Object, _mockJobHashConverter.Object, _mockSerializer.Object, mockRedisLuaScriptService.Object);
+		var mockMetrics = new Mock<IAsyncEndpointsObservability>();
+		var redisJobStore = new RedisJobStore(_mockLogger.Object, _mockDatabase.Object, mockDateTimeProvider.Object, _mockJobHashConverter.Object, _mockSerializer.Object, mockRedisLuaScriptService.Object, mockMetrics.Object);
 
 		_mockDatabase.Setup(db => db.KeyExistsAsync($"ae:job:{job.Id}", It.IsAny<CommandFlags>()))
 					 .ReturnsAsync(true);

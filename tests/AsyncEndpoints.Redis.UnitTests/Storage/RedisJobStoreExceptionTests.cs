@@ -1,4 +1,5 @@
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Redis.Services;
@@ -38,7 +39,8 @@ public class RedisJobStoreExceptionTests
 			.Throws(new RedisException("Redis operation failed"));
 
 		var mockRedisLuaScriptService = new Mock<IRedisLuaScriptService>();
-		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object, mockRedisLuaScriptService.Object);
+		var mockMetrics = new Mock<IAsyncEndpointsObservability>();
+		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object, mockRedisLuaScriptService.Object, mockMetrics.Object);
 
 		// Act
 		var result = await store.CreateJob(job, It.IsAny<CancellationToken>());
@@ -68,7 +70,8 @@ public class RedisJobStoreExceptionTests
 			.ThrowsAsync(new RedisException("Redis operation failed"));
 
 		var mockRedisLuaScriptService = new Mock<IRedisLuaScriptService>();
-		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object, mockRedisLuaScriptService.Object);
+		var mockMetrics = new Mock<IAsyncEndpointsObservability>();
+		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object, mockRedisLuaScriptService.Object, mockMetrics.Object);
 
 		// Act
 		var result = await store.GetJobById(jobId, It.IsAny<CancellationToken>());
@@ -109,7 +112,8 @@ public class RedisJobStoreExceptionTests
 			.ThrowsAsync(new RedisException("Redis operation failed"));
 
 		var mockRedisLuaScriptService = new Mock<IRedisLuaScriptService>();
-		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object, mockRedisLuaScriptService.Object);
+		var mockMetrics = new Mock<IAsyncEndpointsObservability>();
+		var store = new RedisJobStore(mockLogger.Object, mockDatabase.Object, mockDateTimeProvider.Object, mockJobHashConverter.Object, mockSerializer.Object, mockRedisLuaScriptService.Object, mockMetrics.Object);
 
 		// Act
 		var result = await store.UpdateJob(job, It.IsAny<CancellationToken>());

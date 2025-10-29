@@ -1,5 +1,6 @@
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
@@ -21,13 +22,14 @@ public class JobManagerTests
 	public void Constructor_Succeeds_WithValidDependencies(
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IDateTimeProvider> mockDateTimeProvider)
+		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		// Arrange
 		var options = Options.Create(new AsyncEndpointsConfigurations());
 
 		// Act
-		var manager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var manager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Assert
 		Assert.NotNull(manager);
@@ -57,7 +59,7 @@ public class JobManagerTests
 			.Setup(x => x.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult<Job>.Success(newJob));
 
-		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act
 		var result = await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
@@ -93,7 +95,7 @@ public class JobManagerTests
 			.Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult<Job>.Success(existingJob));
 
-		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act
 		var result = await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
@@ -123,7 +125,7 @@ public class JobManagerTests
 			.Setup(x => x.ClaimNextJobForWorker(workerId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
 
-		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act
 		var result = await jobManager.ClaimNextAvailableJob(workerId, CancellationToken.None);
@@ -157,7 +159,7 @@ public class JobManagerTests
 			.Setup(x => x.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult.Success());
 
-		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act
 		var result = await jobManager.ProcessJobSuccess(jobId, resultData, CancellationToken.None);
@@ -187,7 +189,7 @@ public class JobManagerTests
 			.Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult<Job>.Failure("Job not found"));
 
-		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act
 		var result = await jobManager.ProcessJobSuccess(jobId, resultData, CancellationToken.None);
@@ -220,7 +222,7 @@ public class JobManagerTests
 			.Setup(x => x.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult.Success());
 
-		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act
 		var result = await jobManager.ProcessJobFailure(jobId, AsyncEndpointError.FromMessage(error), CancellationToken.None);
@@ -257,7 +259,7 @@ public class JobManagerTests
 			.Setup(x => x.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult.Success());
 
-		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object);
+		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act
 		var result = await jobManager.ProcessJobFailure(jobId, AsyncEndpointError.FromMessage(error), CancellationToken.None);

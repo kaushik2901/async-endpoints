@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,10 +13,11 @@ namespace AsyncEndpoints.Background;
 /// <summary>
 /// Creates a service scope for handler execution to ensure proper dependency injection and disposal.
 /// </summary>
-public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IServiceScopeFactory serviceScopeFactory) : IHandlerExecutionService
+public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IServiceScopeFactory serviceScopeFactory, IAsyncEndpointsObservability metrics) : IHandlerExecutionService
 {
 	private readonly ILogger<HandlerExecutionService> _logger = logger;
 	private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
+	private readonly IAsyncEndpointsObservability _metrics = metrics;
 
 	/// <inheritdoc />
 	public async Task<MethodResult<object>> ExecuteHandlerAsync(string jobName, object request, Job job, CancellationToken cancellationToken)
@@ -48,12 +50,14 @@ public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IS
 			{
 				_logger.LogError("Handler execution failed for job: {JobName}, JobId: {JobId}, Error: {Error}",
 					jobName, job.Id, result.Error?.Message);
+				_metrics.RecordHandlerError(jobName, result.Error?.Code ?? "UNKNOWN_ERROR");
 			}
 
 			return result;
 		}
 		catch (Exception ex)
 		{
+			_metrics.RecordHandlerError(jobName, ex.GetType().Name);
 			_logger.LogError(ex, "Exception occurred during handler execution for job: {JobName}, JobId: {JobId}", jobName, job.Id);
 			return MethodResult<object>.Failure(new InvalidOperationException($"Handler execution failed: {ex.Message}", ex));
 		}

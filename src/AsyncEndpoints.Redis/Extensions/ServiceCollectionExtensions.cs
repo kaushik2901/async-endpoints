@@ -1,4 +1,5 @@
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Redis.Configuration;
@@ -37,7 +38,8 @@ public static class RedisServiceCollectionExtensions
 			var serializer = provider.GetRequiredService<ISerializer>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
 			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
-			return new RedisJobStore(logger, connectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService);
+			var metrics = provider.GetRequiredService<IAsyncEndpointsObservability>();
+			return new RedisJobStore(logger, connectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService, metrics);
 		});
 
 		return services;
@@ -64,8 +66,9 @@ public static class RedisServiceCollectionExtensions
 			var serializer = provider.GetRequiredService<ISerializer>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
 			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
+			var metrics = provider.GetRequiredService<IAsyncEndpointsObservability>();
 			var database = connectionMultiplexer.GetDatabase();
-			return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService);
+			return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService, metrics);
 		});
 
 		return services;
@@ -96,7 +99,8 @@ public static class RedisServiceCollectionExtensions
 			var serializer = provider.GetRequiredService<ISerializer>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
 			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
-			return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService);
+			var metrics = provider.GetRequiredService<IAsyncEndpointsObservability>();
+			return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService, metrics);
 		});
 
 		return services;

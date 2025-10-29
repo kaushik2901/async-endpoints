@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
@@ -12,12 +14,13 @@ namespace AsyncEndpoints.Background;
 /// <summary>
 /// Provides functionality for processing individual jobs by executing their handlers and managing job lifecycle updates.
 /// </summary>
-public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManager jobManager, IHandlerExecutionService handlerExecutionService, ISerializer serializer) : IJobProcessorService
+public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManager jobManager, IHandlerExecutionService handlerExecutionService, ISerializer serializer, IAsyncEndpointsObservability metrics) : IJobProcessorService
 {
 	private readonly ILogger<JobProcessorService> _logger = logger;
 	private readonly IJobManager _jobManager = jobManager;
 	private readonly IHandlerExecutionService _handlerExecutionService = handlerExecutionService;
 	private readonly ISerializer _serializer = serializer;
+	private readonly IAsyncEndpointsObservability _metrics = metrics;
 
 	/// <inheritdoc />
 	public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
@@ -26,16 +29,30 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 		
 		_logger.LogDebug("Starting job processing for job {JobId} with name {JobName}", job.Id, job.Name);
 
+		// Start activity only if tracing is enabled
+		// Using job store type from the job name registration lookup would require additional refactoring
+		// For now, we'll pass the job store type as a generic value, but in a real scenario, 
+		// you might pass the actual store type from the calling service
+		using var activity = _metrics.StartJobProcessActivity(job.GetType().Name, job);
+		
+		// Use the enhanced metrics interface for cleaner duration tracking
+		using var durationTimer = _metrics.TimeJobProcessingDuration(job.Name, "processing");
+		
 		try
 		{
 			var result = await ProcessJobPayloadAsync(job, cancellationToken);
 			if (!result.IsSuccess)
 			{
+				activity?.SetStatus(ActivityStatusCode.Error, result.Error.Message);
+				activity?.SetTag("error.type", result.Error.Code);
+				
 				_logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error.Message);
 
 				var processJobFailureResult = await _jobManager.ProcessJobFailure(job.Id, result.Error, cancellationToken);
 				if (!processJobFailureResult.IsSuccess)
 				{
+					activity?.SetStatus(ActivityStatusCode.Error, processJobFailureResult.Error.Message);
+					
 					_logger.LogError("Failed to update job status for failure {JobId}: {Error}", job.Id, processJobFailureResult.Error.Message);
 					return;
 				}
@@ -46,6 +63,8 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 			var processJobSuccessResult = await _jobManager.ProcessJobSuccess(job.Id, result.Data, cancellationToken);
 			if (!processJobSuccessResult.IsSuccess)
 			{
+				activity?.SetStatus(ActivityStatusCode.Error, processJobSuccessResult.Error.Message);
+				
 				_logger.LogError("Failed to update job status for success {JobId}: {Error}", job.Id, processJobSuccessResult.Error.Message);
 				return;
 			}
@@ -54,6 +73,9 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 		}
 		catch (Exception ex)
 		{
+			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+			activity?.SetTag("error.type", ex.GetType().Name);
+			
 			_logger.LogError(ex, "Exception occurred during job processing");
 		}
 	}
@@ -86,9 +108,22 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 			}
 
 			_logger.LogDebug("Executing handler for job {JobId}", job.Id);
+			
+			// Start handler execution activity if tracing is enabled
+			// Since HandlerRegistration doesn't store the handler type, we'll use the response type as a fallback
+			var handlerType = handlerRegistration.ResponseType?.Name ?? "Unknown";
+			using var handlerActivity = _metrics.StartHandlerExecuteActivity(job.Name, job.Id, handlerType);
+			
+			// Use timer for handler execution duration
+			using var handlerDurationTimer = _metrics.TimeHandlerExecution(job.Name, handlerType);
+			
 			var result = await _handlerExecutionService.ExecuteHandlerAsync(job.Name, request, job, cancellationToken);
 			if (!result.IsSuccess)
 			{
+				_metrics.RecordHandlerError(job.Name, result.Error.Code);
+				handlerActivity?.SetStatus(ActivityStatusCode.Error, result.Error.Message);
+				handlerActivity?.SetTag("error.type", result.Error.Code);
+				
 				_logger.LogError("Handler execution failed for job {JobId}: {Error}", job.Id, result.Error.Message);
 				return MethodResult<string>.Failure(result.Error);
 			}
@@ -101,6 +136,8 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 		}
 		catch (Exception ex)
 		{
+			_metrics.RecordHandlerError(job.Name, ex.GetType().Name);
+			
 			_logger.LogError(ex, "Exception during payload processing for job {JobId}", job.Id);
 			return MethodResult<string>.Failure(ex);
 		}
