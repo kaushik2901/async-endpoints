@@ -290,7 +290,7 @@ public class AsyncEndpointsMetrics : IAsyncEndpointsMetrics
 
 ### 2. Distributed Tracing Implementation
 
-The library will implement distributed tracing using ActivitySource with proper configuration to enable/disable it:
+The library will implement distributed tracing using ActivitySource, but activities will only be created when tracing is enabled in the ObservabilityOptions:
 
 ```csharp
 public static class AsyncEndpointsTracing
@@ -299,7 +299,49 @@ public static class AsyncEndpointsTracing
 }
 ```
 
-And in the JobManager, we can apply the same approach for duration tracking:
+To properly respect the `ObservabilityOptions.EnableTracing` setting, the metrics interface will be enhanced to include activity management methods that conditionally create activities:
+
+```csharp
+public interface IAsyncEndpointsMetrics
+{
+    // ... existing metrics methods ...
+    
+    /// <summary>
+    /// Starts a job submission activity if tracing is enabled
+    /// </summary>
+    /// <param name="jobName">Name of the job</param>
+    /// <param name="jobId">ID of the job</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartJobSubmitActivity(string jobName, Guid jobId);
+    
+    /// <summary>
+    /// Starts a job processing activity if tracing is enabled
+    /// </summary>
+    /// <param name="job">The job being processed</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartJobProcessActivity(Job job);
+    
+    /// <summary>
+    /// Starts a handler execution activity if tracing is enabled
+    /// </summary>
+    /// <param name="jobName">Name of the job</param>
+    /// <param name="jobId">ID of the job</param>
+    /// <param name="handlerType">Type of the handler being executed</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartHandlerExecuteActivity(string jobName, Guid jobId, string handlerType);
+    
+    /// <summary>
+    /// Starts a store operation activity if tracing is enabled
+    /// </summary>
+    /// <param name="operation">The store operation being performed</param>
+    /// <param name="storeType">The type of store</param>
+    /// <param name="jobId">Optional job ID associated with the operation</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartStoreOperationActivity(string operation, string storeType, Guid? jobId = null);
+}
+```
+
+And in the JobManager, we can properly conditionally create activities:
 
 ```csharp
 public class JobManager(
@@ -319,12 +361,15 @@ public class JobManager(
     {
         using var _ = _logger.BeginScope(new { JobName = jobName });
         
+        var id = httpContext.GetOrCreateJobId();
+        
+        // Start activity only if tracing is enabled
+        using var activity = _metrics.StartJobSubmitActivity(jobName, id);
+        
         // Use disposable timer to measure total duration
         using var durationTimer = _metrics.TimeJobProcessingDuration(jobName, "created");
         
         _logger.LogDebug("Processing job creation for: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
-        
-        var id = httpContext.GetOrCreateJobId();
         
         var result = await _jobStore.GetJobById(id, cancellationToken);
         if (result.IsSuccess && result.Data != null)
@@ -357,17 +402,174 @@ public class JobManager(
 }
 ```
 
-#### 2.1. Trace Context Propagation
+#### 2.1. Updated Implementation of Metrics Interface with Activity Support
+
+Update the metrics implementation to include activity management:
+
+```csharp
+public class AsyncEndpointsMetrics : IAsyncEndpointsMetrics
+{
+    // ... existing metrics fields ...
+    private readonly ObservabilityOptions _options;
+    private readonly ILogger<AsyncEndpointsMetrics> _logger;
+    
+    public AsyncEndpointsMetrics(IOptions<ObservabilityOptions> options, ILogger<AsyncEndpointsMetrics> logger)
+    {
+        _options = options.Value;
+        _logger = logger;
+        
+        // Only create metrics if observability is enabled
+        if (_options.EnableMetrics)
+        {
+            _meter = new Meter("AsyncEndpoints", "1.0.0");
+            
+            // Initialize all metric instruments...
+        }
+        else
+        {
+            // Initialize as null when metrics are disabled
+            _meter = null;
+            // Initialize all other metric fields as null...
+        }
+    }
+
+    public Activity? StartJobSubmitActivity(string jobName, Guid jobId)
+    {
+        if (_options.EnableTracing)
+        {
+            var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Job.Submit", ActivityKind.Server);
+            activity?.SetTag("job.id", jobId.ToString());
+            activity?.SetTag("job.name", jobName);
+            activity?.SetTag("store.type", GetStoreType());
+            return activity;
+        }
+        return null; // Return null when tracing is disabled
+    }
+
+    public Activity? StartJobProcessActivity(Job job)
+    {
+        if (_options.EnableTracing)
+        {
+            var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Job.Process", ActivityKind.Consumer);
+            activity?.SetTag("job.id", job.Id.ToString());
+            activity?.SetTag("job.name", job.Name);
+            activity?.SetTag("job.status", job.Status.ToString());
+            activity?.SetTag("worker.id", job.WorkerId?.ToString());
+            activity?.SetTag("store.type", GetStoreType());
+            return activity;
+        }
+        return null; // Return null when tracing is disabled
+    }
+
+    public Activity? StartHandlerExecuteActivity(string jobName, Guid jobId, string handlerType)
+    {
+        if (_options.EnableTracing)
+        {
+            var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Handler.Execute", ActivityKind.Internal);
+            activity?.SetTag("job.id", jobId.ToString());
+            activity?.SetTag("job.name", jobName);
+            activity?.SetTag("handler.type", handlerType);
+            return activity;
+        }
+        return null; // Return null when tracing is disabled
+    }
+
+    public Activity? StartStoreOperationActivity(string operation, string storeType, Guid? jobId = null)
+    {
+        if (_options.EnableTracing)
+        {
+            var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Store.Operation", ActivityKind.Internal);
+            activity?.SetTag("operation", operation);
+            activity?.SetTag("store.type", storeType);
+            if (jobId.HasValue)
+            {
+                activity?.SetTag("job.id", jobId.Value.ToString());
+            }
+            return activity;
+        }
+        return null; // Return null when tracing is disabled
+    }
+    
+    private string GetStoreType()
+    {
+        // This method would need to have access to the current store type
+        // Implementation would depend on how we want to pass the store type
+        // For now, we'll return a placeholder - this would need to be resolved
+        // at runtime based on the current context
+        return "Unknown"; // This would be properly resolved in the actual implementation
+    }
+    
+    // ... rest of existing methods ...
+}
+```
+
+#### 2.2. Updated JobProcessorService with Conditional Activity Creation
+
+```csharp
+public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
+{
+    using var _ = _logger.BeginScope(new { JobId = job.Id, JobName = job.Name });
+    
+    _logger.LogDebug("Starting job processing for job {JobId} with name {JobName}", job.Id, job.Name);
+
+    // Start activity only if tracing is enabled
+    using var activity = _metrics.StartJobProcessActivity(job);
+    
+    // Use the enhanced metrics interface for cleaner duration tracking
+    using var durationTimer = _metrics.TimeJobProcessingDuration(job.Name, "processed");
+    
+    try
+    {
+        var result = await ProcessJobPayloadAsync(job, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, result.Error.Message);
+            activity?.SetTag("error.type", result.Error.Code);
+            
+            _logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error.Message);
+            
+            var processJobFailureResult = await _jobManager.ProcessJobFailure(job.Id, result.Error, cancellationToken);
+            if (!processJobFailureResult.IsSuccess)
+            {
+                _logger.LogError("Failed to update job status for failure {JobId}: {Error}", job.Id, processJobFailureResult.Error.Message);
+                return;
+            }
+
+            return;
+        }
+
+        var processJobSuccessResult = await _jobManager.ProcessJobSuccess(job.Id, result.Data, cancellationToken);
+        if (!processJobSuccessResult.IsSuccess)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, processJobSuccessResult.Error.Message);
+            
+            _logger.LogError("Failed to update job status for success {JobId}: {Error}", job.Id, processJobSuccessResult.Error.Message);
+            return;
+        }
+
+        _logger.LogInformation("Successfully processed job {JobId}", job.Id);
+    }
+    catch (Exception ex)
+    {
+        activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+        activity?.SetTag("error.type", ex.GetType().Name);
+        
+        _logger.LogError(ex, "Exception occurred during job processing");
+    }
+}
+```
+
+#### 2.3. Trace Context Propagation
 
 The library will implement distributed tracing by:
 
-1. **Request Initiation**: When a job is created via the endpoint, the current trace context (Span/Trace ID) will be captured and stored with the job metadata
-2. **Job Processing**: When a background worker processes the job, it will create a new span as a child of the original trace context
-3. **Continuity**: This ensures end-to-end traceability from the initial request to job completion
+1. **Request Initiation**: When a job is created via the endpoint, the current trace context (Span/Trace ID) will be captured and stored with the job metadata if tracing is enabled
+2. **Job Processing**: When a background worker processes the job, it will create a new span as a child of the original trace context if tracing is enabled
+3. **Continuity**: This ensures end-to-end traceability from the initial request to job completion when tracing is enabled
 
-#### 2.2. Span Attributes
+#### 2.4. Span Attributes
 
-Each span will include relevant attributes:
+When tracing is enabled, each span will include relevant attributes:
 
 - `job.id`: Unique job identifier
 - `job.name`: Job type/name
@@ -594,7 +796,7 @@ services.AddSingleton<IAsyncEndpointsMetrics, CustomMetrics>();
 
 #### 11.1. Using Metrics in Services
 
-When implementing services that need to record metrics, inject the `IAsyncEndpointsMetrics` interface. For timing operations, we can use a disposable `MetricTimer` class to encapsulate duration tracking:
+When implementing services that need to record metrics and tracing, inject the `IAsyncEndpointsMetrics` interface. For timing operations, we can use a disposable `MetricTimer` class to encapsulate duration tracking:
 
 ```csharp
 public class MetricTimer : IDisposable
@@ -640,11 +842,8 @@ public class JobProcessorService(
         
         _logger.LogDebug("Starting job processing for job {JobId} with name {JobName}", job.Id, job.Name);
 
-        // Start activity directly
-        using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("JobProcessing", ActivityKind.Consumer);
-        activity?.SetTag("job.id", job.Id.ToString());
-        activity?.SetTag("job.name", job.Name);
-        activity?.SetTag("job.status", job.Status.ToString());
+        // Start activity only if tracing is enabled
+        using var activity = _metrics.StartJobProcessActivity(job);
         
         // Use disposable timer to measure duration
         using var durationTimer = MetricTimer.Start(duration => _metrics.RecordJobProcessingDuration(job.Name, "processed", duration));
@@ -763,7 +962,124 @@ namespace AsyncEndpoints.Utilities
 }
 ```
 
-With this enhanced interface, the service usage becomes even cleaner:
+With this enhanced interface, the service usage becomes even cleaner. The updated interface includes activity management methods that respect the ObservabilityOptions configuration:
+
+```csharp
+public interface IAsyncEndpointsMetrics
+{
+    // ... existing methods ...
+    
+    /// <summary>
+    /// Records duration of job processing using a disposable timer
+    /// </summary>
+    /// <param name="jobName">Name of the job</param>
+    <param name="status">Status of the job</param>
+    /// <returns>IDisposable timer that records duration when disposed</returns>
+    IDisposable TimeJobProcessingDuration(string jobName, string status);
+    
+    /// <summary>
+    /// Records duration of a handler execution
+    /// </summary>
+    /// <param name="jobName">Name of the job</param>
+    <param name="handlerType">Type of the handler</param>
+    /// <returns>IDisposable timer that records duration when disposed</returns>
+    IDisposable TimeHandlerExecution(string jobName, string handlerType);
+    
+    /// <summary>
+    /// Starts a job submission activity if tracing is enabled
+    /// </summary>
+    /// <param name="jobName">Name of the job</param>
+    /// <param name="jobId">ID of the job</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartJobSubmitActivity(string jobName, Guid jobId);
+    
+    /// <summary>
+    /// Starts a job processing activity if tracing is enabled
+    /// </summary>
+    /// <param name="job">The job being processed</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartJobProcessActivity(Job job);
+    
+    /// <summary>
+    /// Starts a handler execution activity if tracing is enabled
+    /// </summary>
+    /// <param name="jobName">Name of the job</param>
+    /// <param name="jobId">ID of the job</param>
+    /// <param name="handlerType">Type of the handler being executed</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartHandlerExecuteActivity(string jobName, Guid jobId, string handlerType);
+    
+    /// <summary>
+    /// Starts a store operation activity if tracing is enabled
+    /// </summary>
+    /// <param name="operation">The store operation being performed</param>
+    /// <param name="storeType">The type of store</param>
+    /// <param name="jobId">Optional job ID associated with the operation</param>
+    /// <returns>An Activity if tracing is enabled, otherwise null</returns>
+    Activity? StartStoreOperationActivity(string operation, string storeType, Guid? jobId = null);
+
+    // ... other methods
+}
+
+public class AsyncEndpointsMetrics : IAsyncEndpointsMetrics
+{
+    // ... existing implementation ...
+    
+    public IDisposable TimeJobProcessingDuration(string jobName, string status)
+    {
+        if (_options.EnableMetrics && _jobProcessingDuration != null)
+        {
+            return MetricTimer.Start(duration => _jobProcessingDuration.Record(duration, new("job_name", jobName), new("status", status)));
+        }
+        
+        return AsyncEndpoints.Utilities.NullDisposable.Instance; // Return a no-op disposable instead of null
+    }
+    
+    public IDisposable TimeHandlerExecution(string jobName, string handlerType)
+    {
+        if (_options.EnableMetrics && _handlerExecutionDuration != null)
+        {
+            return MetricTimer.Start(duration => _handlerExecutionDuration.Record(duration, new("job_name", jobName), new("handler_type", handlerType)));
+        }
+        
+        return AsyncEndpoints.Utilities.NullDisposable.Instance; // Return a no-op disposable instead of null
+    }
+    
+    public Activity? StartJobProcessActivity(Job job)
+    {
+        if (_options.EnableTracing)
+        {
+            var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Job.Process", ActivityKind.Consumer);
+            activity?.SetTag("job.id", job.Id.ToString());
+            activity?.SetTag("job.name", job.Name);
+            activity?.SetTag("job.status", job.Status.ToString());
+            activity?.SetTag("worker.id", job.WorkerId?.ToString());
+            return activity;
+        }
+        return null; // Return null when tracing is disabled
+    }
+    
+    // Other activity start methods would follow the same pattern...
+    
+    // ... other methods
+}
+
+// Helper class for no-op disposable in the AsyncEndpoints.Utilities namespace
+namespace AsyncEndpoints.Utilities
+{
+    internal class NullDisposable : IDisposable
+    {
+        public static readonly NullDisposable Instance = new NullDisposable();
+        
+        public void Dispose()
+        {
+            // No-op
+        }
+    }
+}
+```
+
+With this enhanced interface, the service usage becomes even cleaner with proper tracing configuration:
 
 ```csharp
 public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
@@ -772,10 +1088,8 @@ public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
     
     _logger.LogDebug("Starting job processing for job {JobId} with name {JobName}", job.Id, job.Name);
 
-    using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("JobProcessing", ActivityKind.Consumer);
-    activity?.SetTag("job.id", job.Id.ToString());
-    activity?.SetTag("job.name", job.Name);
-    activity?.SetTag("job.status", job.Status.ToString());
+    // Start activity only if tracing is enabled
+    using var activity = _metrics.StartJobProcessActivity(job);
     
     // Use the enhanced metrics interface for cleaner duration tracking
     using var durationTimer = _metrics.TimeJobProcessingDuration(job.Name, "processed");
@@ -821,52 +1135,40 @@ public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
 }
 ```
 
-The `TimeJobProcessingDuration` and `TimeHandlerExecution` methods will properly return a no-op disposable when metrics are disabled, ensuring that the `using` declaration works correctly without causing null reference exceptions. The `using` declarations without brackets provide a cleaner syntax while ensuring proper resource disposal when the scope ends.
+The `TimeJobProcessingDuration` and `TimeHandlerExecution` methods will properly return a no-op disposable when metrics are disabled, and activity methods will return null when tracing is disabled, ensuring that the `using` declarations work correctly without causing null reference exceptions. The `using` declarations without brackets provide a cleaner syntax while ensuring proper resource disposal when the scope ends.
 
 #### 11.2. Where to Start Activities (Distributed Tracing)
 
-Based on analysis of the AsyncEndpoints solution, here are the essential locations where Activities should be started for end-to-end traceability, balancing comprehensive monitoring with performance:
+Based on analysis of the AsyncEndpoints solution, here are the essential locations where Activities should be started for end-to-end traceability when tracing is enabled, balancing comprehensive monitoring with performance:
 
 **1. JobManager.SubmitJob method** - When a new job is created via an endpoint (this is the initial trace entry point)
 ```csharp
-// In JobManager.SubmitJob method
-using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Job.Submit", ActivityKind.Server);
-activity?.SetTag("job.id", id);
-activity?.SetTag("job.name", jobName);
+// In JobManager.SubmitJob method using the metrics interface
+using var activity = _metrics.StartJobSubmitActivity(jobName, id);
 ```
 
 **2. JobProcessorService.ProcessAsync method** - When a background worker processes a job (continues the trace from the initial request)
 ```csharp
-// In JobProcessorService.ProcessAsync method
-using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Job.Process", ActivityKind.Consumer);
-activity?.SetTag("job.id", job.Id.ToString());
-activity?.SetTag("job.name", job.Name);
-activity?.SetTag("job.status", job.Status.ToString());
-activity?.SetTag("worker.id", job.WorkerId?.ToString());
+// In JobProcessorService.ProcessAsync method using the metrics interface
+using var activity = _metrics.StartJobProcessActivity(job);
 ```
 
 **3. Handler execution** - When the actual business logic is executed (shows the core work being done)
 ```csharp
-// In ProcessJobPayloadAsync method or IHandlerExecutionService.ExecuteHandlerAsync
-using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Handler.Execute", ActivityKind.Internal);
-activity?.SetTag("job.id", job.Id.ToString());
-activity?.SetTag("handler.type", handlerRegistration?.HandlerType?.Name);
+// Using the metrics interface in ProcessJobPayloadAsync method or IHandlerExecutionService.ExecuteHandlerAsync
+using var activity = _metrics.StartHandlerExecuteActivity(job.Name, job.Id, handlerRegistration?.HandlerType?.Name);
 ```
 
 **4. Key store operations** - Critical operations that bridge the request and processing (CreateJob and ClaimNextJob, but not read operations which could be too noisy)
 ```csharp
-// In CreateJob method
-using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Store.CreateJob", ActivityKind.Internal);
-activity?.SetTag("job.id", job?.Id.ToString());
-activity?.SetTag("store.type", this.GetType().Name);
+// Using the metrics interface in CreateJob method
+using var activity = _metrics.StartStoreOperationActivity("CreateJob", this.GetType().Name, job?.Id);
 
-// In ClaimNextJobForWorker method
-using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Store.ClaimJob", ActivityKind.Internal);
-activity?.SetTag("worker.id", workerId.ToString());
-activity?.SetTag("store.type", this.GetType().Name);
+// Using the metrics interface in ClaimNextJobForWorker method
+using var activity = _metrics.StartStoreOperationActivity("ClaimJob", this.GetType().Name, jobId);
 ```
 
-These essential Activity spans provide end-to-end traceability from the initial request creating a job through to its background processing completion, while maintaining a good balance between observability and performance overhead.
+These essential Activity spans provide end-to-end traceability from the initial request creating a job through to its background processing completion when tracing is enabled, while maintaining a good balance between observability and performance overhead. When tracing is disabled, these methods return null and no activities are created, minimizing performance impact.
 
 #### 11.3. Testing with Mock Metrics
 
