@@ -432,46 +432,39 @@ public class JobManager(
     {
         using var _ = _logger.BeginScope(new { JobName = jobName });
         
-        var startTime = Stopwatch.GetTimestamp();
+        // Use the enhanced metrics interface for cleaner duration tracking
+        using var durationTimer = _metrics.TimeJobProcessingDuration(jobName, "created");
         
-        try
+        _logger.LogDebug("Processing job creation for: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
+        
+        var id = httpContext.GetOrCreateJobId();
+        
+        var result = await _jobStore.GetJobById(id, cancellationToken);
+        if (result.IsSuccess && result.Data != null)
         {
-            _logger.LogDebug("Processing job creation for: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
-            
-            var id = httpContext.GetOrCreateJobId();
-            
-            var result = await _jobStore.GetJobById(id, cancellationToken);
-            if (result.IsSuccess && result.Data != null)
-            {
-                _logger.LogDebug("Found existing job {JobId} for job: {JobName}, returning existing job", id, jobName);
-                return MethodResult<Job>.Success(result.Data);
-            }
-
-            var headers = httpContext.GetHeadersFromContext();
-            var routeParams = httpContext.GetRouteParamsFromContext();
-            var queryParams = httpContext.GetQueryParamsFromContext();
-
-            var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _dateTimeProvider);
-            _logger.LogDebug("Created new job {JobId} for job: {JobName}", id, jobName);
-
-            var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
-            if (createJobResult.IsSuccess)
-            {
-                _metrics.RecordJobCreated(jobName, _jobStore.GetType().Name);
-                
-                _logger.LogDebug("Successfully created job {JobId} in store", id);
-                return MethodResult<Job>.Success(job);
-            }
-            else
-            {
-                _logger.LogError("Failed to create job {JobId} in store: {Error}", id, createJobResult.Error?.Message);
-                return MethodResult<Job>.Failure(createJobResult.Error!);
-            }
+            _logger.LogDebug("Found existing job {JobId} for job: {JobName}, returning existing job", id, jobName);
+            return MethodResult<Job>.Success(result.Data);
         }
-        finally
+
+        var headers = httpContext.GetHeadersFromContext();
+        var routeParams = httpContext.GetRouteParamsFromContext();
+        var queryParams = httpContext.GetQueryParamsFromContext();
+
+        var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _dateTimeProvider);
+        _logger.LogDebug("Created new job {JobId} for job: {JobName}", id, jobName);
+
+        var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
+        if (createJobResult.IsSuccess)
         {
-            var duration = TimeSpan.FromTicks(Stopwatch.GetTimestamp() - startTime).TotalSeconds;
-            _metrics.RecordJobProcessingDuration(jobName, "created", duration);
+            _metrics.RecordJobCreated(jobName, _jobStore.GetType().Name);
+            
+            _logger.LogDebug("Successfully created job {JobId} in store", id);
+            return MethodResult<Job>.Success(job);
+        }
+        else
+        {
+            _logger.LogError("Failed to create job {JobId} in store: {Error}", id, createJobResult.Error?.Message);
+            return MethodResult<Job>.Failure(createJobResult.Error!);
         }
     }
 }
@@ -654,46 +647,45 @@ public class JobProcessorService(
         activity?.SetTag("job.status", job.Status.ToString());
         
         // Use disposable timer to measure duration
-        using (MetricTimer.Start(duration => _metrics.RecordJobProcessingDuration(job.Name, "processed", duration)))
+        using var durationTimer = MetricTimer.Start(duration => _metrics.RecordJobProcessingDuration(job.Name, "processed", duration));
+        
+        try
         {
-            try
+            var result = await ProcessJobPayloadAsync(job, cancellationToken);
+            if (!result.IsSuccess)
             {
-                var result = await ProcessJobPayloadAsync(job, cancellationToken);
-                if (!result.IsSuccess)
-                {
-                    activity?.SetStatus(ActivityStatusCode.Error, result.Error.Message);
-                    activity?.SetTag("error.type", result.Error.Code);
-                    
-                    _logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error.Message);
-                    
-                    var processJobFailureResult = await _jobManager.ProcessJobFailure(job.Id, result.Error, cancellationToken);
-                    if (!processJobFailureResult.IsSuccess)
-                    {
-                        _logger.LogError("Failed to update job status for failure {JobId}: {Error}", job.Id, processJobFailureResult.Error.Message);
-                        return;
-                    }
-
-                    return;
-                }
-
-                var processJobSuccessResult = await _jobManager.ProcessJobSuccess(job.Id, result.Data, cancellationToken);
-                if (!processJobSuccessResult.IsSuccess)
-                {
-                    activity?.SetStatus(ActivityStatusCode.Error, processJobSuccessResult.Error.Message);
-                    
-                    _logger.LogError("Failed to update job status for success {JobId}: {Error}", job.Id, processJobSuccessResult.Error.Message);
-                    return;
-                }
-
-                _logger.LogInformation("Successfully processed job {JobId}", job.Id);
-            }
-            catch (Exception ex)
-            {
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag("error.type", ex.GetType().Name);
+                activity?.SetStatus(ActivityStatusCode.Error, result.Error.Message);
+                activity?.SetTag("error.type", result.Error.Code);
                 
-                _logger.LogError(ex, "Exception occurred during job processing");
+                _logger.LogError("Failed to process job {JobId}: {Error}", job.Id, result.Error.Message);
+                
+                var processJobFailureResult = await _jobManager.ProcessJobFailure(job.Id, result.Error, cancellationToken);
+                if (!processJobFailureResult.IsSuccess)
+                {
+                    _logger.LogError("Failed to update job status for failure {JobId}: {Error}", job.Id, processJobFailureResult.Error.Message);
+                    return;
+                }
+
+                return;
             }
+
+            var processJobSuccessResult = await _jobManager.ProcessJobSuccess(job.Id, result.Data, cancellationToken);
+            if (!processJobSuccessResult.IsSuccess)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, processJobSuccessResult.Error.Message);
+                
+                _logger.LogError("Failed to update job status for success {JobId}: {Error}", job.Id, processJobSuccessResult.Error.Message);
+                return;
+            }
+
+            _logger.LogInformation("Successfully processed job {JobId}", job.Id);
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            _logger.LogError(ex, "Exception occurred during job processing");
         }
     }
     
@@ -711,9 +703,10 @@ public interface IAsyncEndpointsMetrics
     // ... existing methods ...
     
     /// <summary>
-    /// Records duration of an operation using a disposable timer
+    /// Records duration of job processing using a disposable timer
     /// </summary>
-    /// <param name="action">Action that measures the duration</param>
+    /// <param name="jobName">Name of the job</param>
+    /// <param name="status">Status of the job</param>
     /// <returns>IDisposable timer that records duration when disposed</returns>
     IDisposable TimeJobProcessingDuration(string jobName, string status);
     
@@ -739,7 +732,7 @@ public class AsyncEndpointsMetrics : IAsyncEndpointsMetrics
             return MetricTimer.Start(duration => _jobProcessingDuration.Record(duration, new("job_name", jobName), new("status", status)));
         }
         
-        return null; // Return a disposable that does nothing when metrics are disabled
+        return AsyncEndpoints.Utilities.NullDisposable.Instance; // Return a no-op disposable instead of null
     }
     
     public IDisposable TimeHandlerExecution(string jobName, string handlerType)
@@ -749,10 +742,24 @@ public class AsyncEndpointsMetrics : IAsyncEndpointsMetrics
             return MetricTimer.Start(duration => _handlerExecutionDuration.Record(duration, new("job_name", jobName), new("handler_type", handlerType)));
         }
         
-        return null; // Return a disposable that does nothing when metrics are disabled
+        return AsyncEndpoints.Utilities.NullDisposable.Instance; // Return a no-op disposable instead of null
     }
     
     // ... other methods
+}
+
+// Helper class for no-op disposable in the AsyncEndpoints.Utilities namespace
+namespace AsyncEndpoints.Utilities
+{
+    internal class NullDisposable : IDisposable
+    {
+        public static readonly NullDisposable Instance = new NullDisposable();
+        
+        public void Dispose()
+        {
+            // No-op
+        }
+    }
 }
 ```
 
@@ -813,53 +820,53 @@ public async Task ProcessAsync(Job job, CancellationToken cancellationToken)
     }
 }
 ```
-```
 
-#### 11.2. Custom Metrics Implementation
+The `TimeJobProcessingDuration` and `TimeHandlerExecution` methods will properly return a no-op disposable when metrics are disabled, ensuring that the `using` declaration works correctly without causing null reference exceptions. The `using` declarations without brackets provide a cleaner syntax while ensuring proper resource disposal when the scope ends.
 
-Developers can create custom metrics implementations that might send data to custom monitoring systems:
+#### 11.2. Where to Start Activities (Distributed Tracing)
 
+Based on analysis of the AsyncEndpoints solution, here are the essential locations where Activities should be started for end-to-end traceability, balancing comprehensive monitoring with performance:
+
+**1. JobManager.SubmitJob method** - When a new job is created via an endpoint (this is the initial trace entry point)
 ```csharp
-public class CustomMetrics : IAsyncEndpointsMetrics
-{
-    private readonly ILogger<CustomMetrics> _logger;
-    private readonly HttpClient _httpClient;
-    private readonly string _metricsEndpoint;
-
-    public CustomMetrics(ILogger<CustomMetrics> logger, IHttpClientFactory httpClientFactory, IConfiguration configuration)
-    {
-        _logger = logger;
-        _httpClient = httpClientFactory.CreateClient();
-        _metricsEndpoint = configuration["Metrics:Endpoint"];
-    }
-
-    public void RecordJobCreated(string jobName, string storeType)
-    {
-        // Custom logic to send metric to external system
-        var metricData = new {
-            MetricName = "asyncendpoints.jobs.created.total",
-            Value = 1,
-            Labels = new { job_name = jobName, store_type = storeType },
-            Timestamp = DateTime.UtcNow
-        };
-        
-        // Send to custom metrics endpoint
-        _ = Task.Run(async () => {
-            try 
-            {
-                var content = new StringContent(JsonSerializer.Serialize(metricData), Encoding.UTF8, "application/json");
-                await _httpClient.PostAsync(_metricsEndpoint, content);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to send custom metric");
-            }
-        });
-    }
-
-    // Other methods follow similar pattern...
-}
+// In JobManager.SubmitJob method
+using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Job.Submit", ActivityKind.Server);
+activity?.SetTag("job.id", id);
+activity?.SetTag("job.name", jobName);
 ```
+
+**2. JobProcessorService.ProcessAsync method** - When a background worker processes a job (continues the trace from the initial request)
+```csharp
+// In JobProcessorService.ProcessAsync method
+using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Job.Process", ActivityKind.Consumer);
+activity?.SetTag("job.id", job.Id.ToString());
+activity?.SetTag("job.name", job.Name);
+activity?.SetTag("job.status", job.Status.ToString());
+activity?.SetTag("worker.id", job.WorkerId?.ToString());
+```
+
+**3. Handler execution** - When the actual business logic is executed (shows the core work being done)
+```csharp
+// In ProcessJobPayloadAsync method or IHandlerExecutionService.ExecuteHandlerAsync
+using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Handler.Execute", ActivityKind.Internal);
+activity?.SetTag("job.id", job.Id.ToString());
+activity?.SetTag("handler.type", handlerRegistration?.HandlerType?.Name);
+```
+
+**4. Key store operations** - Critical operations that bridge the request and processing (CreateJob and ClaimNextJob, but not read operations which could be too noisy)
+```csharp
+// In CreateJob method
+using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Store.CreateJob", ActivityKind.Internal);
+activity?.SetTag("job.id", job?.Id.ToString());
+activity?.SetTag("store.type", this.GetType().Name);
+
+// In ClaimNextJobForWorker method
+using var activity = AsyncEndpointsTracing.ActivitySource.StartActivity("Store.ClaimJob", ActivityKind.Internal);
+activity?.SetTag("worker.id", workerId.ToString());
+activity?.SetTag("store.type", this.GetType().Name);
+```
+
+These essential Activity spans provide end-to-end traceability from the initial request creating a job through to its background processing completion, while maintaining a good balance between observability and performance overhead.
 
 #### 11.3. Testing with Mock Metrics
 
