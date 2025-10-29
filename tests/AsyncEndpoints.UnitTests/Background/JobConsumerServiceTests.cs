@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using AsyncEndpoints.Background;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
@@ -18,10 +19,11 @@ public class JobConsumerServiceTests
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
 		[Frozen] Mock<IServiceScopeFactory> mockScopeFactory,
-		Mock<ILogger<JobConsumerService>> mockLogger)
+		Mock<ILogger<JobConsumerService>> mockLogger,
+		Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		// Act
-		var service = new JobConsumerService(mockLogger.Object, mockScopeFactory.Object);
+		var service = new JobConsumerService(mockLogger.Object, mockScopeFactory.Object, mockMetrics.Object);
 
 		// Assert
 		Assert.NotNull(service);
@@ -59,7 +61,7 @@ public class JobConsumerServiceTests
 		await channel.Writer.WriteAsync(job, CancellationToken.None);
 		channel.Writer.Complete();
 
-		var service = new JobConsumerService(mockLogger.Object, mockScopeFactory.Object);
+		var service = new JobConsumerService(mockLogger.Object, mockScopeFactory.Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act & Assert - Should not throw exception
 		var exception = await Record.ExceptionAsync(() =>

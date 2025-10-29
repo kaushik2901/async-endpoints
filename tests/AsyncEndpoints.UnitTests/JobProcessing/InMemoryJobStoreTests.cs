@@ -1,4 +1,5 @@
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
@@ -16,10 +17,11 @@ public class InMemoryJobStoreTests
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
 		Mock<ILogger<InMemoryJobStore>> mockLogger,
-		Mock<IDateTimeProvider> mockDateTimeProvider)
+		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		// Act
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Assert
 		Assert.NotNull(store);
@@ -112,10 +114,11 @@ public class InMemoryJobStoreTests
 	public async Task UpdateJob_Succeeds_WhenJobExists(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;
@@ -157,12 +160,13 @@ public class InMemoryJobStoreTests
 	public async Task ClaimNextJobForWorker_ReturnsAvailableJob_WhenJobExists(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job1,
 		Job job2,
 		Guid workerId)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;

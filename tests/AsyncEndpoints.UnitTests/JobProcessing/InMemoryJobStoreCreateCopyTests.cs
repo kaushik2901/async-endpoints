@@ -1,4 +1,5 @@
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
@@ -22,10 +23,11 @@ public class InMemoryJobStoreCreateCopyTests
 	public async Task UpdateJob_UsesImmutablePattern_WhenJobExists(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;
@@ -68,10 +70,11 @@ public class InMemoryJobStoreCreateCopyTests
 	[Theory, AutoMoqData]
 	public void CreateCopy_ProperlyDeepCopiesReferenceTypes(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider)
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;
@@ -134,11 +137,12 @@ public class InMemoryJobStoreCreateCopyTests
 	public async Task ClaimNextJobForWorker_UsesCreateCopy_WhenClaimingJob(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job,
 		Guid workerId)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;
@@ -171,10 +175,11 @@ public class InMemoryJobStoreCreateCopyTests
 	public async Task UpdateJob_UpdatesJobCorrectly(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;

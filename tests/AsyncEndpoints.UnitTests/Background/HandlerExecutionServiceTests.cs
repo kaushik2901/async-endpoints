@@ -1,4 +1,5 @@
 using AsyncEndpoints.Background;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,10 +12,11 @@ public class HandlerExecutionServiceTests
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
 		Mock<ILogger<HandlerExecutionService>> mockLogger,
-		IServiceScopeFactory serviceScopeFactory)
+		IServiceScopeFactory serviceScopeFactory,
+		Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		// Act
-		var service = new HandlerExecutionService(mockLogger.Object, serviceScopeFactory);
+		var service = new HandlerExecutionService(mockLogger.Object, serviceScopeFactory, mockMetrics.Object);
 
 		// Assert
 		Assert.NotNull(service);

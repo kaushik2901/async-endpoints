@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,10 +10,11 @@ using Microsoft.Extensions.Logging;
 namespace AsyncEndpoints.Background;
 
 /// <inheritdoc />
-public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScopeFactory serviceScopeFactory) : IJobConsumerService
+public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScopeFactory serviceScopeFactory, IAsyncEndpointsObservability metrics) : IJobConsumerService
 {
 	private readonly ILogger<JobConsumerService> _logger = logger;
 	private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
+	private readonly IAsyncEndpointsObservability _metrics = metrics;
 
 	/// <inheritdoc />
 	public async Task ConsumeJobsAsync(ChannelReader<Job> readerJobChannel, SemaphoreSlim semaphoreSlim, CancellationToken stoppingToken)
@@ -38,6 +40,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScop
 					await using var scope = _serviceScopeFactory.CreateAsyncScope();
 					var jobProcessorService = scope.ServiceProvider.GetRequiredService<IJobProcessorService>();
 					await jobProcessorService.ProcessAsync(job, stoppingToken);
+					_metrics.RecordBackgroundProcessingRate(job.WorkerId?.ToString() ?? "unknown");
 					_logger.LogDebug("Completed processing job {JobId}", job.Id);
 				}
 				catch (Exception ex)

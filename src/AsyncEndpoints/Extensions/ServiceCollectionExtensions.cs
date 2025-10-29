@@ -3,8 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization.Metadata;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
+using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
@@ -37,6 +39,7 @@ public static class ServiceCollectionExtensions
 		services.AddScoped<IJsonBodyParserService, JsonBodyParserService>();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 		services.AddSingleton<ISerializer, Serializer>();
+		services.AddSingleton<IAsyncEndpointsObservability, AsyncEndpointsObservability>();
 		services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsJsonSerializationContext.Default);
 
 		return services;

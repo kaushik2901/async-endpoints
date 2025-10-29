@@ -1,4 +1,5 @@
 using AsyncEndpoints.Background;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
@@ -16,10 +17,11 @@ public class JobProcessorServiceTests
 		Mock<ILogger<JobProcessorService>> mockLogger,
 		Mock<IJobManager> mockJobManager,
 		Mock<IHandlerExecutionService> mockHandlerExecutionService,
-		Mock<ISerializer> mockSerializer)
+		Mock<ISerializer> mockSerializer,
+		Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		// Act
-		var service = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, mockSerializer.Object);
+		var service = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, mockSerializer.Object, mockMetrics.Object);
 
 		// Assert
 		Assert.NotNull(service);
@@ -66,7 +68,7 @@ public class JobProcessorServiceTests
 			.Setup(x => x.ExecuteHandlerAsync(job.Name, It.IsAny<object>(), job, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(handlerResult);
 
-		var jobProcessorService = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, new Mock<ISerializer>().Object);
+		var jobProcessorService = new JobProcessorService(mockLogger.Object, mockJobManager.Object, mockHandlerExecutionService.Object, new Mock<ISerializer>().Object, Mock.Of<IAsyncEndpointsObservability>());
 
 		// Act & Assert - Should not throw exception
 		var exception = await Record.ExceptionAsync(() =>

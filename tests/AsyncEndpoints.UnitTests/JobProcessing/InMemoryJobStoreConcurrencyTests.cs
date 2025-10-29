@@ -1,4 +1,5 @@
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
@@ -20,10 +21,11 @@ public class InMemoryJobStoreConcurrencyTests
 	[Theory, AutoMoqData]
 	public async Task UpdateJob_HandlesConcurrentUpdates(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider)
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;
@@ -82,10 +84,11 @@ public class InMemoryJobStoreConcurrencyTests
 	public async Task ClaimNextJobForWorker_HandlesMultipleWorkers(
 		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
 		// Create store manually with the required dependencies
-		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object);
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
 		// Setup datetime mock
 		var expectedTime = DateTimeOffset.UtcNow;
