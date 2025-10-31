@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
@@ -33,9 +34,19 @@ public class InMemoryJobStoreTests
 	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task CreateJob_Succeeds_WhenJobDoesNotExist(
-		[Frozen] InMemoryJobStore store,
+		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
+		// Create store manually with the required dependencies
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
+		
 		// Act
 		var result = await store.CreateJob(job, CancellationToken.None);
 
@@ -54,9 +65,19 @@ public class InMemoryJobStoreTests
 	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task CreateJob_Fails_WhenJobAlreadyExists(
-		[Frozen] InMemoryJobStore store,
+		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
+		// Create store manually with the required dependencies
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
+		
 		// Arrange
 		await store.CreateJob(job, CancellationToken.None);
 
@@ -74,9 +95,19 @@ public class InMemoryJobStoreTests
 	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task GetJobById_ReturnsJob_WhenJobExists(
-		[Frozen] InMemoryJobStore store,
+		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
+		// Create store manually with the required dependencies
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
+		
 		// Arrange
 		await store.CreateJob(job, CancellationToken.None);
 
@@ -95,9 +126,19 @@ public class InMemoryJobStoreTests
 	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task GetJobById_ReturnsFailure_WhenJobDoesNotExist(
-		[Frozen] InMemoryJobStore store,
+		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Guid jobId)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
+		// Create store manually with the required dependencies
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
+		
 		// Act
 		var result = await store.GetJobById(jobId, CancellationToken.None);
 
@@ -117,6 +158,11 @@ public class InMemoryJobStoreTests
 		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -141,9 +187,19 @@ public class InMemoryJobStoreTests
 	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task UpdateJob_Fails_WhenJobDoesNotExist(
-		[Frozen] InMemoryJobStore store,
+		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
+		// Create store manually with the required dependencies
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
+		
 		// Act
 		var result = await store.UpdateJob(job, CancellationToken.None);
 
@@ -165,6 +221,11 @@ public class InMemoryJobStoreTests
 		Job job2,
 		Guid workerId)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -197,9 +258,19 @@ public class InMemoryJobStoreTests
 	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ClaimNextJobForWorker_ReturnsNull_WhenNoJobsAvailable(
-		[Frozen] InMemoryJobStore store,
+		[Frozen] Mock<ILogger<InMemoryJobStore>> mockLogger,
+		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Guid workerId)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
+		// Create store manually with the required dependencies
+		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
+		
 		// Act
 		var result = await store.ClaimNextJobForWorker(workerId, CancellationToken.None);
 

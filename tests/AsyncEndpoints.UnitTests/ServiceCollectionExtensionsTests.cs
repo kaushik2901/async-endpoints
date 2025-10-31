@@ -3,6 +3,7 @@ using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.UnitTests.Utilities;
@@ -63,6 +64,7 @@ public class ServiceCollectionExtensionsTests
 		var services = new ServiceCollection();
 		services.AddLogging();  // Add logging to resolve ILogger dependencies
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
+		services.AddAsyncEndpoints(); // Add Async endpoints
 
 		// Act
 		services.AddAsyncEndpointsInMemoryStore();

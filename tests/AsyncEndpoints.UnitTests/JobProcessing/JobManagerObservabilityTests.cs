@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Extensions;
@@ -28,13 +29,23 @@ public class JobManagerObservabilityTests
         Mock<IOptions<AsyncEndpointsConfigurations>> mockOptions,
         Mock<IDateTimeProvider> mockDateTimeProvider,
         Mock<IAsyncEndpointsObservability> mockMetrics,
-        Mock<HttpContext> mockHttpContext,
-        Guid jobId)
+		Job job)
     {
-        // Arrange
-        mockHttpContext.Setup(ctx => ctx.GetOrCreateJobId()).Returns(jobId);
-        mockJobStore.Setup(store => store.GetJobById(jobId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MethodResult<Job>.Success(null)); // No existing job found
+		// Arrange
+		var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers[AsyncEndpointsConstants.JobIdHeaderName] = job.Id.ToString();
+        
+        // Setup the options to return proper configurations
+        var config = new AsyncEndpointsConfigurations();
+        mockOptions.Setup(x => x.Value).Returns(config);
+        
+        // Setup the observability to return null for activity (which is what happens in unit tests)
+        mockMetrics
+            .Setup(x => x.StartJobSubmitActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()))
+            .Returns((Activity?)null);
+        
+        mockJobStore.Setup(store => store.GetJobById(job.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {job.Id} not found"))); // No existing job found
         mockJobStore.Setup(store => store.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult.Success);
 
@@ -46,7 +57,7 @@ public class JobManagerObservabilityTests
             mockMetrics.Object);
 
         // Act
-        await jobManager.SubmitJob(jobName, payload, mockHttpContext.Object, CancellationToken.None);
+        await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
 
         // Assert
         mockMetrics.Verify(m => m.RecordJobCreated(jobName, It.IsAny<string>()), Times.Once);
@@ -68,6 +79,9 @@ public class JobManagerObservabilityTests
         AsyncEndpointError error)
     {
         // Arrange
+        var config = new AsyncEndpointsConfigurations();
+        mockOptions.Setup(x => x.Value).Returns(config);
+        
         var job = new Job { Id = jobId, Name = "TestJob", RetryCount = 5, MaxRetries = 5 };
         mockJobStore.Setup(store => store.GetJobById(jobId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Success(job));
@@ -104,6 +118,9 @@ public class JobManagerObservabilityTests
         AsyncEndpointError error)
     {
         // Arrange
+        var config = new AsyncEndpointsConfigurations();
+        mockOptions.Setup(x => x.Value).Returns(config);
+        
         var job = new Job { Id = jobId, Name = "TestJob", RetryCount = 1, MaxRetries = 5 };
         mockJobStore.Setup(store => store.GetJobById(jobId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(MethodResult<Job>.Success(job));

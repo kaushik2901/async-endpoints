@@ -38,7 +38,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 
 		_logger.LogDebug("Retrieving existing job {JobId} to check if already exists", id);
 		var result = await _jobStore.GetJobById(id, cancellationToken);
-		if (result.IsSuccess && result.Data != null)
+		if (result.IsSuccess && result.DataOrNull != null)
 		{
 			_logger.LogDebug("Found existing job {JobId} for job: {JobName}, returning existing job", id, jobName);
 			return MethodResult<Job>.Success(result.Data);
