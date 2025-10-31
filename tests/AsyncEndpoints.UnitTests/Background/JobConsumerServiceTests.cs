@@ -40,10 +40,15 @@ public class JobConsumerServiceTests
 		[Frozen] Mock<IServiceScopeFactory> mockScopeFactory,
 		[Frozen] Mock<IJobProcessorService> mockJobProcessorService,
 		[Frozen] Mock<ILogger<JobConsumerService>> mockLogger,
+		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		SemaphoreSlim semaphoreSlim,
 		Job job)
 	{
 		// Arrange
+		mockServiceProvider
+			.Setup(x => x.GetService(typeof(IAsyncEndpointsObservability)))
+			.Returns(mockMetrics.Object);
+			
 		mockServiceProvider
 			.Setup(x => x.GetService(typeof(IJobProcessorService)))
 			.Returns(mockJobProcessorService.Object);
@@ -61,7 +66,7 @@ public class JobConsumerServiceTests
 		await channel.Writer.WriteAsync(job, CancellationToken.None);
 		channel.Writer.Complete();
 
-		var service = new JobConsumerService(mockLogger.Object, mockScopeFactory.Object, Mock.Of<IAsyncEndpointsObservability>());
+		var service = new JobConsumerService(mockLogger.Object, mockScopeFactory.Object, mockMetrics.Object);
 
 		// Act & Assert - Should not throw exception
 		var exception = await Record.ExceptionAsync(() =>

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
@@ -26,6 +27,11 @@ public class InMemoryJobStoreCreateCopyTests
 		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -73,6 +79,11 @@ public class InMemoryJobStoreCreateCopyTests
 		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
 		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -141,6 +152,11 @@ public class InMemoryJobStoreCreateCopyTests
 		Job job,
 		Guid workerId)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -178,6 +194,11 @@ public class InMemoryJobStoreCreateCopyTests
 		[Frozen] Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
+		// Setup the observability to return null for activity (which is what happens in unit tests)
+		mockMetrics
+			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+			.Returns((Activity?)null);
+		
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 

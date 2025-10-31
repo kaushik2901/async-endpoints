@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
@@ -21,6 +22,11 @@ public class InMemoryJobStoreObservabilityTests
         Mock<IDateTimeProvider> mockDateTimeProvider,
         Mock<IAsyncEndpointsObservability> mockMetrics)
     {
+        // Setup the observability to return null for activity (which is what happens in unit tests)
+        mockMetrics
+            .Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+            .Returns((Activity?)null);
+        
         // Arrange
         var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -43,6 +49,11 @@ public class InMemoryJobStoreObservabilityTests
         Mock<IDateTimeProvider> mockDateTimeProvider,
         Mock<IAsyncEndpointsObservability> mockMetrics)
     {
+        // Setup the observability to return null for activity (which is what happens in unit tests)
+        mockMetrics
+            .Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+            .Returns((Activity?)null);
+        
         // Arrange
         var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -66,6 +77,11 @@ public class InMemoryJobStoreObservabilityTests
         Mock<IDateTimeProvider> mockDateTimeProvider,
         Mock<IAsyncEndpointsObservability> mockMetrics)
     {
+        // Setup the observability to return null for activity (which is what happens in unit tests)
+        mockMetrics
+            .Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+            .Returns((Activity?)null);
+        
         // Arrange
         var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
         
