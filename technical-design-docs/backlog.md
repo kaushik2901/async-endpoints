@@ -9,10 +9,11 @@
 
 ## In progress
 
-- AsyncEndpoints should important metrics and traces
+- Capture and compare benchmark with Hangfire.io
 
 ## Completed
 
+- AsyncEndpoints should important metrics and traces
 - AsyncEndpoints should support PUT, PATCH, and DELETE methods
 - AsyncEndpoints should support both AOT and JIT compilation
 - AsyncEndpoints should support request without body
