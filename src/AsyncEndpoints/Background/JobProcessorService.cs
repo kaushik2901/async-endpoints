@@ -29,13 +29,8 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 		
 		_logger.LogDebug("Starting job processing for job {JobId} with name {JobName}", job.Id, job.Name);
 
-		// Start activity only if tracing is enabled
-		// Using job store type from the job name registration lookup would require additional refactoring
-		// For now, we'll pass the job store type as a generic value, but in a real scenario, 
-		// you might pass the actual store type from the calling service
 		using var activity = _metrics.StartJobProcessActivity(job.GetType().Name, job);
 		
-		// Use the enhanced metrics interface for cleaner duration tracking
 		using var durationTimer = _metrics.TimeJobProcessingDuration(job.Name, "processing");
 		
 		try

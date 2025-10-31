@@ -66,6 +66,6 @@ app.MapAsyncPatch<ExampleRequest>("with-body-failure", "/with-body/failure-patch
 app.MapAsyncDelete("empty-body-success", "/empty-body/success-delete");
 app.MapAsyncDelete("empty-body-failure", "/empty-body/failure-delete");
 app.MapAsyncDelete<ExampleRequest>("with-body-success", "/with-body/success-delete");
-app.MapAsyncDelete<ExampleRequest>("with-body-failure", "/with-body-failure-delete");
+app.MapAsyncDelete<ExampleRequest>("with-body-failure", "/with-body/failure-delete");
 
 await app.RunAsync();
