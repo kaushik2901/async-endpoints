@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization.Metadata;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;

@@ -1,5 +1,9 @@
 using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Redis.Extensions;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using RedisExampleCore;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -10,6 +14,32 @@ builder.Services
 	.AddAsyncEndpoints()
 	.AddAsyncEndpointsRedisStore(redisConnectionString)
 	.AddAsyncEndpointsJsonTypeInfoResolver(ApplicationJsonSerializationContext.Default);
+
+// Configure OpenTelemetry with proper service name
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: "RedisExampleAPI", serviceVersion: "1.0.0"))
+    .WithTracing(tracingBuilder =>
+    {
+        tracingBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter()
+			.AddSource("AsyncEndpoints");
+	})
+    .WithMetrics(metricsBuilder =>
+    {
+        metricsBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter()
+			.AddMeter("AsyncEndpoints");
+	})
+    .WithLogging(loggingBuilder =>
+    {
+        loggingBuilder
+            .AddOtlpExporter();
+    });
 
 var app = builder.Build();
 
@@ -36,6 +66,6 @@ app.MapAsyncPatch<ExampleRequest>("with-body-failure", "/with-body/failure-patch
 app.MapAsyncDelete("empty-body-success", "/empty-body/success-delete");
 app.MapAsyncDelete("empty-body-failure", "/empty-body/failure-delete");
 app.MapAsyncDelete<ExampleRequest>("with-body-success", "/with-body/success-delete");
-app.MapAsyncDelete<ExampleRequest>("with-body-failure", "/with-body/failure-delete");
+app.MapAsyncDelete<ExampleRequest>("with-body-failure", "/with-body-failure-delete");
 
 await app.RunAsync();
