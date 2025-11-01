@@ -12,7 +12,6 @@ namespace AsyncEndpoints.Infrastructure.Observability;
 /// <inheritdoc />
 public class AsyncEndpointsObservability : IAsyncEndpointsObservability
 {
-    private readonly Meter? _meter;
     private readonly Counter<long>? _jobsCreated;
     private readonly Counter<long>? _jobsProcessed;
     private readonly Counter<long>? _jobsFailed;
@@ -38,6 +37,11 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     private static readonly string _workerIdTag = "worker_id";
     private static readonly string _handlerTypeTag = "handler_type";
     private static readonly string _jobIdTag = "job.id";
+    private static readonly string _unitSeconds = "seconds";
+    private static readonly string _activityJobName = "job.name";
+    private static readonly string _activityStoreType = "store.type";
+    private static readonly string _activityWorkerId = "worker.id";
+    private static readonly string _activityHandlerType = "handler.type";
 
     public AsyncEndpointsObservability(IOptions<AsyncEndpointsConfigurations> configurations)
     {
@@ -46,46 +50,45 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         // Only create metrics if observability is enabled
         if (_config.EnableMetrics)
         {
-            _meter = new Meter("AsyncEndpoints", "1.0.0");
+            var meter = new Meter("AsyncEndpoints", "1.0.0");
             
             // Job metrics
-            _jobsCreated = _meter.CreateCounter<long>("asyncendpoints.jobs.created.total", 
+            _jobsCreated = meter.CreateCounter<long>("asyncendpoints.jobs.created.total", 
                 description: "Total number of jobs created");
-            _jobsProcessed = _meter.CreateCounter<long>("asyncendpoints.jobs.processed.total", 
+            _jobsProcessed = meter.CreateCounter<long>("asyncendpoints.jobs.processed.total", 
                 description: "Total number of jobs processed");
-            _jobsFailed = _meter.CreateCounter<long>("asyncendpoints.jobs.failed.total", 
+            _jobsFailed = meter.CreateCounter<long>("asyncendpoints.jobs.failed.total", 
                 description: "Total number of job failures");
-            _jobsRetries = _meter.CreateCounter<long>("asyncendpoints.jobs.retries.total", 
+            _jobsRetries = meter.CreateCounter<long>("asyncendpoints.jobs.retries.total", 
                 description: "Total number of job retries");
-            _jobQueueDuration = _meter.CreateHistogram<double>("asyncendpoints.jobs.queue.duration", 
-                unit: "seconds", description: "Time jobs spend in queue before processing");
-            _jobProcessingDuration = _meter.CreateHistogram<double>("asyncendpoints.jobs.processing.duration", 
-                unit: "seconds", description: "Time spent processing jobs");
-            _jobsCurrentCount = _meter.CreateUpDownCounter<long>("asyncendpoints.jobs.current.count", 
+            _jobQueueDuration = meter.CreateHistogram<double>("asyncendpoints.jobs.queue.duration", 
+                unit: _unitSeconds, description: "Time jobs spend in queue before processing");
+            _jobProcessingDuration = meter.CreateHistogram<double>("asyncendpoints.jobs.processing.duration", 
+                unit: _unitSeconds, description: "Time spent processing jobs");
+            _jobsCurrentCount = meter.CreateUpDownCounter<long>("asyncendpoints.jobs.current.count", 
                 description: "Current number of jobs in each state");
             
             // Handler metrics
-            _handlerExecutionDuration = _meter.CreateHistogram<double>("asyncendpoints.handlers.execution.duration", 
-                unit: "seconds", description: "Time spent executing handlers");
-            _handlerErrors = _meter.CreateCounter<long>("asyncendpoints.handlers.error.rate", 
+            _handlerExecutionDuration = meter.CreateHistogram<double>("asyncendpoints.handlers.execution.duration", 
+                unit: _unitSeconds, description: "Time spent executing handlers");
+            _handlerErrors = meter.CreateCounter<long>("asyncendpoints.handlers.error.rate", 
                 description: "Count of handler execution errors");
             
             // Store metrics
-            _storeOperations = _meter.CreateCounter<long>("asyncendpoints.store.operations.total", 
+            _storeOperations = meter.CreateCounter<long>("asyncendpoints.store.operations.total", 
                 description: "Total store operations by operation type");
-            _storeOperationDuration = _meter.CreateHistogram<double>("asyncendpoints.store.operation.duration", 
-                unit: "seconds", description: "Duration of store operations");
-            _storeErrors = _meter.CreateCounter<long>("asyncendpoints.store.errors.total", 
+            _storeOperationDuration = meter.CreateHistogram<double>("asyncendpoints.store.operation.duration", 
+                unit: _unitSeconds, description: "Duration of store operations");
+            _storeErrors = meter.CreateCounter<long>("asyncendpoints.store.errors.total", 
                 description: "Count of store operation errors");
             
             // Background service metrics
-            _backgroundProcessingRate = _meter.CreateCounter<long>("asyncendpoints.background.processing.rate", 
+            _backgroundProcessingRate = meter.CreateCounter<long>("asyncendpoints.background.processing.rate", 
                 description: "Rate of job processing");
         }
         else
         {
             // Initialize as null when metrics are disabled
-            _meter = null;
             _jobsCreated = null;
             _jobsProcessed = null;
             _jobsFailed = null;
@@ -236,8 +239,8 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         {
             var activity = _activitySource.StartActivity("Job.Submit", ActivityKind.Server);
             activity?.SetTag(_jobIdTag, jobId.ToString());
-            activity?.SetTag("job.name", jobName);
-            activity?.SetTag("store.type", storeType);
+            activity?.SetTag(_activityJobName, jobName);
+            activity?.SetTag(_activityStoreType, storeType);
             return activity;
         }
         return null; // Return null when tracing is disabled
@@ -249,10 +252,10 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         {
             var activity = _activitySource.StartActivity("Job.Process", ActivityKind.Consumer);
             activity?.SetTag(_jobIdTag, job.Id.ToString());
-            activity?.SetTag("job.name", job.Name);
+            activity?.SetTag(_activityJobName, job.Name);
             activity?.SetTag("job.status", job.Status.ToString());
-            activity?.SetTag("worker.id", job.WorkerId?.ToString());
-            activity?.SetTag("store.type", storeType);
+            activity?.SetTag(_activityWorkerId, job.WorkerId?.ToString());
+            activity?.SetTag(_activityStoreType, storeType);
             return activity;
         }
         return null; // Return null when tracing is disabled
@@ -264,8 +267,8 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         {
             var activity = _activitySource.StartActivity("Handler.Execute", ActivityKind.Internal);
             activity?.SetTag(_jobIdTag, jobId.ToString());
-            activity?.SetTag("job.name", jobName);
-            activity?.SetTag("handler.type", handlerType);
+            activity?.SetTag(_activityJobName, jobName);
+            activity?.SetTag(_activityHandlerType, handlerType);
             return activity;
         }
         return null; // Return null when tracing is disabled
@@ -277,7 +280,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         {
             var activity = _activitySource.StartActivity("Store.Operation", ActivityKind.Internal);
             activity?.SetTag("operation", operation);
-            activity?.SetTag("store.type", storeType);
+            activity?.SetTag(_activityStoreType, storeType);
             if (jobId.HasValue)
             {
                 activity?.SetTag(_jobIdTag, jobId.Value.ToString());

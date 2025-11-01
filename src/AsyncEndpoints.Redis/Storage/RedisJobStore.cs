@@ -150,20 +150,20 @@ public class RedisJobStore : IJobStore
 
 			_logger.LogInformation("Created job {JobId} with name {JobName}", job.Id, job.Name);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("CreateJob", this.GetType().Name, duration);
-			_metrics.RecordStoreOperation("CreateJob", this.GetType().Name);
+			_metrics.RecordStoreOperationDuration(_createJobOperationName, this.GetType().Name, duration);
+			_metrics.RecordStoreOperation(_createJobOperationName, this.GetType().Name);
 			
 			return MethodResult.Success();
 		}
 		catch (Exception ex)
 		{
-			_metrics.RecordStoreError("CreateJob", ex.GetType().Name, this.GetType().Name);
+			_metrics.RecordStoreError(_createJobOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 			activity?.SetTag("error.type", ex.GetType().Name);
 			
 			_logger.LogError(ex, "Unexpected error creating job: {JobName}", job?.Name);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("CreateJob", this.GetType().Name, duration);
+			_metrics.RecordStoreOperationDuration(_createJobOperationName, this.GetType().Name, duration);
 			
 			return MethodResult.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error creating job: {ex.Message}", ex));

@@ -76,6 +76,6 @@ public class AsyncEndpointsObservabilityTests
 
         // Assert
         Assert.NotNull(timer);
-        Assert.IsType<IDisposable>(timer, exactMatch: false);
+        Assert.IsAssignableFrom<IDisposable>(timer);
     }
 }

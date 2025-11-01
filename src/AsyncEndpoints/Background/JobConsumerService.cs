@@ -54,9 +54,9 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScop
 				}
 			}
 		}
-		catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+		catch (OperationCanceledException ex) when (stoppingToken.IsCancellationRequested)
 		{
-			_logger.LogDebug("Job consumption loop cancelled");
+			_logger.LogDebug(ex, "Job consumption loop cancelled");
 		}
 
 		_logger.LogDebug("Job consumption loop finished");
