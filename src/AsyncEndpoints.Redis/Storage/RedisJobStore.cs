@@ -29,6 +29,18 @@ public class RedisJobStore : IJobStore
 	private static readonly string _queueKey = "ae:jobs:queue";
 	private static readonly string _inProgressKey = "ae:jobs:inprogress";
 	private static readonly string _jobStoreErrorCode = "JOB_STORE_ERROR";
+	private static readonly string _createJobOperationName = "CreateJob";
+	private static readonly string _getJobByIdOperationName = "GetJobById";
+	private static readonly string _updateJobOperationName = "UpdateJob";
+	private static readonly string _claimNextJobOperationName = "ClaimNextJob";
+	private static readonly string _invalidJobErrorCode = "INVALID_JOB";
+	private static readonly string _invalidJobIdErrorCode = "INVALID_JOB_ID";
+	private static readonly string _jobNotFoundErrorCode = "JOB_NOT_FOUND";
+	private static readonly string _duplicateJobErrorCode = "DUPLICATE_JOB";
+	private static readonly string _jobCreateFailedErrorCode = "JOB_CREATE_FAILED";
+	private static readonly string _deserializationError = "DESERIALIZATION_ERROR";
+	private static readonly string _errorTypeTag = "error.type";
+	private static readonly string _parseError = "PARSE_ERROR";
 
 	public bool SupportsJobRecovery => true; // Redis supports recovery
 
@@ -78,7 +90,7 @@ public class RedisJobStore : IJobStore
 	public async Task<MethodResult> CreateJob(Job job, CancellationToken cancellationToken)
 	{
 		// Start activity only if tracing is enabled
-		using var activity = _metrics.StartStoreOperationActivity("CreateJob", this.GetType().Name, job?.Id);
+		using var activity = _metrics.StartStoreOperationActivity(_createJobOperationName, this.GetType().Name, job?.Id);
 		
 		var startTime = DateTimeOffset.UtcNow;
 		try
@@ -86,23 +98,23 @@ public class RedisJobStore : IJobStore
 			if (job == null)
 			{
 				_logger.LogWarning("Attempted to create null job");
-				_metrics.RecordStoreError("CreateJob", "INVALID_JOB", this.GetType().Name);
+				_metrics.RecordStoreError(_createJobOperationName, _invalidJobErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job");
-				activity?.SetTag("error.type", "INVALID_JOB");
+				activity?.SetTag(_errorTypeTag, _invalidJobErrorCode);
 				
 				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("INVALID_JOB", "Job cannot be null"));
+					AsyncEndpointError.FromCode(_invalidJobErrorCode, "Job cannot be null"));
 			}
 
 			if (job.Id == Guid.Empty)
 			{
 				_logger.LogWarning("Attempted to create job with empty ID");
-				_metrics.RecordStoreError("CreateJob", "INVALID_JOB_ID", this.GetType().Name);
+				_metrics.RecordStoreError(_createJobOperationName, _invalidJobIdErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job ID");
-				activity?.SetTag("error.type", "INVALID_JOB_ID");
+				activity?.SetTag(_errorTypeTag, _invalidJobIdErrorCode);
 				
 				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty"));
+					AsyncEndpointError.FromCode(_invalidJobIdErrorCode, "Job ID cannot be empty"));
 			}
 
 			if (cancellationToken.IsCancellationRequested)
@@ -118,12 +130,12 @@ public class RedisJobStore : IJobStore
 			if (jobExists)
 			{
 				_logger.LogError("Job with ID {JobId} already exists", job.Id);
-				_metrics.RecordStoreError("CreateJob", "DUPLICATE_JOB", this.GetType().Name);
+				_metrics.RecordStoreError(_createJobOperationName, _duplicateJobErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Duplicate job");
-				activity?.SetTag("error.type", "DUPLICATE_JOB");
+				activity?.SetTag(_errorTypeTag, _duplicateJobErrorCode);
 				
 				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("JOB_CREATE_FAILED", $"Job with ID {job.Id} already exists"));
+					AsyncEndpointError.FromCode(_jobCreateFailedErrorCode, $"Job with ID {job.Id} already exists"));
 			}
 
 			// Create job in Redis as a hash
@@ -162,7 +174,7 @@ public class RedisJobStore : IJobStore
 	public async Task<MethodResult<Job>> GetJobById(Guid id, CancellationToken cancellationToken)
 	{
 		// Start activity only if tracing is enabled
-		using var activity = _metrics.StartStoreOperationActivity("GetJobById", this.GetType().Name, id);
+		using var activity = _metrics.StartStoreOperationActivity(_getJobByIdOperationName, this.GetType().Name, id);
 		
 		var startTime = DateTimeOffset.UtcNow;
 		try
@@ -170,12 +182,12 @@ public class RedisJobStore : IJobStore
 			if (id == Guid.Empty)
 			{
 				_logger.LogWarning("Attempted to retrieve job with empty ID");
-				_metrics.RecordStoreError("GetJobById", "INVALID_JOB_ID", this.GetType().Name);
+				_metrics.RecordStoreError(_getJobByIdOperationName, _invalidJobIdErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job ID");
-				activity?.SetTag("error.type", "INVALID_JOB_ID");
+				activity?.SetTag(_errorTypeTag, _invalidJobIdErrorCode);
 				
 				return MethodResult<Job>.Failure(
-					AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty"));
+					AsyncEndpointError.FromCode(_invalidJobIdErrorCode, "Job ID cannot be empty"));
 			}
 
 			if (cancellationToken.IsCancellationRequested)
@@ -192,41 +204,41 @@ public class RedisJobStore : IJobStore
 			if (hashEntries.Length == 0)
 			{
 				_logger.LogWarning("Job not found with Id {JobId} from store", id);
-				_metrics.RecordStoreError("GetJobById", "JOB_NOT_FOUND", this.GetType().Name);
+				_metrics.RecordStoreError(_getJobByIdOperationName, _jobNotFoundErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Job not found");
-				activity?.SetTag("error.type", "JOB_NOT_FOUND");
+				activity?.SetTag(_errorTypeTag, _jobNotFoundErrorCode);
 				
 				return MethodResult<Job>.Failure(
-					AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {id} not found"));
+					AsyncEndpointError.FromCode(_jobNotFoundErrorCode, $"Job with ID {id} not found"));
 			}
 
 			var job = _jobHashConverter.ConvertFromHashEntries(hashEntries);
 			if (job == null)
 			{
 				_logger.LogError("Conversion failed for job with ID {JobId}", id);
-				_metrics.RecordStoreError("GetJobById", "DESERIALIZATION_ERROR", this.GetType().Name);
+				_metrics.RecordStoreError(_getJobByIdOperationName, _deserializationError, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Deserialization error");
-				activity?.SetTag("error.type", "DESERIALIZATION_ERROR");
+				activity?.SetTag(_errorTypeTag, _deserializationError);
 				
 				return MethodResult<Job>.Failure(
-					AsyncEndpointError.FromCode("DESERIALIZATION_ERROR", $"Failed to convert hash to job with ID {id}"));
+					AsyncEndpointError.FromCode(_deserializationError, $"Failed to convert hash to job with ID {id}"));
 			}
 
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("GetJobById", this.GetType().Name, duration);
-			_metrics.RecordStoreOperation("GetJobById", this.GetType().Name);
+			_metrics.RecordStoreOperationDuration(_getJobByIdOperationName, this.GetType().Name, duration);
+			_metrics.RecordStoreOperation(_getJobByIdOperationName, this.GetType().Name);
 			
 			return MethodResult<Job>.Success(job);
 		}
 		catch (Exception ex)
 		{
-			_metrics.RecordStoreError("GetJobById", ex.GetType().Name, this.GetType().Name);
+			_metrics.RecordStoreError(_getJobByIdOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-			activity?.SetTag("error.type", ex.GetType().Name);
+			activity?.SetTag(_errorTypeTag, ex.GetType().Name);
 			
 			_logger.LogError(ex, "Unexpected error retrieving job: {JobId}", id);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("GetJobById", this.GetType().Name, duration);
+			_metrics.RecordStoreOperationDuration(_getJobByIdOperationName, this.GetType().Name, duration);
 			
 			return MethodResult<Job>.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error retrieving job: {ex.Message}", ex));
@@ -237,7 +249,7 @@ public class RedisJobStore : IJobStore
 	public async Task<MethodResult> UpdateJob(Job job, CancellationToken cancellationToken)
 	{
 		// Start activity only if tracing is enabled
-		using var activity = _metrics.StartStoreOperationActivity("UpdateJob", this.GetType().Name, job?.Id);
+		using var activity = _metrics.StartStoreOperationActivity(_updateJobOperationName, this.GetType().Name, job?.Id);
 		
 		var startTime = DateTimeOffset.UtcNow;
 		try
@@ -245,23 +257,23 @@ public class RedisJobStore : IJobStore
 			if (job == null)
 			{
 				_logger.LogWarning("Attempted to update null job");
-				_metrics.RecordStoreError("UpdateJob", "INVALID_JOB", this.GetType().Name);
+				_metrics.RecordStoreError(_updateJobOperationName, _invalidJobErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job");
-				activity?.SetTag("error.type", "INVALID_JOB");
+				activity?.SetTag(_errorTypeTag, _invalidJobErrorCode);
 				
 				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("INVALID_JOB", "Job cannot be null"));
+					AsyncEndpointError.FromCode(_invalidJobErrorCode, "Job cannot be null"));
 			}
 
 			if (job.Id == Guid.Empty)
 			{
 				_logger.LogWarning("Attempted to update job with empty ID");
-				_metrics.RecordStoreError("UpdateJob", "INVALID_JOB_ID", this.GetType().Name);
+				_metrics.RecordStoreError(_updateJobOperationName, _invalidJobIdErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job ID");
-				activity?.SetTag("error.type", "INVALID_JOB_ID");
+				activity?.SetTag(_errorTypeTag, _invalidJobIdErrorCode);
 				
 				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("INVALID_JOB_ID", "Job ID cannot be empty"));
+					AsyncEndpointError.FromCode(_invalidJobIdErrorCode, "Job ID cannot be empty"));
 			}
 
 			if (cancellationToken.IsCancellationRequested)
@@ -276,12 +288,12 @@ public class RedisJobStore : IJobStore
 			if (!jobExists)
 			{
 				_logger.LogWarning("Attempted to update non-existent job {JobId}", job.Id);
-				_metrics.RecordStoreError("UpdateJob", "JOB_NOT_FOUND", this.GetType().Name);
+				_metrics.RecordStoreError(_updateJobOperationName, _jobNotFoundErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Job not found");
-				activity?.SetTag("error.type", "JOB_NOT_FOUND");
+				activity?.SetTag(_errorTypeTag, _jobNotFoundErrorCode);
 				
 				return MethodResult.Failure(
-					AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {job.Id} not found"));
+					AsyncEndpointError.FromCode(_jobNotFoundErrorCode, $"Job with ID {job.Id} not found"));
 			}
 
 			// Update the last updated timestamp
@@ -310,20 +322,20 @@ public class RedisJobStore : IJobStore
 
 			_logger.LogDebug("Updated job {JobId}", job.Id);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("UpdateJob", this.GetType().Name, duration);
-			_metrics.RecordStoreOperation("UpdateJob", this.GetType().Name);
+			_metrics.RecordStoreOperationDuration(_updateJobOperationName, this.GetType().Name, duration);
+			_metrics.RecordStoreOperation(_updateJobOperationName, this.GetType().Name);
 			
 			return MethodResult.Success();
 		}
 		catch (Exception ex)
 		{
-			_metrics.RecordStoreError("UpdateJob", ex.GetType().Name, this.GetType().Name);
+			_metrics.RecordStoreError(_updateJobOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-			activity?.SetTag("error.type", ex.GetType().Name);
+			activity?.SetTag(_errorTypeTag, ex.GetType().Name);
 			
 			_logger.LogError(ex, "Unexpected error updating job: {JobId}", job?.Id);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("UpdateJob", this.GetType().Name, duration);
+			_metrics.RecordStoreOperationDuration(_updateJobOperationName, this.GetType().Name, duration);
 			
 			return MethodResult.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error updating job: {ex.Message}", ex));
@@ -337,7 +349,7 @@ public class RedisJobStore : IJobStore
 		
 		// Start activity only if tracing is enabled
 		// Note: We don't know the specific job ID yet, so we'll pass null
-		using var activity = _metrics.StartStoreOperationActivity("ClaimNextJob", this.GetType().Name);
+		using var activity = _metrics.StartStoreOperationActivity(_claimNextJobOperationName, this.GetType().Name);
 		
 		var startTime = DateTimeOffset.UtcNow;
 		try
@@ -364,8 +376,8 @@ public class RedisJobStore : IJobStore
 			{
 				_logger.LogDebug("No available jobs to claim for worker {WorkerId}", workerId);
 				var noJobsDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-				_metrics.RecordStoreOperationDuration("ClaimNextJob", this.GetType().Name, noJobsDuration);
-				_metrics.RecordStoreOperation("ClaimNextJob", this.GetType().Name);
+				_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, noJobsDuration);
+				_metrics.RecordStoreOperation(_claimNextJobOperationName, this.GetType().Name);
 				
 				return MethodResult<Job>.Success(default);
 			}
@@ -375,10 +387,10 @@ public class RedisJobStore : IJobStore
 			{
 				_logger.LogDebug("Failed to parse jobId from jobIdString {JobIdString} for worker {WorkerId}", jobIdString, workerId);
 				var parseErrorDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-				_metrics.RecordStoreOperationDuration("ClaimNextJob", this.GetType().Name, parseErrorDuration);
-				_metrics.RecordStoreError("ClaimNextJob", "PARSE_ERROR", this.GetType().Name);
+				_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, parseErrorDuration);
+				_metrics.RecordStoreError(_claimNextJobOperationName, _parseError, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Parse error");
-				activity?.SetTag("error.type", "PARSE_ERROR");
+				activity?.SetTag(_errorTypeTag, _parseError);
 				
 				return MethodResult<Job>.Success(default);
 			}
@@ -388,12 +400,12 @@ public class RedisJobStore : IJobStore
 			if (!result.IsSuccess)
 			{
 				_logger.LogDebug("Failed to claim job for worker {WorkerId}", workerId);
-				_metrics.RecordStoreError("ClaimNextJob", result.Error.Code, this.GetType().Name);
+				_metrics.RecordStoreError(_claimNextJobOperationName, result.Error.Code, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, result.Error.Message);
-				activity?.SetTag("error.type", result.Error.Code);
+				activity?.SetTag(_errorTypeTag, result.Error.Code);
 				
 				var claimFailureDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-				_metrics.RecordStoreOperationDuration("ClaimNextJob", this.GetType().Name, claimFailureDuration);
+				_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, claimFailureDuration);
 				
 				return MethodResult<Job>.Success(default);
 			}
@@ -401,20 +413,20 @@ public class RedisJobStore : IJobStore
 			_logger.LogInformation("Successfully claimed job {JobId} for worker {WorkerId}", jobId, workerId);
 			activity?.SetTag("job.id", jobId.ToString());
 			var successDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("ClaimNextJob", this.GetType().Name, successDuration);
-			_metrics.RecordStoreOperation("ClaimNextJob", this.GetType().Name);
+			_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, successDuration);
+			_metrics.RecordStoreOperation(_claimNextJobOperationName, this.GetType().Name);
 			
 			return result;
 		}
 		catch (Exception ex)
 		{
-			_metrics.RecordStoreError("ClaimNextJob", ex.GetType().Name, this.GetType().Name);
+			_metrics.RecordStoreError(_claimNextJobOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-			activity?.SetTag("error.type", ex.GetType().Name);
+			activity?.SetTag(_errorTypeTag, ex.GetType().Name);
 			
 			_logger.LogError(ex, "Unexpected error claiming next job for worker {WorkerId}", workerId);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-			_metrics.RecordStoreOperationDuration("ClaimNextJob", this.GetType().Name, duration);
+			_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, duration);
 			
 			return MethodResult<Job>.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error claiming job: {ex.Message}", ex));

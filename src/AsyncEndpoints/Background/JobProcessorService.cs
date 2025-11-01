@@ -94,7 +94,6 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 				return MethodResult<string>.Failure(new InvalidOperationException($"Handler registration not found for job name: {job.Name}"));
 			}
 
-			_logger.LogDebug("Deserializing payload for job {JobId}", job.Id);
 			var request = _serializer.Deserialize(job.Payload, handlerRegistration.RequestType);
 			if (request == null)
 			{
@@ -123,8 +122,7 @@ public class JobProcessorService(ILogger<JobProcessorService> logger, IJobManage
 				return MethodResult<string>.Failure(result.Error);
 			}
 
-			_logger.LogDebug("Serializing result for job {JobId}", job.Id);
-			var serializedResult = _serializer.Serialize(result.Data, handlerRegistration.ResponseType);
+			var serializedResult = _serializer.Serialize(result.Data, handlerRegistration.ResponseType ?? typeof(object));
 
 			_logger.LogDebug("Successfully processed payload for job {JobId}", job.Id);
 			return MethodResult<string>.Success(serializedResult);

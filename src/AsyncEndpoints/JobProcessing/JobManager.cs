@@ -36,7 +36,6 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		
 		_logger.LogDebug("Processing job creation for: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
 
-		_logger.LogDebug("Retrieving existing job {JobId} to check if already exists", id);
 		var result = await _jobStore.GetJobById(id, cancellationToken);
 		if (result.IsSuccess && result.DataOrNull != null)
 		{
@@ -44,23 +43,16 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 			return MethodResult<Job>.Success(result.Data);
 		}
 
-		_logger.LogDebug("Extracting context data for job {JobId}", id);
 		var headers = httpContext.GetHeadersFromContext();
 		var routeParams = httpContext.GetRouteParamsFromContext();
 		var queryParams = httpContext.GetQueryParamsFromContext();
 
-		_logger.LogDebug("Creating new job object with {HeaderCount} headers, {RouteParamCount} route params, {QueryParamCount} query params", 
-			headers.Count, routeParams.Count, queryParams.Count);
 		var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _dateTimeProvider);
-		_logger.LogDebug("Created new job {JobId} for job: {JobName}", id, jobName);
-
-		_logger.LogDebug("Persisting job {JobId} to store", id);
 		var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
 		if (createJobResult.IsSuccess)
 		{
 			_metrics.RecordJobCreated(jobName, _jobStore.GetType().Name);
 			
-			_logger.LogDebug("Successfully created job {JobId} in store", id);
 			return MethodResult<Job>.Success(job);
 		}
 		else

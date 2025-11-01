@@ -13,32 +13,40 @@ namespace AsyncEndpoints.Infrastructure.Observability;
 /// <inheritdoc />
 public class AsyncEndpointsObservability : IAsyncEndpointsObservability
 {
-    private readonly Meter _meter;
-    private readonly Counter<long> _jobsCreated;
-    private readonly Counter<long> _jobsProcessed;
-    private readonly Counter<long> _jobsFailed;
-    private readonly Counter<long> _jobsRetries;
-    private readonly Histogram<double> _jobQueueDuration;
-    private readonly Histogram<double> _jobProcessingDuration;
-    private readonly Histogram<double> _jobClaimDuration;
-    private readonly UpDownCounter<long> _jobsCurrentCount;
-    private readonly Histogram<double> _handlerExecutionDuration;
-    private readonly Counter<long> _handlerErrors;
-    private readonly Counter<long> _storeOperations;
-    private readonly Histogram<double> _storeOperationDuration;
-    private readonly Counter<long> _storeErrors;
-    private readonly Counter<long> _backgroundProcessingRate;
-    private readonly Histogram<double> _backgroundConsumerIdleTime;
-    private readonly UpDownCounter<double> _backgroundChannelUtilization;
+    private readonly Meter? _meter;
+    private readonly Counter<long>? _jobsCreated;
+    private readonly Counter<long>? _jobsProcessed;
+    private readonly Counter<long>? _jobsFailed;
+    private readonly Counter<long>? _jobsRetries;
+    private readonly Histogram<double>? _jobQueueDuration;
+    private readonly Histogram<double>? _jobProcessingDuration;
+    private readonly Histogram<double>? _jobClaimDuration;
+    private readonly UpDownCounter<long>? _jobsCurrentCount;
+    private readonly Histogram<double>? _handlerExecutionDuration;
+    private readonly Counter<long>? _handlerErrors;
+    private readonly Counter<long>? _storeOperations;
+    private readonly Histogram<double>? _storeOperationDuration;
+    private readonly Counter<long>? _storeErrors;
+    private readonly Counter<long>? _backgroundProcessingRate;
+    private readonly Histogram<double>? _backgroundConsumerIdleTime;
+    private readonly UpDownCounter<double>? _backgroundChannelUtilization;
     private readonly AsyncEndpointsObservabilityConfigurations _config;
-    private readonly ILogger<AsyncEndpointsObservability> _logger;
     
     private static readonly ActivitySource _activitySource = new ActivitySource("AsyncEndpoints", "1.0.0");
 
-    public AsyncEndpointsObservability(IOptions<AsyncEndpointsConfigurations> configurations, ILogger<AsyncEndpointsObservability> logger)
+    private static readonly string _jobNameTag = "job_name";
+    private static readonly string _storeTypeTag = "store_type";
+    private static readonly string _statusTag = "status";
+    private static readonly string _errorTypeTag = "error_type";
+    private static readonly string _operationTag = "operation";
+    private static readonly string _workerIdTag = "worker_id";
+    private static readonly string _handlerTypeTag = "handler_type";
+    private static readonly string _jobIdTag = "job.id";
+    private static readonly string _secondsUnit = "seconds";
+
+    public AsyncEndpointsObservability(IOptions<AsyncEndpointsConfigurations> configurations)
     {
         _config = configurations.Value.ObservabilityConfigurations;
-        _logger = logger;
         
         // Only create metrics if observability is enabled
         if (_config.EnableMetrics)
@@ -112,7 +120,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _jobsCreated != null)
         {
-            _jobsCreated.Add(1, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("store_type", storeType));
+            _jobsCreated.Add(1, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -120,7 +128,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _jobsProcessed != null)
         {
-            _jobsProcessed.Add(1, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("status", status), new KeyValuePair<string, object?>("store_type", storeType));
+            _jobsProcessed.Add(1, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_statusTag, status), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -128,7 +136,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _jobsFailed != null)
         {
-            _jobsFailed.Add(1, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("error_type", errorType), new KeyValuePair<string, object?>("store_type", storeType));
+            _jobsFailed.Add(1, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_errorTypeTag, errorType), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -136,7 +144,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _jobsRetries != null)
         {
-            _jobsRetries.Add(1, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("store_type", storeType));
+            _jobsRetries.Add(1, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -144,7 +152,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _jobQueueDuration != null)
         {
-            _jobQueueDuration.Record(durationSeconds, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("store_type", storeType));
+            _jobQueueDuration.Record(durationSeconds, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -152,7 +160,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _jobProcessingDuration != null)
         {
-            _jobProcessingDuration.Record(durationSeconds, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("status", status));
+            _jobProcessingDuration.Record(durationSeconds, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_statusTag, status));
         }
     }
 
@@ -160,23 +168,25 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _jobClaimDuration != null)
         {
-            _jobClaimDuration.Record(durationSeconds, new KeyValuePair<string, object?>("store_type", storeType));
+            _jobClaimDuration.Record(durationSeconds, new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
     public void SetJobCurrentCount(string jobStatus, string storeType, long count)
     {
-        // Note: UpDownCounter doesn't support Set operation directly
-        // For now, we'll skip this implementation and return a no-op for backward compatibility
-        // In a real implementation, we would need to track previous values to calculate the difference
-        // This is a simplified implementation that just records that the counter is being set
+        if (_config.EnableMetrics && _jobsCurrentCount != null)
+        {
+            // For UpDownCounter, we'll record the count as a change from the previous state.
+            // For simplicity in the context of this API, we'll add the count directly.
+            _jobsCurrentCount.Add(count, new KeyValuePair<string, object?>(_statusTag, jobStatus), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
+        }
     }
 
     public void RecordHandlerExecutionDuration(string jobName, string handlerType, double durationSeconds)
     {
         if (_config.EnableMetrics && _handlerExecutionDuration != null)
         {
-            _handlerExecutionDuration.Record(durationSeconds, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("handler_type", handlerType));
+            _handlerExecutionDuration.Record(durationSeconds, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_handlerTypeTag, handlerType));
         }
     }
 
@@ -184,7 +194,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _handlerErrors != null)
         {
-            _handlerErrors.Add(1, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("error_type", errorType));
+            _handlerErrors.Add(1, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_errorTypeTag, errorType));
         }
     }
 
@@ -192,7 +202,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _storeOperations != null)
         {
-            _storeOperations.Add(1, new KeyValuePair<string, object?>("operation", operation), new KeyValuePair<string, object?>("store_type", storeType));
+            _storeOperations.Add(1, new KeyValuePair<string, object?>(_operationTag, operation), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -200,7 +210,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _storeOperationDuration != null)
         {
-            _storeOperationDuration.Record(durationSeconds, new KeyValuePair<string, object?>("operation", operation), new KeyValuePair<string, object?>("store_type", storeType));
+            _storeOperationDuration.Record(durationSeconds, new KeyValuePair<string, object?>(_operationTag, operation), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -208,7 +218,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _storeErrors != null)
         {
-            _storeErrors.Add(1, new KeyValuePair<string, object?>("operation", operation), new KeyValuePair<string, object?>("error_type", errorType), new KeyValuePair<string, object?>("store_type", storeType));
+            _storeErrors.Add(1, new KeyValuePair<string, object?>(_operationTag, operation), new KeyValuePair<string, object?>(_errorTypeTag, errorType), new KeyValuePair<string, object?>(_storeTypeTag, storeType));
         }
     }
 
@@ -216,7 +226,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _backgroundProcessingRate != null)
         {
-            _backgroundProcessingRate.Add(1, new KeyValuePair<string, object?>("worker_id", workerId));
+            _backgroundProcessingRate.Add(1, new KeyValuePair<string, object?>(_workerIdTag, workerId));
         }
     }
 
@@ -224,23 +234,25 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _backgroundConsumerIdleTime != null)
         {
-            _backgroundConsumerIdleTime.Record(durationSeconds, new KeyValuePair<string, object?>("worker_id", workerId));
+            _backgroundConsumerIdleTime.Record(durationSeconds, new KeyValuePair<string, object?>(_workerIdTag, workerId));
         }
     }
 
     public void SetBackgroundChannelUtilization(string channelType, double utilizationPercentage)
     {
-        // Note: UpDownCounter doesn't support Set operation directly
-        // For now, we'll skip this implementation and return a no-op for backward compatibility
-        // In a real implementation, we would need to track previous values to calculate the difference
-        // This is a simplified implementation that just records that the counter is being set
+        if (_config.EnableMetrics && _backgroundChannelUtilization != null)
+        {
+            // For UpDownCounter, we'll set the utilization percentage as an increment operation.
+            // This represents the current utilization level.
+            _backgroundChannelUtilization.Add(utilizationPercentage, new KeyValuePair<string, object?>(_storeTypeTag, channelType));
+        }
     }
 
     public IDisposable TimeJobProcessingDuration(string jobName, string status)
     {
         if (_config.EnableMetrics && _jobProcessingDuration != null)
         {
-            return MetricTimer.Start(duration => _jobProcessingDuration.Record(duration, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("status", status)));
+            return MetricTimer.Start(duration => _jobProcessingDuration.Record(duration, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_statusTag, status)));
         }
         
         return NullDisposable.Instance; // Return a no-op disposable when metrics are disabled
@@ -250,7 +262,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     {
         if (_config.EnableMetrics && _handlerExecutionDuration != null)
         {
-            return MetricTimer.Start(duration => _handlerExecutionDuration.Record(duration, new KeyValuePair<string, object?>("job_name", jobName), new KeyValuePair<string, object?>("handler_type", handlerType)));
+            return MetricTimer.Start(duration => _handlerExecutionDuration.Record(duration, new KeyValuePair<string, object?>(_jobNameTag, jobName), new KeyValuePair<string, object?>(_handlerTypeTag, handlerType)));
         }
         
         return NullDisposable.Instance; // Return a no-op disposable when metrics are disabled
@@ -261,7 +273,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         if (_config.EnableTracing)
         {
             var activity = _activitySource.StartActivity("Job.Submit", ActivityKind.Server);
-            activity?.SetTag("job.id", jobId.ToString());
+            activity?.SetTag(_jobIdTag, jobId.ToString());
             activity?.SetTag("job.name", jobName);
             activity?.SetTag("store.type", storeType);
             return activity;
@@ -274,7 +286,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         if (_config.EnableTracing)
         {
             var activity = _activitySource.StartActivity("Job.Process", ActivityKind.Consumer);
-            activity?.SetTag("job.id", job.Id.ToString());
+            activity?.SetTag(_jobIdTag, job.Id.ToString());
             activity?.SetTag("job.name", job.Name);
             activity?.SetTag("job.status", job.Status.ToString());
             activity?.SetTag("worker.id", job.WorkerId?.ToString());
@@ -289,7 +301,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         if (_config.EnableTracing)
         {
             var activity = _activitySource.StartActivity("Handler.Execute", ActivityKind.Internal);
-            activity?.SetTag("job.id", jobId.ToString());
+            activity?.SetTag(_jobIdTag, jobId.ToString());
             activity?.SetTag("job.name", jobName);
             activity?.SetTag("handler.type", handlerType);
             return activity;
@@ -306,7 +318,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
             activity?.SetTag("store.type", storeType);
             if (jobId.HasValue)
             {
-                activity?.SetTag("job.id", jobId.Value.ToString());
+                activity?.SetTag(_jobIdTag, jobId.Value.ToString());
             }
             return activity;
         }
