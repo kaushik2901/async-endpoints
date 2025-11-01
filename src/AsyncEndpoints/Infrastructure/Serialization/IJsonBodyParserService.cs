@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.Infrastructure.Serialization;
 
+/// <summary>
+/// Defines a contract for parsing JSON request bodies into strongly-typed objects without using reflection.
+/// Provides Native AOT compatibility for JSON deserialization.
+/// </summary>
 public interface IJsonBodyParserService
 {
 	/// <summary>

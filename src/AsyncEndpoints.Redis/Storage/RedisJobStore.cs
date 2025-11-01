@@ -511,6 +511,7 @@ public class RedisJobStore : IJobStore
 		return _serializer.Deserialize<T>(value);
 	}
 
+	/// <inheritdoc />
 	public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, CancellationToken cancellationToken)
 	{
 		return await _redisLuaScriptService.RecoverStuckJobs(_database, timeoutUnixTime, maxRetries);

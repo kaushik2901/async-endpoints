@@ -38,6 +38,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 
 	public bool SupportsJobRecovery => false; // In-memory store doesn't support recovery
 
+	/// <inheritdoc />
 	public Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, CancellationToken cancellationToken)
 	{
 		throw new NotSupportedException("In-memory job store does not support job recovery operations.");

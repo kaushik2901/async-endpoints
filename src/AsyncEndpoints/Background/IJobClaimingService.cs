@@ -6,6 +6,9 @@ using AsyncEndpoints.JobProcessing;
 
 namespace AsyncEndpoints.Background;
 
+/// <summary>
+/// Defines a contract for claiming jobs from the job store and enqueuing them for processing
+/// </summary>
 public interface IJobClaimingService
 {
 	/// <summary>
