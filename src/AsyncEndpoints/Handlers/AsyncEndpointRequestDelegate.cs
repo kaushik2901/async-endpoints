@@ -26,7 +26,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 		CancellationToken cancellationToken = default)
 	{
 		using var _ = _logger.BeginScope(new { JobName = jobName, RequestType = typeof(TRequest).Name });
-		
+
 		_logger.LogInformation("Handling async request for job: {JobName}", jobName);
 
 		var handlerResponse = await HandleRequestDelegate(handler, httpContext, request, cancellationToken);

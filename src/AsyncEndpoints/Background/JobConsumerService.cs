@@ -20,7 +20,7 @@ public class JobConsumerService(ILogger<JobConsumerService> logger, IServiceScop
 	public async Task ConsumeJobsAsync(ChannelReader<Job> readerJobChannel, SemaphoreSlim semaphoreSlim, CancellationToken stoppingToken)
 	{
 		_logger.LogDebug("Starting job consumption loop");
-		
+
 		try
 		{
 			await foreach (var job in readerJobChannel.ReadAllAsync(stoppingToken))

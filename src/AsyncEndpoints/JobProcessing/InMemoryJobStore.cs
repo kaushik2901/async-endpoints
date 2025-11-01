@@ -48,7 +48,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	{
 		// Start activity only if tracing is enabled
 		using var activity = _metrics.StartStoreOperationActivity(_createJobOperationName, this.GetType().Name, job?.Id);
-		
+
 		var startTime = DateTimeOffset.UtcNow;
 		try
 		{
@@ -58,7 +58,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_createJobOperationName, _invalidJobErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job");
 				activity?.SetTag(_errorTypeTag, _invalidJobErrorCode);
-				
+
 				return Task.FromResult(MethodResult.Failure(
 					AsyncEndpointError.FromCode(_invalidJobErrorCode, "Job cannot be null")));
 			}
@@ -69,7 +69,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_createJobOperationName, _invalidJobIdErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job ID");
 				activity?.SetTag(_errorTypeTag, _invalidJobIdErrorCode);
-				
+
 				return Task.FromResult(MethodResult.Failure(
 					AsyncEndpointError.FromCode(_invalidJobIdErrorCode, "Job ID cannot be empty")));
 			}
@@ -86,7 +86,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_createJobOperationName, _duplicateJobErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Duplicate job");
 				activity?.SetTag(_errorTypeTag, _duplicateJobErrorCode);
-				
+
 				return Task.FromResult(MethodResult.Failure(
 					AsyncEndpointError.FromCode(_jobCreateFailedErrorCode, $"Failed to create job with ID {job.Id}")));
 			}
@@ -95,7 +95,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_createJobOperationName, this.GetType().Name, duration);
 			_metrics.RecordStoreOperation(_createJobOperationName, this.GetType().Name);
-			
+
 			return Task.FromResult(MethodResult.Success());
 		}
 		catch (Exception ex)
@@ -103,11 +103,11 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			_metrics.RecordStoreError(_createJobOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 			activity?.SetTag(_errorTypeTag, ex.GetType().Name);
-			
+
 			_logger.LogError(ex, "Unexpected error creating job: {JobName}", job?.Name);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_createJobOperationName, this.GetType().Name, duration);
-			
+
 			return Task.FromResult(MethodResult.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error creating job: {ex.Message}", ex)));
 		}
@@ -118,7 +118,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	{
 		// Start activity only if tracing is enabled
 		using var activity = _metrics.StartStoreOperationActivity(_getJobByIdOperationName, this.GetType().Name, id);
-		
+
 		var startTime = DateTimeOffset.UtcNow;
 		try
 		{
@@ -128,7 +128,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_getJobByIdOperationName, _invalidJobIdErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job ID");
 				activity?.SetTag(_errorTypeTag, _invalidJobIdErrorCode);
-				
+
 				return Task.FromResult(MethodResult<Job>.Failure(
 					AsyncEndpointError.FromCode(_invalidJobIdErrorCode, "Job ID cannot be empty")));
 			}
@@ -147,7 +147,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_getJobByIdOperationName, _jobNotFoundErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Job not found");
 				activity?.SetTag(_errorTypeTag, _jobNotFoundErrorCode);
-				
+
 				return Task.FromResult(MethodResult<Job>.Failure(
 					AsyncEndpointError.FromCode(_jobNotFoundErrorCode, $"Job with ID {id} not found")));
 			}
@@ -155,7 +155,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_getJobByIdOperationName, this.GetType().Name, duration);
 			_metrics.RecordStoreOperation(_getJobByIdOperationName, this.GetType().Name);
-			
+
 			return Task.FromResult(MethodResult<Job>.Success(job));
 		}
 		catch (Exception ex)
@@ -163,11 +163,11 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			_metrics.RecordStoreError(_getJobByIdOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 			activity?.SetTag(_errorTypeTag, ex.GetType().Name);
-			
+
 			_logger.LogError(ex, "Unexpected error retrieving job: {JobId}", id);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_getJobByIdOperationName, this.GetType().Name, duration);
-			
+
 			return Task.FromResult(MethodResult<Job>.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error retrieving job: {ex.Message}", ex)));
 		}
@@ -178,7 +178,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	{
 		// Start activity only if tracing is enabled
 		using var activity = _metrics.StartStoreOperationActivity(_updateJobOperationName, this.GetType().Name, job?.Id);
-		
+
 		var startTime = DateTimeOffset.UtcNow;
 		try
 		{
@@ -188,7 +188,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_updateJobOperationName, _invalidJobErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job");
 				activity?.SetTag(_errorTypeTag, _invalidJobErrorCode);
-				
+
 				return Task.FromResult(MethodResult.Failure(
 					AsyncEndpointError.FromCode(_invalidJobErrorCode, "Job cannot be null")));
 			}
@@ -199,7 +199,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_updateJobOperationName, _invalidJobIdErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Invalid job ID");
 				activity?.SetTag(_errorTypeTag, _invalidJobIdErrorCode);
-				
+
 				return Task.FromResult(MethodResult.Failure(
 					AsyncEndpointError.FromCode(_invalidJobIdErrorCode, "Job ID cannot be empty")));
 			}
@@ -217,7 +217,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_updateJobOperationName, _jobNotFoundErrorCode, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Job not found");
 				activity?.SetTag(_errorTypeTag, _jobNotFoundErrorCode);
-				
+
 				return Task.FromResult(MethodResult.Failure(
 					AsyncEndpointError.FromCode(_jobNotFoundErrorCode, $"Job with ID {job.Id} not found")));
 			}
@@ -243,7 +243,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				_metrics.RecordStoreError(_updateJobOperationName, _concurrencyConflict, this.GetType().Name);
 				activity?.SetStatus(ActivityStatusCode.Error, "Concurrency conflict");
 				activity?.SetTag(_errorTypeTag, _concurrencyConflict);
-				
+
 				return Task.FromResult(MethodResult.Failure(
 					AsyncEndpointError.FromCode("JOB_UPDATE_CONFLICT", "Job was modified by another thread")));
 			}
@@ -252,7 +252,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_updateJobOperationName, this.GetType().Name, duration);
 			_metrics.RecordStoreOperation(_updateJobOperationName, this.GetType().Name);
-			
+
 			return Task.FromResult(MethodResult.Success());
 		}
 		catch (Exception ex)
@@ -260,11 +260,11 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			_metrics.RecordStoreError(_updateJobOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 			activity?.SetTag(_errorTypeTag, ex.GetType().Name);
-			
+
 			_logger.LogError(ex, "Unexpected error updating job: {JobId}", job?.Id);
 			var duration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_updateJobOperationName, this.GetType().Name, duration);
-			
+
 			return Task.FromResult(MethodResult.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error updating job: {ex.Message}", ex)));
 		}
@@ -274,11 +274,11 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 	public Task<MethodResult<Job>> ClaimNextJobForWorker(Guid workerId, CancellationToken cancellationToken)
 	{
 		using var _ = _logger.BeginScope(new { WorkerId = workerId });
-		
+
 		// Start activity only if tracing is enabled
 		// Note: We don't know the specific job ID yet, so we'll pass null
 		using var activity = _metrics.StartStoreOperationActivity(_claimNextJobOperationName, this.GetType().Name);
-		
+
 		var startTime = DateTimeOffset.UtcNow;
 		try
 		{
@@ -289,7 +289,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			}
 
 			_logger.LogDebug("Attempting to claim next job for worker {WorkerId}", workerId);
-			
+
 			var now = _dateTimeProvider.UtcNow;
 
 			// Find the next available job (oldest queued/scheduled job)
@@ -310,7 +310,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 				var noJobsDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 				_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, noJobsDuration);
 				_metrics.RecordStoreOperation(_claimNextJobOperationName, this.GetType().Name);
-				
+
 				return Task.FromResult(MethodResult<Job>.Success(default));
 			}
 
@@ -348,7 +348,7 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			var successDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, successDuration);
 			_metrics.RecordStoreOperation(_claimNextJobOperationName, this.GetType().Name);
-			
+
 			return Task.FromResult(MethodResult<Job>.Success(updatedJob));
 		}
 		catch (Exception ex)
@@ -356,11 +356,11 @@ public class InMemoryJobStore(ILogger<InMemoryJobStore> logger, IDateTimeProvide
 			_metrics.RecordStoreError(_claimNextJobOperationName, ex.GetType().Name, this.GetType().Name);
 			activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 			activity?.SetTag(_errorTypeTag, ex.GetType().Name);
-			
+
 			_logger.LogError(ex, "Unexpected error claiming next job for worker {WorkerId}", workerId);
 			var errorDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
 			_metrics.RecordStoreOperationDuration(_claimNextJobOperationName, this.GetType().Name, errorDuration);
-			
+
 			return Task.FromResult(MethodResult<Job>.Failure(
 				AsyncEndpointError.FromCode(_jobStoreErrorCode, $"Unexpected error claiming job: {ex.Message}", ex)));
 		}

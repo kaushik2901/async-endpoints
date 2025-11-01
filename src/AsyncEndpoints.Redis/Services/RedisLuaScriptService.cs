@@ -16,9 +16,9 @@ public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateT
 	public async Task<MethodResult<RedisValue[]>> ClaimSingleJob(IDatabase database, Guid jobId, Guid workerId)
 	{
 		using var _ = _logger.BeginScope(new { JobId = jobId, WorkerId = workerId });
-		
+
 		_logger.LogDebug("Starting Redis job claim operation for job {JobId} by worker {WorkerId}", jobId, workerId);
-		
+
 		var jobKey = GetJobKey(jobId);
 
 		// Use atomic Lua script to check and claim the job in one operation

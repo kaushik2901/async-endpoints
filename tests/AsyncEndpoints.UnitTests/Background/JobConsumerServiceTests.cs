@@ -48,7 +48,7 @@ public class JobConsumerServiceTests
 		mockServiceProvider
 			.Setup(x => x.GetService(typeof(IAsyncEndpointsObservability)))
 			.Returns(mockMetrics.Object);
-			
+
 		mockServiceProvider
 			.Setup(x => x.GetService(typeof(IJobProcessorService)))
 			.Returns(mockJobProcessorService.Object);

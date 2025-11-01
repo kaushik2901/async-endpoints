@@ -25,15 +25,15 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	public async Task<MethodResult<Job>> SubmitJob(string jobName, string payload, HttpContext httpContext, CancellationToken cancellationToken)
 	{
 		using var _ = _logger.BeginScope(new { JobName = jobName });
-		
+
 		var id = httpContext.GetOrCreateJobId();
-		
+
 		// Start activity only if tracing is enabled
 		using var activity = _metrics.StartJobSubmitActivity(jobName, _jobStore.GetType().Name, id);
-		
+
 		// Use disposable timer to measure total duration
 		using var durationTimer = _metrics.TimeJobProcessingDuration(jobName, "created");
-		
+
 		_logger.LogDebug("Processing job creation for: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
 
 		var result = await _jobStore.GetJobById(id, cancellationToken);
@@ -52,7 +52,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		if (createJobResult.IsSuccess)
 		{
 			_metrics.RecordJobCreated(jobName, _jobStore.GetType().Name);
-			
+
 			return MethodResult<Job>.Success(job);
 		}
 		else
@@ -66,9 +66,9 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	public async Task<MethodResult<Job>> ClaimNextAvailableJob(Guid workerId, CancellationToken cancellationToken)
 	{
 		_logger.LogDebug("Attempting to claim next available job for worker {WorkerId}", workerId);
-		
+
 		var claimedJob = await _jobStore.ClaimNextJobForWorker(workerId, cancellationToken);
-		
+
 		if (claimedJob.IsSuccess)
 		{
 			_logger.LogDebug("Successfully claimed job {JobId} for worker {WorkerId}", claimedJob.DataOrNull?.Id, workerId);
@@ -85,7 +85,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		{
 			_logger.LogError("Failed to claim job for worker {WorkerId}: {Error}", workerId, claimedJob.Error?.Message);
 		}
-		
+
 		return claimedJob;
 	}
 
@@ -93,9 +93,9 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	public async Task<MethodResult> ProcessJobSuccess(Guid jobId, string result, CancellationToken cancellationToken)
 	{
 		using var _ = _logger.BeginScope(new { JobId = jobId });
-		
+
 		_logger.LogDebug("Processing successful completion for job {JobId}", jobId);
-		
+
 		var jobResult = await _jobStore.GetJobById(jobId, cancellationToken);
 		if (!jobResult.IsSuccess || jobResult.Data == null)
 		{
@@ -114,7 +114,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 			_metrics.RecordJobProcessed(job.Name, "completed", _jobStore.GetType().Name);
 			var duration = (job.CompletedAt?.UtcDateTime - job.CreatedAt.UtcDateTime).GetValueOrDefault().TotalSeconds;
 			_metrics.RecordJobProcessingDuration(job.Name, "completed", duration);
-			
+
 			_logger.LogInformation("Successfully processed job {JobId} completion", jobId);
 		}
 		else
@@ -129,9 +129,9 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	public async Task<MethodResult> ProcessJobFailure(Guid jobId, AsyncEndpointError error, CancellationToken cancellationToken)
 	{
 		using var _ = _logger.BeginScope(new { JobId = jobId, Error = error.Code });
-		
+
 		_logger.LogDebug("Processing failure for job {JobId}, error code: {ErrorCode}", jobId, error.Code);
-		
+
 		var jobResult = await _jobStore.GetJobById(jobId, cancellationToken);
 		if (!jobResult.IsSuccess || jobResult.Data == null)
 		{
@@ -153,7 +153,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 			job.WorkerId = null; // Release from current worker
 			job.Error = error;
 
-			_logger.LogDebug("Scheduled retry for job {JobId} in {RetryDelay}s, retry count: {RetryCount}", 
+			_logger.LogDebug("Scheduled retry for job {JobId} in {RetryDelay}s, retry count: {RetryCount}",
 				jobId, retryDelay.TotalSeconds, job.RetryCount);
 		}
 		else

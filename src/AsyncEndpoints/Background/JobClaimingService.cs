@@ -18,9 +18,9 @@ public class JobClaimingService(ILogger<JobClaimingService> logger, IJobManager 
 	public async Task<JobClaimingState> ClaimAndEnqueueJobAsync(ChannelWriter<Job> writerJobChannel, Guid workerId, CancellationToken stoppingToken)
 	{
 		using var _ = _logger.BeginScope(new { WorkerId = workerId });
-		
+
 		_logger.LogDebug("Attempting to claim job for worker {WorkerId}", workerId);
-		
+
 		var claimedJobResult = await _jobManager.ClaimNextAvailableJob(workerId, stoppingToken);
 		if (claimedJobResult.IsFailure)
 		{
@@ -36,7 +36,7 @@ public class JobClaimingService(ILogger<JobClaimingService> logger, IJobManager 
 		}
 
 		_logger.LogDebug("Successfully claimed job {JobId}, attempting to enqueue", job.Id);
-		
+
 		var enqueued = await _jobChannelEnqueuer.Enqueue(writerJobChannel, job, stoppingToken);
 		if (!enqueued)
 		{

@@ -43,10 +43,10 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
-		
+
 		// Act
 		var result = await store.CreateJob(job, CancellationToken.None);
 
@@ -74,10 +74,10 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
-		
+
 		// Arrange
 		await store.CreateJob(job, CancellationToken.None);
 
@@ -104,10 +104,10 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
-		
+
 		// Arrange
 		await store.CreateJob(job, CancellationToken.None);
 
@@ -135,10 +135,10 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
-		
+
 		// Act
 		var result = await store.GetJobById(jobId, CancellationToken.None);
 
@@ -162,7 +162,7 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -196,10 +196,10 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
-		
+
 		// Act
 		var result = await store.UpdateJob(job, CancellationToken.None);
 
@@ -225,7 +225,7 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -267,10 +267,10 @@ public class InMemoryJobStoreTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
-		
+
 		// Act
 		var result = await store.ClaimNextJobForWorker(workerId, CancellationToken.None);
 

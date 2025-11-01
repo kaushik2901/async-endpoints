@@ -23,7 +23,7 @@ public class HandlerExecutionService(ILogger<HandlerExecutionService> logger, IS
 	public async Task<MethodResult<object>> ExecuteHandlerAsync(string jobName, object request, Job job, CancellationToken cancellationToken)
 	{
 		using var _ = _logger.BeginScope(new { JobId = job.Id, JobName = jobName, RequestType = request.GetType().Name });
-		
+
 		_logger.LogDebug("Starting handler execution for job: {JobName}, JobId: {JobId}", jobName, job.Id);
 
 		await using var serviceScope = _serviceScopeFactory.CreateAsyncScope();

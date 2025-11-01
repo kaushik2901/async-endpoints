@@ -31,7 +31,7 @@ public class InMemoryJobStoreCreateCopyTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -83,7 +83,7 @@ public class InMemoryJobStoreCreateCopyTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -156,7 +156,7 @@ public class InMemoryJobStoreCreateCopyTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 
@@ -198,7 +198,7 @@ public class InMemoryJobStoreCreateCopyTests
 		mockMetrics
 			.Setup(x => x.StartStoreOperationActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
 			.Returns((Activity?)null);
-		
+
 		// Create store manually with the required dependencies
 		var store = new InMemoryJobStore(mockLogger.Object, mockDateTimeProvider.Object, mockMetrics.Object);
 

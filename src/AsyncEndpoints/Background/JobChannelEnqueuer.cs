@@ -17,7 +17,7 @@ public class JobChannelEnqueuer(ILogger<JobChannelEnqueuer> logger) : IJobChanne
 	public async Task<bool> Enqueue(ChannelWriter<Job> writerJobChannel, Job job, CancellationToken stoppingToken)
 	{
 		using var _ = _logger.BeginScope(new { JobId = job.Id });
-		
+
 		_logger.LogDebug("Attempting to enqueue job {JobId} to channel", job.Id);
 
 		// Try non-blocking write first
