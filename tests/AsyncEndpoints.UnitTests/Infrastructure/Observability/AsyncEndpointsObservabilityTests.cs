@@ -50,13 +50,10 @@ public class AsyncEndpointsObservabilityTests
         var observability = new AsyncEndpointsObservability(options);
 
         // Act
-        var activity = observability.StartJobSubmitActivity("TestJob", "InMemory", Guid.NewGuid());
+        observability.StartJobSubmitActivity("TestJob", "InMemory", Guid.NewGuid());
 
-        // In unit tests, ActivitySource may not return an actual Activity instance
-        // so we'll just verify the method completes without exception and respects the configuration
-        // The important thing is to ensure that it follows the correct path based on the configuration
-        // For this test, let's just verify the configuration is respected
-        Assert.True(configurations.ObservabilityConfigurations.EnableTracing == true); // Configuration is set correctly
+		// Assert
+        Assert.True(configurations.ObservabilityConfigurations.EnableTracing); // Configuration is set correctly
     }
 
     [Theory, AutoMoqData]
@@ -76,6 +73,6 @@ public class AsyncEndpointsObservabilityTests
 
         // Assert
         Assert.NotNull(timer);
-        Assert.IsAssignableFrom<IDisposable>(timer);
+        Assert.IsType<IDisposable>(timer, exactMatch: false);
     }
 }
