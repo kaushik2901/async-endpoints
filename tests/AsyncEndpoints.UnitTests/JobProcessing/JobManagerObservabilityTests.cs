@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;

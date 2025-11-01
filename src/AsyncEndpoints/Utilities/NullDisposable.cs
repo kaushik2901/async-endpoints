@@ -4,7 +4,7 @@ namespace AsyncEndpoints.Utilities
 {
     internal class NullDisposable : IDisposable
     {
-        public static readonly NullDisposable Instance = new NullDisposable();
+        public static readonly NullDisposable Instance = new();
         private bool _disposed = false;
         
         public void Dispose()

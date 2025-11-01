@@ -5,7 +5,6 @@ using System.Diagnostics.Metrics;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Infrastructure.Observability;
@@ -32,7 +31,7 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     private readonly UpDownCounter<double>? _backgroundChannelUtilization;
     private readonly AsyncEndpointsObservabilityConfigurations _config;
     
-    private static readonly ActivitySource _activitySource = new ActivitySource("AsyncEndpoints", "1.0.0");
+    private static readonly ActivitySource _activitySource = new("AsyncEndpoints", "1.0.0");
 
     private static readonly string _jobNameTag = "job_name";
     private static readonly string _storeTypeTag = "store_type";
@@ -42,7 +41,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     private static readonly string _workerIdTag = "worker_id";
     private static readonly string _handlerTypeTag = "handler_type";
     private static readonly string _jobIdTag = "job.id";
-    private static readonly string _secondsUnit = "seconds";
 
     public AsyncEndpointsObservability(IOptions<AsyncEndpointsConfigurations> configurations)
     {

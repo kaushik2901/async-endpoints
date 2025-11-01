@@ -1,11 +1,6 @@
-using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Infrastructure.Observability;
-using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -18,9 +13,8 @@ public class AsyncEndpointsObservabilityTests
     {
         // Arrange
         var configurations = new AsyncEndpointsConfigurations();
-        var logger = Mock.Of<ILogger<AsyncEndpointsObservability>>();
         var options = Options.Create(configurations);
-        var observability = new AsyncEndpointsObservability(options, logger);
+        var observability = new AsyncEndpointsObservability(options);
 
         // Act
         observability.RecordJobCreated("TestJob", "InMemory");
@@ -36,9 +30,8 @@ public class AsyncEndpointsObservabilityTests
     {
         // Arrange
         var configurations = new AsyncEndpointsConfigurations();
-        var logger = Mock.Of<ILogger<AsyncEndpointsObservability>>();
         var options = Options.Create(configurations);
-        var observability = new AsyncEndpointsObservability(options, logger);
+        var observability = new AsyncEndpointsObservability(options);
 
         // Act
         observability.RecordJobProcessed("TestJob", "completed", "InMemory");
@@ -53,9 +46,8 @@ public class AsyncEndpointsObservabilityTests
         // Arrange
         var configurations = new AsyncEndpointsConfigurations();
         configurations.ObservabilityConfigurations.EnableTracing = true;
-        var logger = Mock.Of<ILogger<AsyncEndpointsObservability>>();
         var options = Options.Create(configurations);
-        var observability = new AsyncEndpointsObservability(options, logger);
+        var observability = new AsyncEndpointsObservability(options);
 
         // Act
         var activity = observability.StartJobSubmitActivity("TestJob", "InMemory", Guid.NewGuid());
@@ -70,7 +62,6 @@ public class AsyncEndpointsObservabilityTests
     [Theory, AutoMoqData]
     public void TimeJobProcessingDuration_WhenMetricsEnabled_ReturnsDisposableTimer(
         Mock<IOptions<AsyncEndpointsConfigurations>> mockOptions,
-        Mock<ILogger<AsyncEndpointsObservability>> mockLogger,
         string jobName,
         string status)
     {
@@ -78,13 +69,13 @@ public class AsyncEndpointsObservabilityTests
         var config = new AsyncEndpointsConfigurations();
         mockOptions.Setup(x => x.Value).Returns(config);
 
-        var observability = new AsyncEndpointsObservability(mockOptions.Object, mockLogger.Object);
+        var observability = new AsyncEndpointsObservability(mockOptions.Object);
 
         // Act
         var timer = observability.TimeJobProcessingDuration(jobName, status);
 
         // Assert
         Assert.NotNull(timer);
-        Assert.IsAssignableFrom<IDisposable>(timer);
+        Assert.IsType<IDisposable>(timer, exactMatch: false);
     }
 }
