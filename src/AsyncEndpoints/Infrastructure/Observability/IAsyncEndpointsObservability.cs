@@ -16,7 +16,6 @@ public interface IAsyncEndpointsObservability
     void RecordJobRetries(string jobName, string storeType);
     void RecordJobQueueDuration(string jobName, string storeType, double durationSeconds);
     void RecordJobProcessingDuration(string jobName, string status, double durationSeconds);
-    void RecordJobClaimDuration(string storeType, double durationSeconds);
     void SetJobCurrentCount(string jobStatus, string storeType, long count);
     
     // Handler metrics  
@@ -30,8 +29,6 @@ public interface IAsyncEndpointsObservability
     
     // Background service metrics
     void RecordBackgroundProcessingRate(string workerId);
-    void RecordBackgroundConsumerIdleTime(string workerId, double durationSeconds);
-    void SetBackgroundChannelUtilization(string channelType, double utilizationPercentage);
     
     // Duration tracking methods
     /// <summary>

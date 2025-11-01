@@ -19,7 +19,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     private readonly Counter<long>? _jobsRetries;
     private readonly Histogram<double>? _jobQueueDuration;
     private readonly Histogram<double>? _jobProcessingDuration;
-    private readonly Histogram<double>? _jobClaimDuration;
     private readonly UpDownCounter<long>? _jobsCurrentCount;
     private readonly Histogram<double>? _handlerExecutionDuration;
     private readonly Counter<long>? _handlerErrors;
@@ -27,8 +26,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
     private readonly Histogram<double>? _storeOperationDuration;
     private readonly Counter<long>? _storeErrors;
     private readonly Counter<long>? _backgroundProcessingRate;
-    private readonly Histogram<double>? _backgroundConsumerIdleTime;
-    private readonly UpDownCounter<double>? _backgroundChannelUtilization;
     private readonly AsyncEndpointsObservabilityConfigurations _config;
     
     private static readonly ActivitySource _activitySource = new("AsyncEndpoints", "1.0.0");
@@ -64,8 +61,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
                 unit: "seconds", description: "Time jobs spend in queue before processing");
             _jobProcessingDuration = _meter.CreateHistogram<double>("asyncendpoints.jobs.processing.duration", 
                 unit: "seconds", description: "Time spent processing jobs");
-            _jobClaimDuration = _meter.CreateHistogram<double>("asyncendpoints.jobs.claim.duration", 
-                unit: "seconds", description: "Time taken to claim jobs");
             _jobsCurrentCount = _meter.CreateUpDownCounter<long>("asyncendpoints.jobs.current.count", 
                 description: "Current number of jobs in each state");
             
@@ -86,10 +81,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
             // Background service metrics
             _backgroundProcessingRate = _meter.CreateCounter<long>("asyncendpoints.background.processing.rate", 
                 description: "Rate of job processing");
-            _backgroundConsumerIdleTime = _meter.CreateHistogram<double>("asyncendpoints.background.consumer.idle.time", 
-                unit: "seconds", description: "Time consumers spend idle");
-            _backgroundChannelUtilization = _meter.CreateUpDownCounter<double>("asyncendpoints.background.channel.utilization", 
-                description: "Channel utilization percentage");
         }
         else
         {
@@ -101,7 +92,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
             _jobsRetries = null;
             _jobQueueDuration = null;
             _jobProcessingDuration = null;
-            _jobClaimDuration = null;
             _jobsCurrentCount = null;
             _handlerExecutionDuration = null;
             _handlerErrors = null;
@@ -109,8 +99,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
             _storeOperationDuration = null;
             _storeErrors = null;
             _backgroundProcessingRate = null;
-            _backgroundConsumerIdleTime = null;
-            _backgroundChannelUtilization = null;
         }
     }
 
@@ -162,13 +150,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         }
     }
 
-    public void RecordJobClaimDuration(string storeType, double durationSeconds)
-    {
-        if (_config.EnableMetrics && _jobClaimDuration != null)
-        {
-            _jobClaimDuration.Record(durationSeconds, new KeyValuePair<string, object?>(_storeTypeTag, storeType));
-        }
-    }
 
     public void SetJobCurrentCount(string jobStatus, string storeType, long count)
     {
@@ -228,23 +209,6 @@ public class AsyncEndpointsObservability : IAsyncEndpointsObservability
         }
     }
 
-    public void RecordBackgroundConsumerIdleTime(string workerId, double durationSeconds)
-    {
-        if (_config.EnableMetrics && _backgroundConsumerIdleTime != null)
-        {
-            _backgroundConsumerIdleTime.Record(durationSeconds, new KeyValuePair<string, object?>(_workerIdTag, workerId));
-        }
-    }
-
-    public void SetBackgroundChannelUtilization(string channelType, double utilizationPercentage)
-    {
-        if (_config.EnableMetrics && _backgroundChannelUtilization != null)
-        {
-            // For UpDownCounter, we'll set the utilization percentage as an increment operation.
-            // This represents the current utilization level.
-            _backgroundChannelUtilization.Add(utilizationPercentage, new KeyValuePair<string, object?>(_storeTypeTag, channelType));
-        }
-    }
 
     public IDisposable TimeJobProcessingDuration(string jobName, string status)
     {

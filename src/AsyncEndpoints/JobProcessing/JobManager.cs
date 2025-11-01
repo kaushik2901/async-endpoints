@@ -67,11 +67,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	{
 		_logger.LogDebug("Attempting to claim next available job for worker {WorkerId}", workerId);
 		
-		var startTime = DateTimeOffset.UtcNow;
 		var claimedJob = await _jobStore.ClaimNextJobForWorker(workerId, cancellationToken);
-		var claimDuration = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-		
-		_metrics.RecordJobClaimDuration(_jobStore.GetType().Name, claimDuration);
 		
 		if (claimedJob.IsSuccess)
 		{
