@@ -3,7 +3,7 @@ namespace AsyncEndpoints.Configuration;
 /// <summary>
 /// Configuration options for AsyncEndpoints job recovery functionality
 /// </summary>
-public class AsyncEndpointsRecoveryConfiguration
+public class AsyncEndpointsRecoveryConfigurations
 {
 	/// <summary>
 	/// Whether to enable the distributed job recovery service

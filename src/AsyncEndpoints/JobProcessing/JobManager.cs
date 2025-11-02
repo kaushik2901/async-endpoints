@@ -18,7 +18,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	private readonly ILogger<JobManager> _logger = logger;
 	private readonly IJobStore _jobStore = jobStore;
 	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
-	private readonly AsyncEndpointsJobManagerConfiguration _jobManagerConfiguration = options.Value.JobManagerConfiguration;
+	private readonly AsyncEndpointsJobManagerConfigurations _jobManagerConfigurations = options.Value.JobManagerConfigurations;
 	private readonly IAsyncEndpointsObservability _metrics = metrics;
 
 	/// <inheritdoc />
@@ -47,7 +47,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		var routeParams = httpContext.GetRouteParamsFromContext();
 		var queryParams = httpContext.GetQueryParamsFromContext();
 
-		var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _jobManagerConfiguration.DefaultMaxRetries, _dateTimeProvider);
+		var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _jobManagerConfigurations.DefaultMaxRetries, _dateTimeProvider);
 		var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
 		if (createJobResult.IsSuccess)
 		{
@@ -185,6 +185,6 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	private TimeSpan CalculateRetryDelay(int retryCount)
 	{
 		// Exponential backoff: (2 ^ retryCount) * base delay
-		return TimeSpan.FromSeconds(Math.Pow(2, retryCount) * _jobManagerConfiguration.RetryDelayBaseSeconds);
+		return TimeSpan.FromSeconds(Math.Pow(2, retryCount) * _jobManagerConfigurations.RetryDelayBaseSeconds);
 	}
 }

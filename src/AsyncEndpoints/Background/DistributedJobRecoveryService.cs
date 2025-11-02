@@ -17,14 +17,14 @@ namespace AsyncEndpoints.Background
 		ILogger<DistributedJobRecoveryService> logger,
 		IJobStore jobStore,
 		IDateTimeProvider dateTimeProvider,
-		AsyncEndpointsRecoveryConfiguration recoveryConfig) : BackgroundService
+		AsyncEndpointsRecoveryConfigurations recoveryConfigurations) : BackgroundService
 	{
 		private readonly ILogger<DistributedJobRecoveryService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		private readonly IJobStore _jobStore = jobStore ?? throw new ArgumentNullException(nameof(jobStore));
 		private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
-		private readonly TimeSpan _recoveryInterval = TimeSpan.FromSeconds(recoveryConfig.RecoveryCheckIntervalSeconds);
-		private readonly int _jobTimeoutMinutes = recoveryConfig.JobTimeoutMinutes;
-		private readonly int _maxRetries = recoveryConfig.MaximumRetries;
+		private readonly TimeSpan _recoveryInterval = TimeSpan.FromSeconds(recoveryConfigurations.RecoveryCheckIntervalSeconds);
+		private readonly int _jobTimeoutMinutes = recoveryConfigurations.JobTimeoutMinutes;
+		private readonly int _maxRetries = recoveryConfigurations.MaximumRetries;
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{

@@ -13,7 +13,7 @@ public sealed class AsyncEndpointsConfigurations
 	/// <summary>
 	/// Gets or sets the job-manager-specific configurations.
 	/// </summary>
-	public AsyncEndpointsJobManagerConfiguration JobManagerConfiguration { get; set; } = new();
+	public AsyncEndpointsJobManagerConfigurations JobManagerConfigurations { get; set; } = new();
 
 	/// <summary>
 	/// Gets or sets the response-specific configurations.

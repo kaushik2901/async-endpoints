@@ -3,7 +3,7 @@ namespace AsyncEndpoints.Configuration;
 /// <summary>
 /// Configuration settings for the AsyncEndpoints job manager.
 /// </summary>
-public sealed class AsyncEndpointsJobManagerConfiguration
+public sealed class AsyncEndpointsJobManagerConfigurations
 {
 	/// <summary>
 	/// Gets or sets the default maximum number of retries for failed jobs.

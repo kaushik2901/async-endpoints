@@ -39,4 +39,9 @@ public sealed class AsyncEndpointsWorkerConfigurations
 	/// Gets or sets the maximum size of the job queue.
 	/// </summary>
 	public int MaximumQueueSize { get; set; } = AsyncEndpointsConstants.DefaultMaximumQueueSize;
+
+	/// <summary>
+	/// Gets or sets the configurations for job recovery functionality.
+	/// </summary>
+	public AsyncEndpointsRecoveryConfigurations RecoveryConfigurations { get; set; } = new AsyncEndpointsRecoveryConfigurations();
 }

@@ -78,14 +78,14 @@ public static class ServiceCollectionExtensions
 	/// This includes job consumers, producers, processors, and the hosted background service.
 	/// </summary>
 	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-	/// <param name="recoveryConfiguration">Optional configuration for distributed job recovery.</param>
+	/// <param name="recoveryConfigurations">Optional configurations for distributed job recovery.</param>
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
 	public static IServiceCollection AddAsyncEndpointsWorker(this IServiceCollection services,
-		Action<AsyncEndpointsRecoveryConfiguration>? recoveryConfiguration = null)
+		Action<AsyncEndpointsRecoveryConfigurations>? recoveryConfigurations = null)
 	{
 		// Configure recovery options
-		var recoveryConfig = new AsyncEndpointsRecoveryConfiguration();
-		recoveryConfiguration?.Invoke(recoveryConfig);
+		var recoveryConfig = new AsyncEndpointsRecoveryConfigurations();
+		recoveryConfigurations?.Invoke(recoveryConfig);
 
 		// Register recovery configuration as singleton
 		services.AddSingleton(recoveryConfig);

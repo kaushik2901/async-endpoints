@@ -11,7 +11,7 @@ public class AsyncEndpointsConfigurationsTests
 	{
 		// Assert
 		Assert.NotNull(config.WorkerConfigurations);
-		Assert.NotNull(config.JobManagerConfiguration);
+		Assert.NotNull(config.JobManagerConfigurations);
 	}
 
 	[Theory, AutoMoqData]
@@ -29,13 +29,13 @@ public class AsyncEndpointsConfigurationsTests
 	[Theory, AutoMoqData]
 	public void JobManagerConfiguration_CanBeSet(
 		AsyncEndpointsConfigurations config,
-		AsyncEndpointsJobManagerConfiguration newJobManagerConfiguration)
+		AsyncEndpointsJobManagerConfigurations newJobManagerConfigurations)
 	{
 		// Act
-		config.JobManagerConfiguration = newJobManagerConfiguration;
+		config.JobManagerConfigurations = newJobManagerConfigurations;
 
 		// Assert
-		Assert.Same(newJobManagerConfiguration, config.JobManagerConfiguration);
+		Assert.Same(newJobManagerConfigurations, config.JobManagerConfigurations);
 	}
 }
 

@@ -19,14 +19,14 @@ public class DistributedJobRecoveryServiceTests
 		Mock<ILogger<DistributedJobRecoveryService>> mockLogger,
 		Mock<IJobStore> mockJobStore,
 		Mock<IDateTimeProvider> mockDateTimeProvider,
-		AsyncEndpointsRecoveryConfiguration recoveryConfiguration)
+		AsyncEndpointsRecoveryConfigurations recoveryConfigurations)
 	{
 		// Act
 		var service = new DistributedJobRecoveryService(
 			mockLogger.Object,
 			mockJobStore.Object,
 			mockDateTimeProvider.Object,
-			recoveryConfiguration);
+			recoveryConfigurations);
 
 		// Assert
 		Assert.NotNull(service);
