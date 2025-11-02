@@ -116,12 +116,26 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// <summary>
 	/// Creates a new job with the specified parameters.
 	/// </summary>
-	/// <param name=\"id\">The unique identifier for the job.</param>
-	/// <param name=\"name\">The name of the job.</param>
-	/// <param name=\"payload\">The payload data for the job.</param>
-	/// <param name=\"dateTimeProvider\">Provider for current date and time.</param>
-	/// <returns>A new <see cref=\"Job\"/> instance.</returns>
+	/// <param name="id">The unique identifier for the job.</param>
+	/// <param name="name">The name of the job.</param>
+	/// <param name="payload">The payload data for the job.</param>
+	/// <param name="dateTimeProvider">Provider for current date and time.</param>
+	/// <returns>A new <see cref="Job"/> instance.</returns>
 	public static Job Create(Guid id, string name, string payload, IDateTimeProvider dateTimeProvider)
+	{
+		return Create(id, name, payload, AsyncEndpointsConstants.MaximumRetries, dateTimeProvider);
+	}
+	
+	/// <summary>
+	/// Creates a new job with the specified parameters and max retries.
+	/// </summary>
+	/// <param name="id">The unique identifier for the job.</param>
+	/// <param name="name">The name of the job.</param>
+	/// <param name="payload">The payload data for the job.</param>
+	/// <param name="maxRetries">The maximum number of retries for the job.</param>
+	/// <param name="dateTimeProvider">Provider for current date and time.</param>
+	/// <returns>A new <see cref="Job"/> instance.</returns>
+	public static Job Create(Guid id, string name, string payload, int maxRetries, IDateTimeProvider dateTimeProvider)
 	{
 		var now = dateTimeProvider.DateTimeOffsetNow;
 		return new Job
@@ -129,13 +143,14 @@ public sealed class Job(DateTimeOffset currentTime)
 			Id = id,
 			Name = name,
 			Payload = payload,
+			MaxRetries = maxRetries,
 			CreatedAt = now,
 			LastUpdatedAt = now
 		};
 	}
-
+	
 	/// <summary>
-	/// Creates a new job with the specified parameters including HTTP context information.
+	/// Creates a new job with the specified parameters including HTTP context information and max retries.
 	/// </summary>
 	/// <param name="id">The unique identifier for the job.</param>
 	/// <param name="name">The name of the job.</param>
@@ -143,6 +158,7 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// <param name="headers">The HTTP headers associated with the original request.</param>
 	/// <param name="routeParams">The route parameters associated with the original request.</param>
 	/// <param name="queryParams">The query parameters associated with the original request.</param>
+	/// <param name="maxRetries">The maximum number of retries for the job.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
 	/// <returns>A new <see cref="Job"/> instance.</returns>
 	public static Job Create(
@@ -152,6 +168,7 @@ public sealed class Job(DateTimeOffset currentTime)
 		Dictionary<string, List<string?>> headers,
 		Dictionary<string, object?> routeParams,
 		List<KeyValuePair<string, List<string?>>> queryParams,
+		int maxRetries,
 		IDateTimeProvider dateTimeProvider)
 	{
 		var now = dateTimeProvider.DateTimeOffsetNow;
@@ -163,6 +180,7 @@ public sealed class Job(DateTimeOffset currentTime)
 			Headers = headers,
 			RouteParams = routeParams,
 			QueryParams = queryParams,
+			MaxRetries = maxRetries,
 			CreatedAt = now,
 			LastUpdatedAt = now
 		};

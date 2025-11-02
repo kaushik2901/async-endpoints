@@ -48,12 +48,13 @@ public class JobTests
 		var headers = new Dictionary<string, List<string?>> { { "header1", new List<string?> { "value1" } } };
 		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
 		var queryParams = new List<KeyValuePair<string, List<string?>>> { new("query1", ["value1"]) };
+		var maxRetries = 2;
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 
 		// Act
-		var job = Job.Create(id, name, payload, headers, routeParams, queryParams, mockDateTimeProvider.Object);
+		var job = Job.Create(id, name, payload, headers, routeParams, queryParams, maxRetries, mockDateTimeProvider.Object);
 
 		// Assert
 		Assert.Equal(id, job.Id);
@@ -64,6 +65,7 @@ public class JobTests
 		Assert.Equal(queryParams, job.QueryParams);
 		Assert.Equal(JobStatus.Queued, job.Status);
 		Assert.Equal(0, job.RetryCount);
+		Assert.Equal(maxRetries, job.MaxRetries);
 		Assert.Equal(expectedTime, job.CreatedAt);
 		Assert.Equal(expectedTime, job.LastUpdatedAt);
 		Assert.Equal(AsyncEndpointsConstants.MaximumRetries, job.MaxRetries);
@@ -76,7 +78,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var newTime = DateTimeOffset.UtcNow.AddSeconds(1);
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(newTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act
 		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
@@ -94,7 +96,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act
 		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object);
@@ -111,7 +113,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act
 		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object);
@@ -128,7 +130,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act
 		job.UpdateStatus(JobStatus.Canceled, mockDateTimeProvider.Object);
@@ -145,7 +147,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 		var result = "Success";
 
 		// Act
@@ -164,7 +166,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 		var error = "Error occurred";
 
 		// Act
@@ -213,7 +215,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act
 		job.UpdateStatus(JobStatus.Canceled, mockDateTimeProvider.Object);
@@ -229,7 +231,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act
 		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
@@ -274,7 +276,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act & Assert - Different valid transitions
 		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
@@ -291,7 +293,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object); // First transition to failed
 
 		// Act & Assert - Transition from Failed to Queued for retry
@@ -306,7 +308,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object); // Start in Completed state
 
 		// Act & Assert - Attempt invalid transition from Completed to InProgress
@@ -322,7 +324,7 @@ public class JobTests
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", 2, mockDateTimeProvider.Object);
 
 		// Act & Assert - Same state transition should be allowed
 		job.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object); // Same as initial state

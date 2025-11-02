@@ -47,7 +47,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		var routeParams = httpContext.GetRouteParamsFromContext();
 		var queryParams = httpContext.GetQueryParamsFromContext();
 
-		var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _dateTimeProvider);
+		var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _jobManagerConfiguration.DefaultMaxRetries, _dateTimeProvider);
 		var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
 		if (createJobResult.IsSuccess)
 		{
