@@ -68,7 +68,6 @@ public class JobTests
 		Assert.Equal(maxRetries, job.MaxRetries);
 		Assert.Equal(expectedTime, job.CreatedAt);
 		Assert.Equal(expectedTime, job.LastUpdatedAt);
-		Assert.Equal(AsyncEndpointsConstants.MaximumRetries, job.MaxRetries);
 	}
 
 	[Fact]

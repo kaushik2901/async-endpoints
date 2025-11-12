@@ -382,7 +382,7 @@ public class RedisJobStore : IJobStore
 				return MethodResult<Job>.Success(default);
 			}
 
-			var jobIdString = availableJobIds[0];
+			var jobIdString = availableJobIds[0].ToString();
 			if (!Guid.TryParse(jobIdString, out var jobId))
 			{
 				_logger.LogDebug("Failed to parse jobId from jobIdString {JobIdString} for worker {WorkerId}", jobIdString, workerId);
