@@ -57,7 +57,7 @@
   - "📊 Complete Job Visibility" - Track detailed status and progress of every background job
   - "🔄 Resilient Processing" - Automatic retries and circuit breaker patterns for fault tolerance
 - **Technical Compatibility Bar (Bottom of hero):**
-  - .NET 8+ | C# 12+ | Minimal APIs | Background Services | Redis | Entity Framework
+  - .NET 8, 9, 10+ | C# 12+ | Minimal APIs | Background Services | Redis | Entity Framework
 - **Professional Assurance Statement:** 
   - "Trusted by development teams building scalable, enterprise-grade applications with robust background processing capabilities"
 - **Page Load Animation:** Smooth entrance animation for all hero elements with staggered timing for premium feel

@@ -98,7 +98,7 @@ AsyncEndpoints is a modern .NET library focused on HTTP API scenarios with long-
 
 ### Differentiation from Hangfire
 1. **HTTP-Centric Design**: Maintain focus on HTTP API scenarios as a primary differentiator
-2. **Modern Architecture**: Leverage .NET 8/9 features, AOT compatibility, and modern patterns
+2. **Modern Architecture**: Leverage .NET 8/9/10 features, AOT compatibility, and modern patterns
 3. **Performance**: Optimize for faster job processing in HTTP scenarios
 4. **Simplicity**: Maintain clean, easy-to-use API while adding features
 5. **Cloud-First**: Better integration with cloud-native architectures
@@ -106,7 +106,7 @@ AsyncEndpoints is a modern .NET library focused on HTTP API scenarios with long-
 ### Competitive Response to Hangfire
 1. **Feature Parity**: Implement essential features that Hangfire offers (dashboard, recurring jobs)
 2. **Performance Advantage**: Optimize for HTTP-specific use cases
-3. **Modern Stack**: Provide better .NET 8/9, AOT, and container support
+3. **Modern Stack**: Provide better .NET 8/9/10, AOT, and container support
 4. **Simpler Onboarding**: Maintain easier initial setup than Hangfire
 5. **Microservices Focus**: Better Redis and distributed system support
 

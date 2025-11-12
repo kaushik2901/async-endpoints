@@ -70,7 +70,7 @@ Hardware:
 
 Software:
   OS: Windows Server 2022 / Ubuntu 20.04+
-  .NET: Latest LTS version (8.0+)
+  .NET: Latest LTS version (8.0, 9.0, or 10.0+)
   Redis: Latest stable version
   SQL Server: Latest version (for Hangfire comparison)
   Docker: For containerized testing
@@ -204,7 +204,9 @@ public class BenchmarkProcessor(ILogger<BenchmarkProcessor> logger) : IBenchmark
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 
-[SimpleJob(RuntimeMoniker.Net80, baseline: true)] // Use as baseline
+[SimpleJob(RuntimeMoniker.Net80)]
+[SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net100, baseline: true)] // Use as baseline
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 public class AsyncEndpointsBenchmarks

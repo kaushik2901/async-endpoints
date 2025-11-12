@@ -104,7 +104,7 @@ app.Run();
 
 ```dockerfile
 # Use the official .NET SDK image to build the application
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
 # Copy everything else and build
@@ -113,7 +113,7 @@ RUN dotnet restore
 RUN dotnet publish -c Release -o /app/publish
 
 # Use the official .NET runtime image to run the application
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
@@ -132,7 +132,7 @@ ENTRYPOINT ["dotnet", "YourApp.dll"]
 
 ```dockerfile
 # Use multi-stage build to reduce final image size
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
 # Copy csproj and restore dependencies
@@ -144,7 +144,7 @@ COPY . .
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # Create runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
 # Install only necessary runtime dependencies

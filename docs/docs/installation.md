@@ -13,7 +13,7 @@ This page provides detailed instructions for installing and setting up AsyncEndp
 
 Before installing AsyncEndpoints, ensure your development environment meets the following requirements:
 
-- **.NET Runtime**: .NET 8.0 or .NET 9.0 (the library is built for both target frameworks)
+- **.NET Runtime**: .NET 8.0, .NET 9.0, or .NET 10.0 (the library is built for all target frameworks)
 - **Development Tools**: Visual Studio 2022, Visual Studio Code, or equivalent IDE
 - **Package Manager**: NuGet package manager (ships with .NET)
 
@@ -116,12 +116,12 @@ The Redis extension package includes:
 
 ### Target Framework Mismatch
 
-If you encounter target framework errors, ensure your project targets .NET 8.0 or .NET 9.0:
+If you encounter target framework errors, ensure your project targets .NET 8.0, .NET 9.0, or .NET 10.0:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>  <!-- Update to net8.0 or net9.0 as needed -->
   </PropertyGroup>
 </Project>
 ```
@@ -131,7 +131,7 @@ If you encounter target framework errors, ensure your project targets .NET 8.0 o
 AsyncEndpoints requires the following .NET components:
 
 - `Microsoft.AspNetCore.App` framework reference
-- .NET 8.0 or 9.0 SDK
+- .NET 8.0, 9.0, or 10.0 SDK
 
 ## Next Steps
 

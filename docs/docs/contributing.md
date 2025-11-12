@@ -48,7 +48,7 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 
 ### Prerequisites
 
-- .NET 8.0 or .NET 9.0 SDK
+- .NET 8.0, .NET 9.0, or .NET 10.0 SDK
 - Git
 - An IDE or text editor of your choice (Visual Studio, Visual Studio Code, etc.)
 
