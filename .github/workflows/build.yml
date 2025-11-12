@@ -12,7 +12,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.x"
+          dotnet-version: "9.x"
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -47,11 +47,11 @@ jobs:
             /d:sonar.exclusions="docs/**,examples/**" `
             /d:sonar.cs.opencover.reportsPaths="tests/*/TestResults/*/coverage.opencover.xml"
       - name: Restore dependencies
-        run: dotnet restore AsyncEndpoints.sln
+        run: dotnet restore AsyncEndpoints.sln -p:TargetFramework=net9.0
       - name: Build the solution
-        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore
+        run: dotnet build AsyncEndpoints.sln --configuration Release --no-restore -p:TargetFramework=net9.0
       - name: Run unit tests with coverage
-        run: dotnet test AsyncEndpoints.sln --collect "XPlat Code Coverage;Format=opencover" --configuration Release --no-build
+        run: dotnet test AsyncEndpoints.sln --collect "XPlat Code Coverage;Format=opencover" --configuration Release --no-build -p:TargetFramework=net9.0
       - name: SonarQube End analysis
         shell: powershell
         run: |
