@@ -1,7 +1,10 @@
+using AsyncEndpoints.Configuration;
+using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
 
@@ -42,7 +45,17 @@ public class HandlerRegistrationTrackerTests
 		// Arrange
 		var jobName = nameof(GetInvoker_ReturnsInvokerForRegisteredJob);
 		var serviceProvider = new ServiceCollection().BuildServiceProvider();
-		var testJob = new Job();
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var testJob = Job.Create(
+			Guid.NewGuid(),
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 		var testRequest = new TestRequest { Value = "request" };
 
 		Func<IServiceProvider, TestRequest, Job, CancellationToken, Task<MethodResult<TestResponse>>> handlerFunc =

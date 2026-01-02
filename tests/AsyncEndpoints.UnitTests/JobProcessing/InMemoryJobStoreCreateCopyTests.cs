@@ -98,15 +98,21 @@ public class InMemoryJobStoreCreateCopyTests
 			new("query1", ["original_value"])
 		};
 
-		var job = new Job(expectedTime)
-		{
-			Name = "TestJob",
-			Headers = originalHeaders,
-			RouteParams = originalRouteParams,
-			QueryParams = originalQueryParams,
-			Payload = "{\"data\":\"value\"}",
-			Status = JobStatus.Queued
-		};
+		var job = Job.Create(
+			Guid.NewGuid(),
+			"TestJob",
+			"{\"data\":\"value\"}",
+			originalHeaders,
+			originalRouteParams,
+			originalQueryParams,
+			AsyncEndpoints.Configuration.AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
+
+		// Manually set the properties that were set in the original test
+		job = job.CreateCopy(
+			status: JobStatus.Queued,
+			lastUpdatedAt: expectedTime,
+			dateTimeProvider: mockDateTimeProvider.Object);
 
 		// Act - Create a copy using CreateCopy method
 		var copiedJob = job.CreateCopy(status: JobStatus.InProgress);

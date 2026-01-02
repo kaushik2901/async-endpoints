@@ -1,3 +1,4 @@
+using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
@@ -38,7 +39,25 @@ public class RedisJobStoreTests
 	public async Task CreateJob_ValidJob_ReturnsSuccess()
 	{
 		// Arrange
-		var job = new Job { Id = Guid.NewGuid(), Name = "TestJob", Status = JobStatus.Queued, Payload = "{}" };
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var jobId = Guid.NewGuid();
+		var job = Job.Create(
+			jobId,
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
+
+		// Manually set the properties that were set in the original test
+		job = job.CreateCopy(
+			status: JobStatus.Queued,
+			lastUpdatedAt: DateTimeOffset.UtcNow,
+			dateTimeProvider: mockDateTimeProvider.Object);
+
 		_mockDatabase.Setup(db => db.KeyExistsAsync($"ae:job:{job.Id}", It.IsAny<CommandFlags>()))
 					 .ReturnsAsync(false);
 		_mockDatabase.Setup(db => db.SortedSetAddAsync("ae:jobs:queue", job.Id.ToString(),
@@ -77,7 +96,17 @@ public class RedisJobStoreTests
 	public async Task CreateJob_EmptyGuidJob_ReturnsFailure()
 	{
 		// Arrange
-		var job = new Job { Id = Guid.Empty };
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			Guid.Empty, // Using empty GUID as in the original test
+			"",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 
 		// Act
 		var result = await _redisJobStore.CreateJob(job, default);
@@ -96,7 +125,17 @@ public class RedisJobStoreTests
 	{
 		// Arrange
 		var jobId = Guid.NewGuid();
-		var job = new Job { Id = jobId, Name = "TestJob" };
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			jobId,
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 		var hashEntries = new[] { new HashEntry("Id", jobId.ToString()), new HashEntry("Name", "TestJob") };
 		_mockDatabase.Setup(db => db.HashGetAllAsync($"ae:job:{jobId}", It.IsAny<CommandFlags>()))
 					 .ReturnsAsync(hashEntries);
@@ -140,11 +179,20 @@ public class RedisJobStoreTests
 	public async Task UpdateJob_ExistingJob_ReturnsSuccess()
 	{
 		// Arrange
-		var job = new Job { Id = Guid.NewGuid(), Name = "TestJob", Payload = "{}" };
-		var hashEntries = new[] { new HashEntry("Id", job.Id.ToString()) };
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var now = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(now);
+		var jobId = Guid.NewGuid();
+		var job = Job.Create(
+			jobId,
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
+		var hashEntries = new[] { new HashEntry("Id", job.Id.ToString()) };
 
 		// Create a new instance of RedisJobStore with the mock DateTimeProvider
 		var mockRedisLuaScriptService = new Mock<IRedisLuaScriptService>();
@@ -173,7 +221,17 @@ public class RedisJobStoreTests
 	public async Task UpdateJob_NonExistingJob_ReturnsFailure()
 	{
 		// Arrange
-		var job = new Job { Id = Guid.NewGuid() };
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			Guid.NewGuid(),
+			"",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 		_mockDatabase.Setup(db => db.KeyExistsAsync($"ae:job:{job.Id}", It.IsAny<CommandFlags>()))
 					 .ReturnsAsync(false);
 

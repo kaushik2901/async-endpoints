@@ -3,7 +3,7 @@ namespace AsyncEndpoints.Configuration;
 public static class AsyncEndpointsConstants
 {
 	public const string AsyncEndpointTag = "AsyncEndpoint";
-	public const string JobIdHeaderName = "Async-Job-Id";
+	public const string JobIdHeaderName = "X-Async-Request-Id";
 	public const int MaximumRetries = 3;
 
 	// Configuration Default Values

@@ -1,5 +1,6 @@
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Handlers;
+using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
@@ -18,6 +19,8 @@ public class ConfigurableResponseTests
 		var mockLogger = new Mock<ILogger<AsyncEndpointRequestDelegate>>();
 		var mockJobManager = new Mock<IJobManager>();
 		var mockSerializer = new Mock<ISerializer>();
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
 
 		// Create custom configurations with custom response factory
 		var configurations = new AsyncEndpointsConfigurations
@@ -33,7 +36,15 @@ public class ConfigurableResponseTests
 		};
 
 		var httpContext = new DefaultHttpContext();
-		var job = new Job { Id = Guid.NewGuid(), Name = "TestJob" };
+		var job = Job.Create(
+			Guid.NewGuid(),
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 		var request = new object();
 
 		var successResult = MethodResult<Job>.Success(job);

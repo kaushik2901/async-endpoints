@@ -80,7 +80,21 @@ public class JobManagerObservabilityTests
 		var config = new AsyncEndpointsConfigurations();
 		mockOptions.Setup(x => x.Value).Returns(config);
 
-		var job = new Job { Id = jobId, Name = "TestJob", RetryCount = 5, MaxRetries = 5 };
+		var job = Job.Create(
+			jobId,
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			5, // MaxRetries = 5
+			mockDateTimeProvider.Object);
+
+		// Manually set the properties that were set in the original test
+		job = job.CreateCopy(
+			retryCount: 5,
+			lastUpdatedAt: DateTimeOffset.UtcNow,
+			dateTimeProvider: mockDateTimeProvider.Object);
 		mockJobStore.Setup(store => store.GetJobById(jobId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
 		mockJobStore.Setup(store => store.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
@@ -119,7 +133,21 @@ public class JobManagerObservabilityTests
 		var config = new AsyncEndpointsConfigurations();
 		mockOptions.Setup(x => x.Value).Returns(config);
 
-		var job = new Job { Id = jobId, Name = "TestJob", RetryCount = 1, MaxRetries = 5 };
+		var job = Job.Create(
+			jobId,
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			5, // MaxRetries = 5
+			mockDateTimeProvider.Object);
+
+		// Manually set the properties that were set in the original test
+		job = job.CreateCopy(
+			retryCount: 1,
+			lastUpdatedAt: DateTimeOffset.UtcNow,
+			dateTimeProvider: mockDateTimeProvider.Object);
 		mockJobStore.Setup(store => store.GetJobById(jobId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
 		mockJobStore.Setup(store => store.UpdateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))

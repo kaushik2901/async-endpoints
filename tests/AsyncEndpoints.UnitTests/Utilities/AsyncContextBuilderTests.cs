@@ -1,6 +1,8 @@
+using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
+using Moq;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
 
@@ -26,12 +28,17 @@ public class AsyncContextBuilderTests
 		TestRequest request)
 	{
 		// Arrange
-		var job = new Job
-		{
-			Headers = [],
-			RouteParams = [],
-			QueryParams = []
-		};
+		var mockDateTimeProvider = new Mock<AsyncEndpoints.Infrastructure.IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			Guid.NewGuid(),
+			"",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpoints.Configuration.AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 
 		// Act
 		var context = AsyncContextBuilder.Build(request, job);

@@ -41,6 +41,8 @@ public class JobProducerService(
 				await using var scope = _serviceScopeFactory.CreateAsyncScope();
 				var jobClaimingService = scope.ServiceProvider.GetRequiredService<IJobClaimingService>();
 
+				using var _ = _logger.BeginScope(new { _workerConfigurations.WorkerId });
+
 				try
 				{
 					var result = await jobClaimingService.ClaimAndEnqueueJobAsync(writerJobChannel, _workerConfigurations.WorkerId, stoppingToken);

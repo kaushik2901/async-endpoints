@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
@@ -6,6 +6,7 @@ using AsyncEndpoints.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Diagnostics;
 
 namespace AsyncEndpoints.UnitTests.JobProcessing;
 
@@ -38,7 +39,7 @@ public class InMemoryJobStoreConcurrencyTests
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 
 		// Arrange - Create a job
-		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", mockDateTimeProvider.Object);
+		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], AsyncEndpointsConstants.MaximumRetries, mockDateTimeProvider.Object);
 		await store.CreateJob(job, CancellationToken.None);
 
 		// Simulate two concurrent updates to the same job

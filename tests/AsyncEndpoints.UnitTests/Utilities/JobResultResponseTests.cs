@@ -1,4 +1,6 @@
 using System.Text.Json;
+using AsyncEndpoints.Configuration;
+using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
@@ -18,7 +20,17 @@ public class JobResultResponseTests
 	public void Constructor_Succeeds_WithValidParameters()
 	{
 		// Arrange
-		var job = new Job();
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			Guid.NewGuid(),
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 		var statusCode = 200;
 
 		// Act
@@ -36,7 +48,17 @@ public class JobResultResponseTests
 	public void Constructor_UsesDefaultStatusCode_WhenNotProvided()
 	{
 		// Arrange
-		var job = new Job();
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			Guid.NewGuid(),
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 
 		// Act
 		var result = new JobResultResponse(job);
@@ -54,14 +76,26 @@ public class JobResultResponseTests
 	public async Task ExecuteAsync_SetsCorrectResponse()
 	{
 		// Arrange
-		var job = new Job
-		{
-			Id = Guid.NewGuid(),
-			Name = "TestJob",
-			Status = JobStatus.Completed,
-			Result = "\"Test Result\"", // JSON string for the result
-			CreatedAt = DateTimeOffset.UtcNow
-		};
+		var jobId = Guid.NewGuid();
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			jobId,
+			"TestJob",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
+
+		// Manually set the properties that were set in the original test
+		job = job.CreateCopy(
+			status: JobStatus.Completed,
+			result: "\"Test Result\"", // JSON string for the result
+			lastUpdatedAt: DateTimeOffset.UtcNow,
+			dateTimeProvider: mockDateTimeProvider.Object);
+
 		var statusCode = 200;
 		var result = new JobResultResponse(job, statusCode);
 
@@ -111,19 +145,29 @@ public class JobResultResponseTests
 		// Arrange
 		var jobId = Guid.NewGuid();
 		var complexResult = new { Message = "Success", Data = new { Id = 123, Name = "Test" } };
-		var jobResultJson = System.Text.Json.JsonSerializer.Serialize(complexResult);
-		var job = new Job
-		{
-			Id = jobId,
-			Name = "ComplexJob",
-			Status = JobStatus.Completed,
-			Result = jobResultJson,
-			CreatedAt = DateTimeOffset.UtcNow,
-			StartedAt = DateTimeOffset.UtcNow.AddMinutes(1),
-			CompletedAt = DateTimeOffset.UtcNow.AddMinutes(2),
-			MaxRetries = 3,
-			RetryCount = 0
-		};
+		var jobResultJson = JsonSerializer.Serialize(complexResult);
+		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var job = Job.Create(
+			jobId,
+			"ComplexJob",
+			"{}",
+			[],
+			[],
+			[],
+			3, // MaxRetries = 3
+			mockDateTimeProvider.Object);
+
+		// Manually set the properties that were set in the original test
+		job = job.CreateCopy(
+			status: JobStatus.Completed,
+			result: jobResultJson,
+			startedAt: DateTimeOffset.UtcNow.AddMinutes(1),
+			completedAt: DateTimeOffset.UtcNow.AddMinutes(2),
+			retryCount: 0,
+			lastUpdatedAt: DateTimeOffset.UtcNow,
+			dateTimeProvider: mockDateTimeProvider.Object);
+
 		var result = new JobResultResponse(job);
 
 		var httpContext = new DefaultHttpContext();

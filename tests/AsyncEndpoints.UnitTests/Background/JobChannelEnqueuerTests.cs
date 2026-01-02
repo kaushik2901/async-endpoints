@@ -91,7 +91,17 @@ public class JobChannelEnqueuerTests
 		});
 
 		// Fill the channel to make TryWrite return false
-		var fillerJob = new Job { Id = Guid.NewGuid() };
+		var mockDateTimeProvider = new Mock<AsyncEndpoints.Infrastructure.IDateTimeProvider>();
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var fillerJob = Job.Create(
+			Guid.NewGuid(),
+			"",
+			"{}",
+			[],
+			[],
+			[],
+			AsyncEndpoints.Configuration.AsyncEndpointsConstants.MaximumRetries,
+			mockDateTimeProvider.Object);
 		await channel.Writer.WriteAsync(fillerJob);
 
 		var service = new JobChannelEnqueuer(mockLogger.Object);

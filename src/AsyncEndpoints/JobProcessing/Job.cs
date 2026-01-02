@@ -39,6 +39,21 @@ public sealed class Job(DateTimeOffset currentTime)
 	public JobStatus Status { get; set; } = JobStatus.Queued;
 
 	/// <summary>
+	/// Gets or sets the result of the job execution, if successful.
+	/// </summary>
+	public string? Result { get; set; } = null;
+
+	/// <summary>
+	/// Gets or sets the error details if the job failed.
+	/// </summary>
+	public AsyncEndpointError? Error { get; set; } = null;
+
+	/// <summary>
+	/// Gets the payload data for the job.
+	/// </summary>
+	public string Payload { get; init; } = string.Empty;
+
+	/// <summary>
 	/// Gets or sets the collection of HTTP headers associated with the job.
 	/// </summary>
 	public Dictionary<string, List<string?>> Headers { get; set; } = [];
@@ -52,21 +67,6 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// Gets or sets the query parameters associated with the job.
 	/// </summary>
 	public List<KeyValuePair<string, List<string?>>> QueryParams { get; set; } = [];
-
-	/// <summary>
-	/// Gets the payload data for the job.
-	/// </summary>
-	public string Payload { get; init; } = string.Empty;
-
-	/// <summary>
-	/// Gets or sets the result of the job execution, if successful.
-	/// </summary>
-	public string? Result { get; set; } = null;
-
-	/// <summary>
-	/// Gets or sets the error details if the job failed.
-	/// </summary>
-	public AsyncEndpointError? Error { get; set; } = null;
 
 	/// <summary>
 	/// Gets or sets the number of times the job has been retried.
@@ -89,11 +89,6 @@ public sealed class Job(DateTimeOffset currentTime)
 	public Guid? WorkerId { get; set; } = null;
 
 	/// <summary>
-	/// Gets or sets the date and time when the job was created.
-	/// </summary>
-	public DateTimeOffset CreatedAt { get; set; } = currentTime;
-
-	/// <summary>
 	/// Gets or sets the date and time when the job processing started, if applicable.
 	/// </summary>
 	public DateTimeOffset? StartedAt { get; set; } = null;
@@ -104,51 +99,15 @@ public sealed class Job(DateTimeOffset currentTime)
 	public DateTimeOffset? CompletedAt { get; set; } = null;
 
 	/// <summary>
+	/// Gets or sets the date and time when the job was created.
+	/// </summary>
+	public DateTimeOffset CreatedAt { get; set; } = currentTime;
+
+	/// <summary>
 	/// Gets or sets the date and time when the job was last updated.
 	/// </summary>
 	public DateTimeOffset LastUpdatedAt { get; set; } = currentTime;
 
-	/// <summary>
-	/// Gets a value indicating whether the job has been canceled.
-	/// </summary>
-	public bool IsCanceled => Status == JobStatus.Canceled;
-
-	/// <summary>
-	/// Creates a new job with the specified parameters.
-	/// </summary>
-	/// <param name="id">The unique identifier for the job.</param>
-	/// <param name="name">The name of the job.</param>
-	/// <param name="payload">The payload data for the job.</param>
-	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	/// <returns>A new <see cref="Job"/> instance.</returns>
-	public static Job Create(Guid id, string name, string payload, IDateTimeProvider dateTimeProvider)
-	{
-		return Create(id, name, payload, AsyncEndpointsConstants.MaximumRetries, dateTimeProvider);
-	}
-	
-	/// <summary>
-	/// Creates a new job with the specified parameters and max retries.
-	/// </summary>
-	/// <param name="id">The unique identifier for the job.</param>
-	/// <param name="name">The name of the job.</param>
-	/// <param name="payload">The payload data for the job.</param>
-	/// <param name="maxRetries">The maximum number of retries for the job.</param>
-	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	/// <returns>A new <see cref="Job"/> instance.</returns>
-	public static Job Create(Guid id, string name, string payload, int maxRetries, IDateTimeProvider dateTimeProvider)
-	{
-		var now = dateTimeProvider.DateTimeOffsetNow;
-		return new Job
-		{
-			Id = id,
-			Name = name,
-			Payload = payload,
-			MaxRetries = maxRetries,
-			CreatedAt = now,
-			LastUpdatedAt = now
-		};
-	}
-	
 	/// <summary>
 	/// Creates a new job with the specified parameters including HTTP context information and max retries.
 	/// </summary>
@@ -270,17 +229,6 @@ public sealed class Job(DateTimeOffset currentTime)
 	}
 
 	/// <summary>
-	/// Sets the error details for the job and updates the status to failed.
-	/// </summary>
-	/// <param name="error">The error message that occurred during job execution.</param>
-	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	public void SetError(string error, IDateTimeProvider dateTimeProvider)
-	{
-		Error = AsyncEndpointError.FromMessage(error);
-		UpdateStatus(JobStatus.Failed, dateTimeProvider);
-	}
-
-	/// <summary>
 	/// Increments the retry count for the job.
 	/// </summary>
 	public void IncrementRetryCount()
@@ -330,8 +278,8 @@ public sealed class Job(DateTimeOffset currentTime)
 			Status = status ?? this.Status,
 			Headers = new Dictionary<string, List<string?>>(this.Headers), // Deep copy
 			RouteParams = new Dictionary<string, object?>(this.RouteParams), // Deep copy
-			QueryParams = new List<KeyValuePair<string, List<string?>>>(this.QueryParams.Select(kvp =>
-				new KeyValuePair<string, List<string?>>(kvp.Key, new List<string?>(kvp.Value)))), // Deep copy
+			QueryParams = [.. this.QueryParams.Select(kvp =>
+				new KeyValuePair<string, List<string?>>(kvp.Key, [.. kvp.Value]))], // Deep copy
 			Payload = this.Payload, // String is immutable
 			Result = result ?? this.Result,
 			Error = error ?? this.Error, // AsyncEndpointError should be immutable or treated as such

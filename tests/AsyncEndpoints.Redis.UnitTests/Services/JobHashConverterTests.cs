@@ -16,26 +16,33 @@ public class JobHashConverterTests
 	public void ConvertToHashEntries_WithValidJob_ReturnsCorrectHashEntries()
 	{
 		// Arrange
-		var job = new Job
-		{
-			Id = Guid.NewGuid(),
-			Name = "TestJob",
-			Status = JobStatus.InProgress,
-			Payload = "{}",
-			Headers = new Dictionary<string, List<string?>> { { "Content-Type", new List<string?> { "application/json" } } },
-			RouteParams = new Dictionary<string, object?> { { "id", "123" } },
-			QueryParams = [new("page", ["1"])],
-			Result = "Success",
-			Error = AsyncEndpointError.FromMessage("Error message"),
-			RetryCount = 1,
-			MaxRetries = 3,
-			RetryDelayUntil = DateTime.UtcNow.AddMinutes(5),
-			WorkerId = Guid.NewGuid(),
-			CreatedAt = DateTimeOffset.UtcNow,
-			StartedAt = DateTimeOffset.UtcNow.AddSeconds(1),
-			CompletedAt = DateTimeOffset.UtcNow.AddSeconds(2),
-			LastUpdatedAt = DateTimeOffset.UtcNow.AddSeconds(3)
-		};
+		var mockDateTimeProvider = new Mock<AsyncEndpoints.Infrastructure.IDateTimeProvider>();
+		var currentTime = DateTimeOffset.UtcNow;
+		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(currentTime);
+		var jobId = Guid.NewGuid();
+		var workerId = Guid.NewGuid();
+		var job = Job.Create(
+			jobId,
+			"TestJob",
+			"{}",
+			new Dictionary<string, List<string?>> { { "Content-Type", new List<string?> { "application/json" } } },
+			new Dictionary<string, object?> { { "id", "123" } },
+			[new("page", ["1"])],
+			3, // MaxRetries = 3
+			mockDateTimeProvider.Object);
+
+		// Manually set the properties that were set in the original test
+		job = job.CreateCopy(
+			status: JobStatus.InProgress,
+			result: "Success",
+			retryCount: 1,
+			retryDelayUntil: DateTime.UtcNow.AddMinutes(5),
+			workerId: workerId,
+			startedAt: DateTimeOffset.UtcNow.AddSeconds(1),
+			completedAt: DateTimeOffset.UtcNow.AddSeconds(2),
+			lastUpdatedAt: DateTimeOffset.UtcNow.AddSeconds(3),
+			error: AsyncEndpointError.FromMessage("Error message"),
+			dateTimeProvider: mockDateTimeProvider.Object);
 
 		var mockSerializer = new Mock<ISerializer>();
 		mockSerializer.Setup(s => s.Serialize(It.IsAny<object>(), null)).Returns("serialized_value");
