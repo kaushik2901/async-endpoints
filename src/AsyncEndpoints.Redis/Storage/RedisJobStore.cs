@@ -433,6 +433,12 @@ public class RedisJobStore : IJobStore
 		}
 	}
 
+	/// <inheritdoc />
+	public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, CancellationToken cancellationToken)
+	{
+		return await _redisLuaScriptService.RecoverStuckJobs(_database, timeoutUnixTime, maxRetries);
+	}
+
 	private async Task<MethodResult<Job>> ClaimSingleJob(Guid jobId, Guid workerId)
 	{
 		var result = await _redisLuaScriptService.ClaimSingleJob(_database, jobId, workerId);
@@ -509,11 +515,5 @@ public class RedisJobStore : IJobStore
 	{
 		if (string.IsNullOrEmpty(value)) return default;
 		return _serializer.Deserialize<T>(value);
-	}
-
-	/// <inheritdoc />
-	public async Task<int> RecoverStuckJobs(long timeoutUnixTime, int maxRetries, CancellationToken cancellationToken)
-	{
-		return await _redisLuaScriptService.RecoverStuckJobs(_database, timeoutUnixTime, maxRetries);
 	}
 }

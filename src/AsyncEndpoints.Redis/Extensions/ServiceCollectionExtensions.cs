@@ -42,6 +42,13 @@ public static class RedisServiceCollectionExtensions
 			return new RedisJobStore(logger, connectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService, metrics);
 		});
 
+		services.AddSingleton<IJobRecoveryService>(provider =>
+		{
+			var logger = provider.GetRequiredService<ILogger<RedisJobRecoveryService>>();
+			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
+			return new RedisJobRecoveryService(logger, connectionString, redisLuaScriptService);
+		});
+
 		return services;
 	}
 

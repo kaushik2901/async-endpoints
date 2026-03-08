@@ -1,4 +1,3 @@
-using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;

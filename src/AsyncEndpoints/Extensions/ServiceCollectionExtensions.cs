@@ -53,6 +53,7 @@ public static class ServiceCollectionExtensions
 	public static IServiceCollection AddAsyncEndpointsInMemoryStore(this IServiceCollection services)
 	{
 		services.AddSingleton<IJobStore, InMemoryJobStore>();
+		services.AddSingleton<IJobRecoveryService, InMemoryJobRecoveryService>();
 
 		return services;
 	}
