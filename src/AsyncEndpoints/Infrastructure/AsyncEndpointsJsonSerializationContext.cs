@@ -1,8 +1,8 @@
-using System.Text.Json.Serialization;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 namespace AsyncEndpoints;
 

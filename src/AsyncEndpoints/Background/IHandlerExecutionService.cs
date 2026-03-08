@@ -1,7 +1,7 @@
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncEndpoints.Background;
 

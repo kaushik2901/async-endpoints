@@ -1,7 +1,7 @@
-using System;
 using AsyncEndpoints.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 
 namespace AsyncEndpoints.Background;
 

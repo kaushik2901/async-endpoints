@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.Handlers;
 

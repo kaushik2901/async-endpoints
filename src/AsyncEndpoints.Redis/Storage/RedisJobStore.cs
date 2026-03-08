@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Globalization;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
@@ -8,6 +6,8 @@ using AsyncEndpoints.Redis.Services;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace AsyncEndpoints.Redis.Storage;
 

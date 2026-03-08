@@ -1,9 +1,9 @@
-using System.Threading.Tasks;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace AsyncEndpoints.Utilities
 {

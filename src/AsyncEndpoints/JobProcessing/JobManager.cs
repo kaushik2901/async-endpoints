@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Infrastructure;
@@ -9,6 +6,9 @@ using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncEndpoints.JobProcessing;
 

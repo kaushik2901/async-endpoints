@@ -1,5 +1,5 @@
-using System;
 using AsyncEndpoints.Configuration;
+using System;
 
 namespace AsyncEndpoints.Background;
 

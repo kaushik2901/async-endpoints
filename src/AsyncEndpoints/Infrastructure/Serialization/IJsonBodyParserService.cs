@@ -1,7 +1,7 @@
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncEndpoints.Infrastructure.Serialization;
 

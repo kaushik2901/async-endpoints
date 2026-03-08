@@ -1,6 +1,6 @@
+using AsyncEndpoints.Utilities;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncEndpoints.Utilities;
 
 namespace AsyncEndpoints.Handlers;
 

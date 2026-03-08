@@ -1,8 +1,8 @@
-using System.Globalization;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using StackExchange.Redis;
+using System.Globalization;
 
 namespace AsyncEndpoints.Redis.Services;
 

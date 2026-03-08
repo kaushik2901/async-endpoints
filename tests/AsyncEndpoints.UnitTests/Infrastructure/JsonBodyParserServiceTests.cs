@@ -1,8 +1,8 @@
-using System.Text;
-using System.Text.Json;
 using AsyncEndpoints.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text;
+using System.Text.Json;
 
 namespace AsyncEndpoints.UnitTests.Infrastructure;
 

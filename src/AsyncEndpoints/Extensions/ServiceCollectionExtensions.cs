@@ -1,6 +1,3 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization.Metadata;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Handlers;
@@ -10,6 +7,9 @@ using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization.Metadata;
 
 namespace AsyncEndpoints.Extensions;
 

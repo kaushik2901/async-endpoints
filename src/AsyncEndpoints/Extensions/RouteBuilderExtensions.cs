@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure.Serialization;
@@ -9,6 +6,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncEndpoints.Extensions;
 

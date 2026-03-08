@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
 using AsyncEndpoints.Configuration;
 using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
 
 namespace AsyncEndpoints.Extensions;
 

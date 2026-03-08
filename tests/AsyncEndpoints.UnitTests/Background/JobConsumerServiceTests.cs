@@ -1,4 +1,3 @@
-using System.Threading.Channels;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
@@ -7,6 +6,7 @@ using AutoFixture.Xunit2;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Threading.Channels;
 
 namespace AsyncEndpoints.UnitTests.Background;
 

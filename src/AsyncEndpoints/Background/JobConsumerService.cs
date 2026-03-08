@@ -1,11 +1,11 @@
-using System;
-using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace AsyncEndpoints.Background;
 

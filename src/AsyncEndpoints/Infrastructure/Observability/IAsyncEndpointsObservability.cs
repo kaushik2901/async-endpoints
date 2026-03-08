@@ -1,6 +1,6 @@
+using AsyncEndpoints.JobProcessing;
 using System;
 using System.Diagnostics;
-using AsyncEndpoints.JobProcessing;
 
 namespace AsyncEndpoints.Infrastructure.Observability;
 

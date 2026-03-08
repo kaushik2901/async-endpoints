@@ -1,10 +1,10 @@
-using System.Threading.Channels;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Threading.Channels;
 
 namespace AsyncEndpoints.UnitTests.Background;
 

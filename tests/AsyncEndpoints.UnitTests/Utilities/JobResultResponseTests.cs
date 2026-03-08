@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Serialization;
@@ -7,6 +6,7 @@ using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using System.Text.Json;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
 

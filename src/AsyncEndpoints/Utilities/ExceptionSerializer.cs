@@ -1,7 +1,7 @@
+using AsyncEndpoints.Configuration;
 using System;
 using System.Collections;
 using System.Text;
-using AsyncEndpoints.Configuration;
 
 namespace AsyncEndpoints.Utilities
 {

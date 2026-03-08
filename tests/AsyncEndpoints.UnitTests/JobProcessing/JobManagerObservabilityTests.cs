@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using System.Diagnostics;
 
 namespace AsyncEndpoints.UnitTests.JobProcessing;
 

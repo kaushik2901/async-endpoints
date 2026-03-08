@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace AsyncEndpoints.Infrastructure.Observability;
 

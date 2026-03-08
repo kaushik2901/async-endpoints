@@ -1,9 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AsyncEndpoints.JobProcessing;
 

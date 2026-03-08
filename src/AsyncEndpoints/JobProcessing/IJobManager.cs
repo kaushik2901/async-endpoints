@@ -1,8 +1,8 @@
+using AsyncEndpoints.Utilities;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncEndpoints.Utilities;
-using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.JobProcessing;
 

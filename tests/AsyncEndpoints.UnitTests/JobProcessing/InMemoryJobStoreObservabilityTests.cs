@@ -1,10 +1,10 @@
-using System.Diagnostics;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Diagnostics;
 
 namespace AsyncEndpoints.UnitTests.JobProcessing;
 

@@ -1,13 +1,13 @@
+using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Infrastructure.Observability;
+using AsyncEndpoints.Utilities;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.Infrastructure.Observability;
-using AsyncEndpoints.Utilities;
-using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.JobProcessing;
 
