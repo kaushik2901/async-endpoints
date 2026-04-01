@@ -1,24 +1,23 @@
 using System;
 
-namespace AsyncEndpoints.Utilities
+namespace AsyncEndpoints.Utilities;
+
+internal class NullDisposable : IDisposable
 {
-	internal class NullDisposable : IDisposable
+	public static readonly NullDisposable Instance = new();
+	private bool _disposed = false;
+
+	public void Dispose()
 	{
-		public static readonly NullDisposable Instance = new();
-		private bool _disposed = false;
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
 
-		public void Dispose()
+	protected virtual void Dispose(bool disposing)
+	{
+		if (!_disposed)
 		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			if (!_disposed)
-			{
-				_disposed = true;
-			}
+			_disposed = true;
 		}
 	}
 }
