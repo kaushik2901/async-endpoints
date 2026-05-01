@@ -10,31 +10,31 @@ This document outlines the architectural improvements needed to make AsyncEndpoi
 
 ### What's Implemented
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| **Core Job Model** | ✅ Complete | Job, JobStatus, JobState transitions |
-| **InMemoryJobStore** | ✅ Complete | ConcurrentDictionary-based, thread-safe |
-| **RedisJobStore** | ✅ Complete | Hash-based storage, Lua scripts for atomicity |
-| **JobManager** | ✅ Complete | Submit, claim, success/failure processing |
-| **Background Services** | ✅ Complete | Main worker, recovery service |
-| **Configuration** | ✅ Complete | Worker, JobManager, Response, Observability |
-| **Observability** | ✅ Complete | ActivitySource, metrics recording |
-| **HTTP Integration** | ✅ Complete | Extensions, handlers, context preservation |
+| Component               | Status      | Notes                                         |
+| ----------------------- | ----------- | --------------------------------------------- |
+| **Core Job Model**      | ✅ Complete | Job, JobStatus, JobState transitions          |
+| **InMemoryJobStore**    | ✅ Complete | ConcurrentDictionary-based, thread-safe       |
+| **RedisJobStore**       | ✅ Complete | Hash-based storage, Lua scripts for atomicity |
+| **JobManager**          | ✅ Complete | Submit, claim, success/failure processing     |
+| **Background Services** | ✅ Complete | Main worker, recovery service                 |
+| **Configuration**       | ✅ Complete | Worker, JobManager, Response, Observability   |
+| **Observability**       | ✅ Complete | ActivitySource, metrics recording             |
+| **HTTP Integration**    | ✅ Complete | Extensions, handlers, context preservation    |
 
 ### What's Missing or Partial
 
-| Component | Status | Priority |
-|-----------|--------|---------|
+| Component                        | Status     | Priority                           |
+| -------------------------------- | ---------- | ---------------------------------- |
 | **IJobStore Extended Interface** | 🔶 Partial | Missing heartbeat, reclaim methods |
-| **IJobNotifier** | ❌ Missing | Event-driven notifications |
-| **Adaptive Polling** | 🔶 Partial | Within Redis, not abstracted |
-| **Job Partitioning** | 🔶 Partial | Channels in model, no strategy |
-| **SQL Server Store** | ❌ Missing | Needed for enterprise |
-| **Postgres Store** | ❌ Missing | Needed for enterprise |
-| **IJobListener** | ❌ Missing | Abstraction for job acquisition |
-| **Handler Auto-Discovery** | 🔶 Partial | Manual registration only |
-| **Dashboard** | ❌ Missing | Not implemented |
-| **Recurring Jobs** | ❌ Missing | Cron-based scheduling |
+| **IJobNotifier**                 | ❌ Missing | Event-driven notifications         |
+| **Adaptive Polling**             | 🔶 Partial | Within Redis, not abstracted       |
+| **Job Partitioning**             | 🔶 Partial | Channels in model, no strategy     |
+| **SQL Server Store**             | ❌ Missing | Needed for enterprise              |
+| **Postgres Store**               | ❌ Missing | Needed for enterprise              |
+| **IJobListener**                 | ❌ Missing | Abstraction for job acquisition    |
+| **Handler Auto-Discovery**       | 🔶 Partial | Manual registration only           |
+| **Dashboard**                    | ❌ Missing | Not implemented                    |
+| **Recurring Jobs**               | ❌ Missing | Cron-based scheduling              |
 
 ---
 
@@ -206,11 +206,11 @@ public static class JobListenerSelector
 
 We need to add multiple storage providers to support enterprise scenarios:
 
-| Provider | Use Case | Key Feature |
-|----------|---------|------------|
-| **SQL Server** | Enterprise, existing infrastructure | Row-level locking, ACID |
-| **Postgres** | Cloud-native, open-source | `SELECT FOR UPDATE SKIP LOCKED` |
-| **Redis Streams** | High-throughput, pub/sub | Native blocking reads |
+| Provider          | Use Case                            | Key Feature                     |
+| ----------------- | ----------------------------------- | ------------------------------- |
+| **SQL Server**    | Enterprise, existing infrastructure | Row-level locking, ACID         |
+| **Postgres**      | Cloud-native, open-source           | `SELECT FOR UPDATE SKIP LOCKED` |
+| **Redis Streams** | High-throughput, pub/sub            | Native blocking reads           |
 
 ### 4.2 SQL Server Implementation Pattern
 
@@ -724,13 +724,13 @@ public async Task<MethodResult<List<Job>>> ClaimNextJobsForWorker(
 
 For competitive parity with Hangfire, implement a web dashboard:
 
-| Feature | Description |
-|---------|-----------|
-| Job List | Real-time job status grid |
-| Job Details | Full payload, history, logs |
-| Recurring Jobs | Cron-scheduled job management |
-| Metrics | Throughput, latency charts |
-| Health | Store connectivity, worker status |
+| Feature        | Description                       |
+| -------------- | --------------------------------- |
+| Job List       | Real-time job status grid         |
+| Job Details    | Full payload, history, logs       |
+| Recurring Jobs | Cron-scheduled job management     |
+| Metrics        | Throughput, latency charts        |
+| Health         | Store connectivity, worker status |
 
 ---
 
@@ -770,28 +770,28 @@ For competitive parity with Hangfire, implement a web dashboard:
 
 ### Performance Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Throughput** | 10,000+ jobs/second | Redis with optimal tuning |
-| **Latency** | < 5ms median | Job processing start time |
-| **Memory** | < 1KB per queued job | Includes payload |
-| **Recovery Time** | < 30 seconds | After worker crash |
+| Metric            | Target               | Notes                     |
+| ----------------- | -------------------- | ------------------------- |
+| **Throughput**    | 10,000+ jobs/second  | Redis with optimal tuning |
+| **Latency**       | < 5ms median         | Job processing start time |
+| **Memory**        | < 1KB per queued job | Includes payload          |
+| **Recovery Time** | < 30 seconds         | After worker crash        |
 
 ### Reliability Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Data Integrity** | Zero lost jobs | With proper reclamation |
-| **Duplication** | Zero | At-least-once delivery |
-| **Uptime** | 99.99% | Excluding planned maintenance |
+| Metric             | Target         | Notes                         |
+| ------------------ | -------------- | ----------------------------- |
+| **Data Integrity** | Zero lost jobs | With proper reclamation       |
+| **Duplication**    | Zero           | At-least-once delivery        |
+| **Uptime**         | 99.99%         | Excluding planned maintenance |
 
 ### Operational Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **AOT Support** | Full | Self-contained部署 |
-| **Observability** | Complete | Traces, metrics, health |
-| **Configuration** | Zero-touch | For simple deployments |
+| Metric            | Target     | Notes                   |
+| ----------------- | ---------- | ----------------------- |
+| **AOT Support**   | Full       | Self-contained部署      |
+| **Observability** | Complete   | Traces, metrics, health |
+| **Configuration** | Zero-touch | For simple deployments  |
 
 ---
 
@@ -817,6 +817,7 @@ For competitive parity with Hangfire, implement a web dashboard:
 This design document provides a concrete path to making AsyncEndpoints scalable, strong, and stable. The existing implementation forms a solid foundation; adding the extended interface methods, storage providers, and resilience mechanisms will position the library for enterprise use.
 
 The key focus areas are:
+
 1. **Extend the IJobStore interface** with heartbeat and batch operations
 2. **Implement IJobListener** for flexible job acquisition
 3. **Add SQL Server and Postgres stores** for enterprise support
@@ -824,3 +825,4 @@ The key focus areas are:
 5. **Add backpressure** for queue protection
 
 Following this roadmap will make AsyncEndpoints competitive with established solutions like Hangfire while maintaining its core strengths in HTTP integration and modern .NET architecture.
+
