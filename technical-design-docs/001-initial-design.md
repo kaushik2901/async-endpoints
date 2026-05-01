@@ -1,4 +1,4 @@
-# AsyncJobKit - High level Design
+# AsyncEndpoints - High level Design
 
 ## Core Architecture
 
@@ -139,13 +139,13 @@ The package ships two implementations:
 
 ```csharp
 // Provider registration (pseudo-code)
-services.AddAsyncJobKit(options => {
+services.AddAsyncEndpoints(options => {
     options.UsePostgres(connString);
     // internally registers PostgresJobStore + PostgresJobNotifier
     // engine sees IJobNotifier is registered -> picks EventDrivenJobListener
 });
 
-services.AddAsyncJobKit(options => {
+services.AddAsyncEndpoints(options => {
     options.UseSqlServer(connString);
     // registers SqlServerJobStore only, no IJobNotifier
     // engine sees no IJobNotifier -> falls back to PollingJobListener
@@ -247,7 +247,7 @@ JobRecord:
 
 ```csharp
 // Program.cs
-builder.Services.AddAsyncJobKit(options =>
+builder.Services.AddAsyncEndpoints(options =>
 {
     options.UsePostgres(connectionString);
 });
@@ -282,7 +282,7 @@ app.MapPost("/send-email", async (SendEmailJob job, IJobSubmitter submitter) =>
 #### Tier 2: "I need channels and priorities"
 
 ```csharp
-builder.Services.AddAsyncJobKit(options =>
+builder.Services.AddAsyncEndpoints(options =>
 {
     options.UsePostgres(connectionString);
 
@@ -300,7 +300,7 @@ await submitter.SubmitAsync(job, channel: "email");
 #### Tier 3: "I need per-entity ordering"
 
 ```csharp
-builder.Services.AddAsyncJobKit(options =>
+builder.Services.AddAsyncEndpoints(options =>
 {
     options.UsePostgres(connectionString);
 
@@ -318,7 +318,7 @@ await submitter.SubmitAsync(job, partitionBy: order.OrderId);
 ### Options Builder
 
 ```csharp
-public class AsyncJobKitOptionsBuilder
+public class AsyncEndpointsOptionsBuilder
 {
     // Provider (exactly one required)
     public void UsePostgres(string conn) { ... }
@@ -357,7 +357,7 @@ UseRedis + partitioning enabled
 ### Handler Auto-Discovery
 
 ```csharp
-builder.Services.AddAsyncJobKit(options =>
+builder.Services.AddAsyncEndpoints(options =>
 {
     options.UsePostgres(connectionString);
     options.ScanHandlersFrom(typeof(Program).Assembly); // optional, scans entry assembly by default
@@ -370,7 +370,7 @@ Payload type name is stored at enqueue; correct handler resolved from DI at dequ
 ### Auto-Mapped Status Endpoints
 
 ```csharp
-app.MapAsyncJobKitEndpoints("/jobs");
+app.MapAsyncEndpointsEndpoints("/jobs");
 
 // GET /jobs/{id}         -> job status, progress, result
 // GET /jobs/{int}/result  -> final result payload (when completed)
