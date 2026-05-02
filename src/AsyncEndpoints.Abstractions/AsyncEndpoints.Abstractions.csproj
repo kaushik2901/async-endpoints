@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Jobs\" />
+    <Folder Include="Listener\" />
+    <Folder Include="Common\" />
+    <Folder Include="Partitioning\" />
+    <Folder Include="Submission\" />
+    <Folder Include="Storage\" />
+  </ItemGroup>
+
+</Project>

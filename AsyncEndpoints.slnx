@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="src/AsyncEndpoints.Abstractions/AsyncEndpoints.Abstractions.csproj" />
+  <Project Path="src/AsyncEndpoints.AspNetCore/AsyncEndpoints.AspNetCore.csproj" />
+  <Project Path="src/AsyncEndpoints.Core/AsyncEndpoints.Core.csproj" />
+  <Project Path="src/AsyncEndpoints.Worker/AsyncEndpoints.Worker.csproj" />
+  <Project Path="src/AsyncEndpoints/AsyncEndpoints.csproj" />
+</Solution>

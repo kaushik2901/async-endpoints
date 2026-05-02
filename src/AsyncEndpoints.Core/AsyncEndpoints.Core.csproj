@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="DependencyInjection\" />
+    <Folder Include="Configuration\" />
+    <Folder Include="Execution\" />
+    <Folder Include="Listener\" />
+    <Folder Include="Channels\" />
+    <Folder Include="Internal\" />
+    <Folder Include="Serialization\" />
+    <Folder Include="Partitioning\" />
+    <Folder Include="Submission\" />
+  </ItemGroup>
+
+</Project>

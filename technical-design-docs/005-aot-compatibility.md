@@ -74,8 +74,11 @@ internal sealed class JobSerializerRegistry
     private readonly Dictionary<string, Func<object, string>> _ser = new();
     private readonly Dictionary<string, Func<string, object>> _de  = new();
     public void Register<TJob>(JsonTypeInfo<TJob> info) where TJob : class
-    { var k = typeof(TJob).Name; _ser[k] = o => JsonSerializer.Serialize((TJob)o, info);
-      _de[k] = j => JsonSerializer.Deserialize(j, info)!; }
+    {
+      var k = typeof(TJob).Name;
+      _ser[k] = o => JsonSerializer.Serialize((TJob)o, info);
+      _de[k] = j => JsonSerializer.Deserialize(j, info)!;
+    }
     public string Serialize<TJob>(TJob job) where TJob : class => _ser[typeof(TJob).Name](job);
     public object Deserialize(string key, string json) => _de[key](json);
 }
@@ -146,7 +149,7 @@ If specific internals must be preserved, include a minimal `ILLink.Descriptors.x
     <type fullname="AsyncEndpoints.Core.Execution.JobTypeRegistry" preserve="all"/>
     <type fullname="AsyncEndpoints.Core.Serialization.JobSerializerRegistry" preserve="all"/>
   </assembly>
-  </linker>
+</linker>
 ```
 
 ---
