@@ -5,6 +5,10 @@
   <Project Path="src/AsyncEndpoints.Abstractions/AsyncEndpoints.Abstractions.csproj" />
   <Project Path="src/AsyncEndpoints.AspNetCore/AsyncEndpoints.AspNetCore.csproj" />
   <Project Path="src/AsyncEndpoints.Core/AsyncEndpoints.Core.csproj" />
+  <Project Path="src/AsyncEndpoints.Provider.Postgres/AsyncEndpoints.Provider.Postgres.csproj" Id="040f4d43-d737-4af0-a7ab-36af0357fba1" />
   <Project Path="src/AsyncEndpoints.Worker/AsyncEndpoints.Worker.csproj" />
-  <Project Path="src/AsyncEndpoints/AsyncEndpoints.csproj" />
+  <Project Path="tests/AsyncEndpoints.Abstractions.UnitTests/AsyncEndpoints.Abstractions.UnitTests.csproj" Id="3e7f15df-88c1-42fb-ac88-0c4f6ff8f6e1" />
+  <Project Path="tests/AsyncEndpoints.AspNetCore.UnitTests/AsyncEndpoints.AspNetCore.UnitTests.csproj" Id="dc9f7aee-d349-4814-8932-0ddd6904833a" />
+  <Project Path="tests/AsyncEndpoints.Core.UnitTests/AsyncEndpoints.Core.UnitTests.csproj" Id="c6e7af64-2207-4cf9-86ae-6922eedbfe0a" />
+  <Project Path="tests/AsyncEndpoints.Worker.UnitTests/AsyncEndpoints.Worker.UnitTests.csproj" Id="7018ec17-cbee-47ee-91a6-b6ae297bae58" />
 </Solution>

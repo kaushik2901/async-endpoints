@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Jobs\" />
     <Folder Include="Listener\" />
     <Folder Include="Common\" />
     <Folder Include="Partitioning\" />

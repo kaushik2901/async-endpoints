@@ -16,6 +16,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AsyncEndpoints.Abstractions\AsyncEndpoints.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\AsyncEndpoints.Core\AsyncEndpoints.Core.csproj" />
+    <ProjectReference Include="..\..\src\AsyncEndpoints.Worker\AsyncEndpoints.Worker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>
