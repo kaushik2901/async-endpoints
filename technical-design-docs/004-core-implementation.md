@@ -1,8 +1,8 @@
-# AsyncEndpoints — Core Implementation Reference
+# AsyncEndpoints — Core Implementation Reference (AOT-Native)
 
 ## Overview
 
-This document covers the concrete implementation details that bridge the high-level design (001) and the folder structure (002) into working code. It is the authoritative reference for the `JobRecord` schema, state machine transition rules, atomic dequeue mechanics, heartbeat/sweeper contracts, retry and dead-letter behaviour, payload serialization, and the full `IJobStore` method contracts.
+This document covers the concrete implementation details that bridge the high-level design (001) and the folder structure (002) into working code. It is the authoritative reference for the `JobRecord` schema, state machine transition rules, atomic dequeue mechanics, heartbeat/sweeper contracts, retry and dead-letter behaviour, AOT-safe payload serialization/dispatch, and the full `IJobStore` method contracts.
 
 ---
 
@@ -13,14 +13,14 @@ public sealed class JobRecord
 {
     // Identity
     public Guid   JobId      { get; init; } = Guid.NewGuid();
-    public string JobType    { get; init; } = string.Empty; // e.g. "SendEmailJob"
+    public string JobType    { get; init; } = string.Empty; // e.g. "SendEmailJob" (job contract key)
     public string Channel    { get; init; } = "default";
     public int    Priority   { get; init; } = 5;            // lower = more urgent
     public int?   Partition  { get; init; }                 // null when partitioning disabled
 
     // Payload
-    public string PayloadJson { get; init; } = string.Empty; // System.Text.Json
-    public string PayloadType { get; init; } = string.Empty; // assembly-qualified short name
+    public string PayloadJson { get; init; } = string.Empty; // source-generated System.Text.Json
+    public string PayloadType { get; init; } = string.Empty; // same as JobType (simple name); no CLR lookup
 
     // Status
     public JobStatus Status    { get; set; } = JobStatus.Queued;
@@ -59,7 +59,7 @@ CREATE TABLE async_endpoints_jobs (
     partition       INT             NULL,
 
     payload_json    TEXT            NOT NULL,
-    payload_type    VARCHAR(512)    NOT NULL,
+    payload_type    VARCHAR(256)    NOT NULL,
 
     status          SMALLINT        NOT NULL DEFAULT 0,   -- see JobStatus enum
     retry_count     INT             NOT NULL DEFAULT 0,
@@ -492,7 +492,7 @@ public sealed record JobDescriptor
 }
 ```
 
-`JobSubmitter` creates a `JobDescriptor` from the user-facing `SubmitAsync<TJob>(TJob job, ...)` call:
+`JobSubmitter` creates a `JobDescriptor` from the user-facing `SubmitAsync<TJob>(TJob job, ...)` call using the AOT-safe serializer registry (no reflection):
 
 ```csharp
 public async Task<JobSubmitResult> SubmitAsync<TJob>(
@@ -501,12 +501,13 @@ public async Task<JobSubmitResult> SubmitAsync<TJob>(
     int? priority = null,
     object? partitionBy = null,
     CancellationToken ct = default)
+    where TJob : class
 {
     var descriptor = new JobDescriptor
     {
         JobType     = typeof(TJob).Name,
-        PayloadJson = JsonSerializer.Serialize(job, _serializerOptions),
-        PayloadType = typeof(TJob).AssemblyQualifiedName!,
+        PayloadJson = _serializers.Serialize(job),
+        PayloadType = typeof(TJob).Name,
         Channel     = channel  ?? _options.DefaultChannel,
         Priority    = priority ?? _options.DefaultPriority,
         Partition   = partitionBy != null
@@ -516,7 +517,8 @@ public async Task<JobSubmitResult> SubmitAsync<TJob>(
     };
 
     var jobId = await _store.EnqueueAsync(descriptor, ct);
-    await _notifier?.NotifyJobAvailableAsync(descriptor.Channel, ct);
+    if (_notifier != null)
+        await _notifier.NotifyJobAvailableAsync(descriptor.Channel, ct);
 
     return new JobSubmitResult(jobId, descriptor.Channel);
 }
@@ -524,66 +526,110 @@ public async Task<JobSubmitResult> SubmitAsync<TJob>(
 
 ---
 
-## 8. Payload Serialization
+## 8. Payload Serialization and Handler Dispatch (AOT-Safe)
 
-### JobSerializer
+All serialization and dispatch paths are AOT-safe — no runtime type discovery, no `dynamic`, no generic construction at runtime.
 
-All serialization goes through `JobSerializer` to keep the format configurable and consistent.
+### 8a. JsonSerializerContext + Serializer Registry
+
+`System.Text.Json` source generation provides `JsonTypeInfo<T>` for each job contract. The library stores delegates built from these `JsonTypeInfo<T>` instances in a serializer registry used by both enqueue and dispatch.
 
 ```csharp
-internal sealed class JobSerializer
+internal sealed class JobSerializerRegistry
 {
-    private static readonly JsonSerializerOptions Options = new()
+    private readonly Dictionary<string, Func<object, string>> _serializers = new();
+    private readonly Dictionary<string, Func<string, object>> _deserializers = new();
+
+    public void Register<TJob>(JsonTypeInfo<TJob> jsonTypeInfo) where TJob : class
     {
-        PropertyNamingPolicy        = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition      = JsonIgnoreCondition.WhenWritingNull,
-        Converters                  = { new JsonStringEnumConverter() }
-    };
+        var key = typeof(TJob).Name;
+        _serializers[key]   = obj => JsonSerializer.Serialize((TJob)obj, jsonTypeInfo);
+        _deserializers[key] = json => JsonSerializer.Deserialize(json, jsonTypeInfo)
+                                ?? throw new JobDeserializationException(key, json);
+    }
 
-    public string Serialize<TJob>(TJob job)
-        => JsonSerializer.Serialize(job, Options);
+    public string Serialize<TJob>(TJob job) where TJob : class
+        => _serializers[typeof(TJob).Name](job);
 
-    public TJob Deserialize<TJob>(string json)
-        => JsonSerializer.Deserialize<TJob>(json, Options)
-           ?? throw new JobDeserializationException(typeof(TJob), json);
-
-    public object Deserialize(string json, Type type)
-        => JsonSerializer.Deserialize(json, type, Options)
-           ?? throw new JobDeserializationException(type, json);
+    public object Deserialize(string jobTypeKey, string json)
+        => _deserializers[jobTypeKey](json);
 }
 ```
 
-### Handler Resolution
+### 8b. JobTypeRegistry + IJobExecutor
 
-At dequeue time, the worker resolves the correct `IJobHandler<TJob>` from DI using the `JobType` string stored on the record:
+At startup we register a factory for each job type that can execute the handler without knowing `TJob` at dispatch time.
+
+```csharp
+public interface IJobExecutor
+{
+    Task ExecuteAsync(JobRecord record, CancellationToken ct);
+}
+
+internal sealed class JobExecutor<TJob> : IJobExecutor where TJob : class
+{
+    private readonly IJobHandler<TJob> _handler;
+    private readonly Func<string, TJob> _deserialize;
+
+    public JobExecutor(IJobHandler<TJob> handler, Func<string, TJob> deserialize)
+    { _handler = handler; _deserialize = deserialize; }
+
+    public Task ExecuteAsync(JobRecord record, CancellationToken ct)
+        => _handler.HandleAsync(_deserialize(record.PayloadJson), ct);
+}
+
+public sealed class JobTypeRegistry
+{
+    private readonly Dictionary<string, Func<IServiceProvider, IJobExecutor>> _factories = new();
+
+    public void Register<TJob>(Func<string, TJob> deserialize) where TJob : class
+    {
+        var key = typeof(TJob).Name;
+        _factories[key] = sp =>
+        {
+            var handler = sp.GetRequiredService<IJobHandler<TJob>>();
+            return new JobExecutor<TJob>(handler, deserialize);
+        };
+    }
+
+    public IJobExecutor Resolve(string jobTypeKey, IServiceProvider sp)
+        => _factories.TryGetValue(jobTypeKey, out var f)
+           ? f(sp)
+           : throw new UnknownJobTypeException(jobTypeKey);
+}
+```
+
+### 8c. Dispatcher (dictionary lookup only)
 
 ```csharp
 internal sealed class JobDispatcher
 {
+    private readonly JobTypeRegistry _registry;
     private readonly IServiceProvider _sp;
-    private readonly JobSerializer    _serializer;
 
-    public async Task DispatchAsync(JobRecord record, CancellationToken ct)
-    {
-        // 1. Resolve the CLR type from the stored type name
-        var jobType = Type.GetType(record.PayloadType)
-            ?? throw new UnknownJobTypeException(record.PayloadType);
+    public JobDispatcher(JobTypeRegistry registry, IServiceProvider sp)
+    { _registry = registry; _sp = sp; }
 
-        // 2. Deserialize the payload
-        var payload = _serializer.Deserialize(record.PayloadJson, jobType);
-
-        // 3. Resolve the handler from DI (scoped per job)
-        var handlerType = typeof(IJobHandler<>).MakeGenericType(jobType);
-        using var scope  = _sp.CreateScope();
-        var handler = scope.ServiceProvider.GetRequiredService(handlerType);
-
-        // 4. Invoke via the interface (reflection or source gen)
-        await ((dynamic)handler).HandleAsync((dynamic)payload, ct);
-    }
+    public Task DispatchAsync(JobRecord record, CancellationToken ct)
+        => _registry.Resolve(record.JobType, _sp).ExecuteAsync(record, ct);
 }
 ```
 
-`ScanHandlersFrom` auto-registers all `IJobHandler<T>` implementations at startup using a simple assembly scan, so no manual registration is needed.
+### 8d. Registration
+
+Applications register job types with their source-generated `JsonTypeInfo<T>`:
+
+```csharp
+// Application
+[JsonSerializable(typeof(SendEmailJob))]
+public partial class MyJobsJsonContext : JsonSerializerContext { }
+
+builder.Services
+    .AddAsyncEndpoints(o => o.UsePostgres(cs))
+    .AddJobType<SendEmailJob>(MyJobsJsonContext.Default.SendEmailJob);
+```
+
+For convenience, a Roslyn source generator can emit the `AddJobType<T>` and handler DI registrations automatically. No assembly scanning is used.
 
 ---
 
@@ -649,7 +695,7 @@ public sealed record JobStatusResponse
 ```
 AsyncEndpointsException                   (base)
 ├── InvalidJobStatusTransitionException   (illegal state machine transition)
-├── UnknownJobTypeException               (PayloadType not resolvable)
+├── UnknownJobTypeException               (job type key not registered)
 ├── JobDeserializationException           (payload JSON could not be parsed)
 ├── JobNotFoundException                  (GetStatusAsync on unknown jobId)
 └── PartitionLeaseException               (lease acquisition / renewal failure)
