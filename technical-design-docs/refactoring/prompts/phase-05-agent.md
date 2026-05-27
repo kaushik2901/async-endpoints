@@ -7,7 +7,8 @@ You are implementing Phase 05 of the AsyncEndpoints architecture realignment. Yo
 The new Core layer implements all orchestration logic:
 - **JobSubmitter**: Serializes job payload → creates `JobDescriptor` → calls `IJobStore.EnqueueAsync`
 - **PollingJobListener**: Adaptive polling loop over `IJobStore.DequeueAsync` with exponential backoff
-- **JobDispatcher**: Resolves `IJobHandler<T>` from DI, deserializes payload, invokes handler
+- **IHandlerRegistry**: Stores compile-time typed delegates keyed by job name (AOT-safe — replaces static `HandlerRegistrationTracker`)
+- **JobDispatcher**: Looks up typed delegate from `IHandlerRegistry` by job name, invokes it. The delegate (captured at `AddJobHandler<T>()` compile time) handles typed deserialization + `IJobHandler<T>` resolution.
 - **ChannelManager**: Manages named channel configurations
 - **PartitionManager** + **LeaseBasedPartitionAssigner**: Partition lease management
 
@@ -34,24 +35,31 @@ Build all Core orchestration services. Wire them via DI in `ServiceCollectionExt
 - Adaptive backoff: success → reset to min; empty → double up to max
 - `WaitForNextJobAsync`: call `IJobStore.DequeueAsync`, apply backoff, return `JobRecord?`
 
-### 5.3 Create `Core/Execution/JobDispatcher.cs`
-- Injects: `IServiceProvider`, `ISerializer`
-- `DispatchAsync(JobRecord record)`: deserialize payload to T → resolve `IJobHandler<T>` → invoke → return success/failure
-- Handle missing handler gracefully (mark job failed)
+### 5.3 Create `Core/Execution/IHandlerRegistry.cs` + `HandlerRegistry.cs`
+- Injects: (none needed — just a `ConcurrentDictionary`)
+- `Register<T>(string jobName, Func<IServiceProvider, JobRecord, CancellationToken, Task> invoker)` — stores a typed delegate
+- `GetInvoker(string jobName) → Func<IServiceProvider, JobRecord, CancellationToken, Task>?` — lookup by name
+- The delegate captures `T` at compile time (set up by `AddJobHandler<T>()`) and handles typed deserialization + typed `IJobHandler<T>` resolution internally. This avoids runtime reflection.
 
-### 5.4 Create `Core/Channels/ChannelManager.cs`
+### 5.4 Create `Core/Execution/JobDispatcher.cs`
+- Injects: `IServiceProvider`, `IHandlerRegistry`
+- `DispatchAsync(JobRecord record)`: look up invoker from `IHandlerRegistry` by `record.JobName` → invoke → return success/failure
+- Handle missing handler gracefully (mark job failed)
+- **No runtime reflection**: the typed work (deserialization, `IJobHandler<T>` resolution) happens inside the pre-registered delegate
+
+### 5.5 Create `Core/Channels/ChannelManager.cs`
 - Stores channel configs (name, maxConcurrency, maxRetries, partitions)
 - Methods: `GetChannelNames()`, `GetChannelConfig(name)`, `GetConfiguredChannels()`
 
-### 5.5 Create `Core/Partitioning/PartitionManager.cs` + `LeaseBasedPartitionAssigner.cs`
+### 5.6 Create `Core/Partitioning/PartitionManager.cs` + `LeaseBasedPartitionAssigner.cs`
 - `PartitionManager`: assign/release/get partitions for workers
 - `LeaseBasedPartitionAssigner`: implements `IPartitionAssigner`, lease acquire/renew/release
 
-### 5.6 Create/update `Core/DependencyInjection/ServiceCollectionExtensions.cs`
+### 5.7 Create/update `Core/DependencyInjection/ServiceCollectionExtensions.cs`
 - `AddAsyncEndpointsCore(this IServiceCollection, Action<AsyncEndpointsOptionsBuilder>? configure = null)`
-- Register: `IJobSubmitter → JobSubmitter`, `IJobListener → PollingJobListener`, `JobDispatcher`, `ChannelManager`, `ISerializer → JobSerializer`, `AsyncEndpointsOptions`
+- Register: `IJobSubmitter → JobSubmitter`, `IJobListener → PollingJobListener`, `IHandlerRegistry → HandlerRegistry`, `JobDispatcher`, `ChannelManager`, `ISerializer → JobSerializer`, `AsyncEndpointsOptions`
 
-### 5.7 Write unit tests for all 5 services
+### 5.8 Write unit tests for all services
 
 ## Validation
 - `dotnet build src/AsyncEndpoints.Core/` succeeds

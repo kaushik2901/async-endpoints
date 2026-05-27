@@ -51,27 +51,38 @@ var job = await listener.WaitForNextJobAsync("default", null, CancellationToken.
 
 ---
 
-### 5.3 Create JobDispatcher
+### 5.3 Create IHandlerRegistry and HandlerRegistry
+
+⚠️ **AOT requirement**: Handler dispatch must NOT use runtime reflection (`MakeGenericMethod`, `Activator.CreateInstance`, or `GetRequiredService(Type)`). All typed work must happen inside a compile-time captured delegate.
+
+- [ ] Create `src/AsyncEndpoints.Core/Execution/IHandlerRegistry.cs`
+  - [ ] `void Register<T>(string jobName, Func<IServiceProvider, JobRecord, CancellationToken, Task> invoker)`
+  - [ ] `Func<IServiceProvider, JobRecord, CancellationToken, Task>? GetInvoker(string jobName)`
+- [ ] Create `src/AsyncEndpoints.Core/Execution/HandlerRegistry.cs`
+  - [ ] Thread-safe `ConcurrentDictionary<string, Func<...>>` storage
+  - [ ] Not static — proper DI service (fixes test isolation issue of old `HandlerRegistrationTracker`)
+
+### 5.4 Create JobDispatcher
 
 - [ ] Create `src/AsyncEndpoints.Core/Execution/JobDispatcher.cs`
-- [ ] Constructor injects: `IServiceProvider`, `ISerializer`
+- [ ] Constructor injects: `IServiceProvider`, `IHandlerRegistry`
 - [ ] `DispatchAsync(JobRecord record, CancellationToken ct)`:
-  - [ ] Deserialize `record.Payload` to `T` using `ISerializer`
-  - [ ] Resolve `IJobHandler<T>` from `IServiceProvider`
-  - [ ] Invoke `handler.HandleAsync(job, ct)`
+  - [ ] Look up invoker from `IHandlerRegistry.GetInvoker(record.JobName)`
+  - [ ] If null: log warning, mark job as failed (missing handler registration)
+  - [ ] Invoke delegate: `await invoker(serviceProvider, record, ct)`
   - [ ] Return success or exception info
-- [ ] Handle missing handler registration gracefully (log warning, mark job as failed)
+- [ ] **No runtime reflection** — typed deserialization and `IJobHandler<T>` resolution happen inside the pre-registered delegate (captured at compile time by `AddJobHandler<T>()`)
 
 **Validation**:
 ```csharp
-var dispatcher = new JobDispatcher(serviceProvider, serializer);
+var dispatcher = new JobDispatcher(serviceProvider, handlerRegistry);
 var result = await dispatcher.DispatchAsync(record, ct);
 // result indicates success/failure
 ```
 
 ---
 
-### 5.4 Create ChannelManager
+### 5.5 Create ChannelManager
 
 - [ ] Create `src/AsyncEndpoints.Core/Channels/ChannelManager.cs`
 - [ ] Constructor injects: channel configurations (from `AsyncEndpointsOptions` or `ChannelBuilder`)
@@ -85,7 +96,7 @@ var result = await dispatcher.DispatchAsync(record, ct);
 
 ---
 
-### 5.5 Create PartitionManager and LeaseBasedPartitionAssigner
+### 5.6 Create PartitionManager and LeaseBasedPartitionAssigner
 
 - [ ] Create `src/AsyncEndpoints.Core/Partitioning/PartitionManager.cs`
 - [ ] Constructor injects: `IPartitionAssigner`, partition config
@@ -101,7 +112,7 @@ var result = await dispatcher.DispatchAsync(record, ct);
 
 ---
 
-### 5.6 Create Core DI registration
+### 5.7 Create Core DI registration
 
 - [ ] Create/Update `src/AsyncEndpoints.Core/DependencyInjection/ServiceCollectionExtensions.cs`
 - [ ] Define `AddAsyncEndpointsCore(this IServiceCollection services, Action<AsyncEndpointsOptionsBuilder>? configure = null)`
@@ -118,7 +129,7 @@ var result = await dispatcher.DispatchAsync(record, ct);
 
 ---
 
-### 5.7 Write unit tests
+### 5.8 Write unit tests
 
 - [ ] In `tests/AsyncEndpoints.Core.UnitTests/`:
   - [ ] `JobSubmitterTests`:
@@ -130,11 +141,19 @@ var result = await dispatcher.DispatchAsync(record, ct);
     - [ ] `WaitForNextJobAsync_AdaptiveBackoff_ResetsOnSuccess`
     - [ ] `WaitForNextJobAsync_AdaptiveBackoff_DoublesOnEmpty`
     - [ ] `WaitForNextJobAsync_RespectsCancellationToken`
+  - [ ] `IHandlerRegistryTests`:
+    - [ ] `Register_StoresDelegate_ByJobName`
+    - [ ] `GetInvoker_ReturnsNull_ForUnknownJobName`
+    - [ ] `Register_IsThreadSafe`
+  - [ ] `HandlerRegistryTests`:
+    - [ ] `RegisterAndInvoke_DelegateCapturesTypeAtCompileTime`
+    - [ ] `MultipleRegistrations_DontConflict`
   - [ ] `JobDispatcherTests`:
-    - [ ] `DispatchAsync_ResolvesHandler_AndInvokesIt`
-    - [ ] `DispatchAsync_DeserializesPayload_ToCorrectType`
+    - [ ] `DispatchAsync_LooksUpInvoker_FromRegistry`
+    - [ ] `DispatchAsync_InvokesDelegate_WithServiceProvider`
     - [ ] `DispatchAsync_ReturnsFailure_WhenHandlerNotFound`
-    - [ ] `DispatchAsync_ReturnsFailure_WhenHandlerThrows`
+    - [ ] `DispatchAsync_ReturnsFailure_WhenDelegateThrows`
+    - [ ] `DispatchAsync_NoReflection_NoMakeGenericMethodUsed`
   - [ ] `ChannelManagerTests`:
     - [ ] `GetChannelNames_ReturnsConfiguredChannels`
     - [ ] `GetChannelConfig_ReturnsConfig_ForKnownChannel`

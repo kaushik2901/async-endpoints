@@ -39,11 +39,16 @@
     - [ ] `AdaptiveBackoff_DoublesOnEmpty`
     - [ ] `AdaptiveBackoff_RespectsMaxInterval`
     - [ ] `Cancellation_StopsWaiting`
+  - [ ] **IHandlerRegistry tests** (Phase 05):
+    - [ ] `Register_StoresDelegateByJobName`
+    - [ ] `GetInvoker_ReturnsNull_ForUnknown`
+    - [ ] `ThreadSafety_MultipleRegistrations`
   - [ ] **JobDispatcher tests** (Phase 05):
-    - [ ] `DispatchAsync_ResolvesHandler`
-    - [ ] `DispatchAsync_DeserializesPayload`
+    - [ ] `DispatchAsync_LooksUpFromRegistry`
+    - [ ] `DispatchAsync_InvokesDelegate`
     - [ ] `DispatchAsync_HandlerNotFound_FailsGracefully`
-    - [ ] `DispatchAsync_HandlerThrows_ReturnsFailure`
+    - [ ] `DispatchAsync_DelegateThrows_ReturnsFailure`
+    - [ ] `DispatchAsync_NoReflection`
   - [ ] **ChannelManager tests** (Phase 05):
     - [ ] `GetChannelNames_ReturnsConfigured`
     - [ ] `GetChannelConfig_ByName`
@@ -115,7 +120,7 @@
   - [ ] `JobManager` tests → delete or rewrite for `JobSubmitter`
   - [ ] `Job` class tests → rewrite as `JobRecord` + `JobDescriptor` tests
   - [ ] `IJobStore` tests → update to new interface contract
-  - [ ] `HandlerRegistrationTracker` tests → delete
+  - [ ] `HandlerRegistrationTracker` tests → **rewrite** as `IHandlerRegistry` + `HandlerRegistry` tests (pattern is preserved for AOT, but the impl is now DI-registered, not static)
   - [ ] Old worker pipeline tests → delete
 - [ ] Keep tests for components that survived:
   - [ ] Observability tests (updated for new data model)
@@ -150,7 +155,8 @@
   - [ ] `IJobManager` / `JobManager`
   - [ ] `IJobRecoveryService` / `DistributedJobRecoveryService`
   - [ ] `IAsyncEndpointRequestHandler`
-  - [ ] `HandlerRegistration` / `HandlerRegistrationTracker`
+  - [ ] `HandlerRegistration` (delete — replaced by `IHandlerRegistry`)
+  - [ ] `HandlerRegistrationTracker` (do NOT delete — refactored into `IHandlerRegistry` + `HandlerRegistry`; update tests instead)
   - [ ] `AsyncContext` / `AsyncContextBuilder`
   - [ ] `NoBodyRequest`
   - [ ] `ErrorType`
@@ -205,7 +211,7 @@ After Phase 11, verify against the overall Definition of Done:
 - [ ] Channel support works (per-channel workers + weighted round-robin)
 - [ ] Partition support works (hash-based + lease-based assignment)
 - [ ] AspNetCore endpoints use `IJobSubmitter` (not `IJobManager`)
-- [ ] `HandlerRegistrationTracker` (static global) is eliminated
+- [ ] `HandlerRegistrationTracker` (static global) is replaced by DI-registered `IHandlerRegistry` (delegate-registry pattern preserved for AOT safety)
 - [ ] All examples are updated to use new API
 - [ ] All tests pass (unit + integration)
 - [ ] NuGet meta package provides backward compatibility with `[Obsolete]` warnings

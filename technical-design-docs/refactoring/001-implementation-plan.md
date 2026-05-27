@@ -116,7 +116,7 @@ Providers ─────────────► Abstractions   (optionally 
 | `JobProcessing/ErrorType.cs` | **DELETE** | Not in design doc. Retry handling moved to `RetryHandler` in Worker | |
 | `Handlers/IAsyncEndpointRequestHandler.cs` | **DELETE** → replaced by `Abstractions/Jobs/IJobHandler.cs` | New: `Task HandleAsync(TJob job, CancellationToken ct)` | **Major change for consumers** |
 | `Handlers/AsyncContext.cs` | **DELETE** (from Core) → move HTTP portion to `AspNetCore/Models/` | HTTP context data not part of core job processing | |
-| `Handlers/HandlerRegistration.cs` | **DELETE** | Registry pattern eliminated; DI auto-discovery replaces it | |
+| `Handlers/HandlerRegistration.cs` | **REWRITE** → `Core/Execution/IHandlerRegistry.cs` + `HandlerRegistry.cs` | Non-static, DI-registered registry of typed delegates. Stores `Func<IServiceProvider, JobRecord, CancellationToken, Task>` keyed by job name. Registering `IJobHandler<T>` via `AddJobHandler<T>()` stores a delegate that captures `T` at compile time — no reflection. | |
 | `Handlers/NoBodyRequest.cs` | **DELETE** | No-body concept gone; `IJobHandler<T>` always receives `T` | |
 | `Background/IHandlerExecutionService.cs` | **DELETE** | Handler execution moves to `Core/Execution/JobDispatcher.cs` | |
 | `Background/IJobChannelEnqueuer.cs` | **DELETE** | Channel-based pipeline removed | |
@@ -141,7 +141,7 @@ Providers ─────────────► Abstractions   (optionally 
 | `Infrastructure/Serialization/JsonBodyParserService.cs` | **MOVE** → `AspNetCore/Serialization/` | Contains `HttpContext` reference | |
 | `Infrastructure/Serialization/Serializer.cs` | **REFACTOR** → `Core/Serialization/JobSerializer.cs` | Remove dependency on `Microsoft.AspNetCore.Http.Json.JsonOptions` | |
 | `Utilities/AsyncContextBuilder.cs` | **DELETE** → replaced by `JobDispatcher` | | |
-| `Utilities/HandlerRegistrationTracker.cs` | **DELETE** | Static global replaced by DI scanning | |
+| `Utilities/HandlerRegistrationTracker.cs` | **RENAME + REFACTOR** → `Core/Execution/IHandlerRegistry.cs` + `HandlerRegistry.cs` | Static global replaced by DI-registered service. Delegate-registry pattern preserved (required for AOT safety). | |
 | `Utilities/JobResponse.cs` | **MOVE** → `AspNetCore/Models/JobResponse.cs` | HTTP response DTO | |
 | `Utilities/JobResponseMapper.cs` | **MOVE** → `AspNetCore/Models/` | Mapping logic for HTTP responses | |
 | `Utilities/JobResultResponse.cs` | **MOVE** → `AspNetCore/Endpoints/` | Implements `IResult` | |
@@ -438,12 +438,12 @@ class AsyncEndpointsOptionsBuilder {
 
 #### G3: `AddAsyncEndpointHandler<>` is in AspNetCore (and Aggregator)
 **Current**: Handler registration with `HandlerRegistrationTracker` (static global) happens in DI configuration.
-**Fix**: Handler registration should use DI scanning and not rely on static state. Move to Core/Worker.
+**Fix**: Move registration to Core. `AddJobHandler<T>()` registers `IJobHandler<T>` in DI AND stores a typed delegate in `IHandlerRegistry`. The delegate captures `T` at compile time, handling typed deserialization + typed handler resolution — no reflection needed. This pattern is required for AOT compatibility.
 
 #### G4: `HandlerRegistrationTracker` is a Static Global
 **Current**: `ConcurrentDictionary`-based static registry for handler lookups.
 **Problem**: Cannot be tested in isolation, leaks state between tests, not compatible with multi-tenant scenarios.
-**Fix**: Replace with DI-based registration: register `IJobHandler<T>` implementations. Use `IServiceProvider` to resolve at runtime.
+**Fix**: Replace static global with DI-registered `IHandlerRegistry` service. At registration time, `AddJobHandler<T>()` stores a delegate that captures `T` at compile time: the delegate deserializes the payload to `T` (using source-generated `JsonSerializerContext`), resolves `IJobHandler<T>` from DI, and invokes it. `JobDispatcher` looks up the delegate by job name and calls it — no runtime reflection. This is the same core pattern as the current `HandlerRegistrationTracker.Invoker<TRequest,TResponse>` but as a proper DI service.
 
 ### Category H: Channels and Partitions (New Features)
 
@@ -471,8 +471,17 @@ class AsyncEndpointsOptionsBuilder {
 - `AsyncEndpointsJsonSerializationContext` in Core
 - `ApplicationJsonSerializationContext` in each example project
 
-**Challenge**: New types (`JobRecord`, `JobDescriptor`, etc.) need to be added to the source-generated context.
-**Fix**: Consolidate into `AsyncEndpoints.Serialization.JsonSerializationContext` in Core.
+**Challenges**:
+1. New types (`JobRecord`, `JobDescriptor`, etc.) need to be added to the source-generated context.
+2. `Serializer.cs` suppresses `IL2026`/`IL3050` on all non-generic overloads (`Deserialize(string, Type)`, `Serialize(object, Type)`). These use runtime `Type` with STJ = reflection, which breaks AOT.
+3. `JobDispatcher` must not resolve `IJobHandler<T>` at runtime via reflection — it must use pre-registered typed delegates (see Category G).
+4. Consumer DTOs (the `T` in `IJobHandler<T>`) cannot be known by the library's source generator — consumers need their own `JsonSerializationContext`.
+
+**Fixes**:
+1. Consolidate library types into `AsyncEndpoints.Serialization.JsonSerializationContext` in Core.
+2. Remove non-generic overloads from `ISerializer` and `JobSerializer`. The typed delegates registered by `AddJobHandler<T>()` handle typed deserialization with `JsonSerializer.Deserialize<T>(payload, consumerContext.Default.T)`, eliminating the need for runtime-type serialization.
+3. `JobDispatcher` uses `IHandlerRegistry` (compile-time delegates) instead of runtime DI resolution — no reflection.
+4. Consumers must define a `[JsonSerializable(typeof(MyPayload))]` partial `JsonSerializerContext` and pass it during registration. Document this as a requirement in migration guide.
 
 ### Category J: Example/Consumer Impact
 
@@ -572,7 +581,9 @@ class MyHandler : IJobHandler<MyRequest> {
 | `Configuration/ChannelBuilder.cs` | Channel configuration builder |
 | `Configuration/PartitionOptions.cs` | Partition configuration |
 | `Submission/JobSubmitter.cs` | Implements `IJobSubmitter` |
-| `Execution/JobDispatcher.cs` | Deserializes payload, resolves `IJobHandler<T>`, invokes it |
+| `Execution/IHandlerRegistry.cs` | Interface: `Register<T>(string, Func<...>)`, `GetInvoker(string)`. Stores compile-time typed delegates keyed by job name. |
+| `Execution/HandlerRegistry.cs` | Implementation of `IHandlerRegistry`. Manages delegates that capture `T` at compile time (AOT-safe). |
+| `Execution/JobDispatcher.cs` | Looks up typed delegate from `IHandlerRegistry` by job name, invokes it. Delegate handles typed deserialization + handler resolution (captures `T` at compile time via `AddJobHandler<T>()`). No runtime reflection. |
 | `Listener/PollingJobListener.cs` | Adaptive polling implementation of `IJobListener` |
 | `Partitioning/PartitionManager.cs` | Manages partition state, rebalancing |
 | `Partitioning/LeaseBasedPartitionAssigner.cs` | Implements `IPartitionAssigner` for lease-based partition ownership |
@@ -626,7 +637,7 @@ class MyHandler : IJobHandler<MyRequest> {
 | `Core/Background/IJobProducerService.cs` | Producer pattern removed |
 | `Core/Background/JobClaimingState.cs` | Enum no longer needed |
 | `Core/Utilities/AsyncContextBuilder.cs` | Replaced by `JobDispatcher` |
-| `Core/Utilities/HandlerRegistrationTracker.cs` | Static global replaced by DI |
+| `Core/Utilities/HandlerRegistrationTracker.cs` | **RENAME + REFACTOR** → `Core/Execution/IHandlerRegistry.cs` + `HandlerRegistry.cs` | Replace static global with DI-registered service. Registry stores compile-time generated delegates keyed by job name — required for AOT-safe handler dispatch. |
 | `Worker/Background/JobProducerService.cs` | Replaced by `PollingJobListener` |
 | `Worker/Background/JobConsumerService.cs` | Replaced by `JobWorkerService` |
 | `Worker/Background/JobClaimingService.cs` | Deleted |
@@ -761,18 +772,25 @@ class MyHandler : IJobHandler<MyRequest> {
 2. Create `Core/Listener/PollingJobListener.cs` (implements `IJobListener`):
    - Adaptive backoff: starts at `PollingMinInterval`, doubles on empty, resets on dequeue
    - Calls `IJobStore.DequeueAsync(channel, partitions)`
-3. Create `Core/Execution/JobDispatcher.cs`:
-   - Deserializes payload to `T` using `ISerializer`
-   - Resolves `IJobHandler<T>` from DI
-   - Invokes handler
-   - Returns result for status update
-4. Create `Core/Channels/ChannelManager.cs`:
+3. Create `Core/Execution/IHandlerRegistry.cs` + `HandlerRegistry.cs`:
+   - DI-registered service (replaces static `HandlerRegistrationTracker`)
+   - `Register<T>(string jobName, Func<IServiceProvider, JobRecord, CancellationToken, Task> handlerFactory)` — stores a typed delegate
+   - `GetInvoker(string jobName) → Func<IServiceProvider, JobRecord, CancellationToken, Task>?` — lookup by job name
+   - The delegate captures `T` at compile time and handles typed deserialization + typed handler resolution
+4. Create `Core/Execution/JobDispatcher.cs`:
+   - Injects `IHandlerRegistry`, `IServiceProvider`
+   - `DispatchAsync(JobRecord record, CancellationToken ct)`:
+     - Looks up invoker delegate from `IHandlerRegistry` by `record.JobName`
+     - Invokes delegate with `IServiceProvider` and `JobRecord`
+     - Returns success/failure for status update
+   - No runtime reflection: all typed work (deserialization, handler resolution) happens inside the pre-registered delegate
+5. Create `Core/Channels/ChannelManager.cs`:
    - Stores channel configurations (name, concurrency, retries)
    - Creates per-channel worker pools or weighted round-robin
-5. Create `Core/Partitioning/PartitionManager.cs` + `LeaseBasedPartitionAssigner.cs`:
+6. Create `Core/Partitioning/PartitionManager.cs` + `LeaseBasedPartitionAssigner.cs`:
    - Manages partition leases
    - Handles rebalancing
-6. Update `Core/DependencyInjection/ServiceCollectionExtensions.cs`:
+7. Update `Core/DependencyInjection/ServiceCollectionExtensions.cs`:
    - Register all new services
    - Provide `AddAsyncEndpointsCore()` extension
 
@@ -904,7 +922,7 @@ class MyHandler : IJobHandler<MyRequest> {
 3. Populate `AsyncEndpoints.Worker.UnitTests/` — test worker pipeline
 4. Populate `AsyncEndpoints.AspNetCore.UnitTests/` — test endpoint mapping
 5. Update existing `AsyncEndpoints.UnitTests/` and `AsyncEndpoints.Redis.UnitTests/` for new implementations
-6. Remove tests for deleted files (e.g., `JobManager` tests, `JobProducerService` tests, `HandlerRegistrationTracker` tests)
+6. Remove tests for deleted files (e.g., `JobManager` tests, `JobProducerService` tests). **Rewrite** (not delete) `HandlerRegistrationTracker` tests → `IHandlerRegistry` + `HandlerRegistry` tests.
 
 ---
 
@@ -984,7 +1002,7 @@ Create a shared test suite that every provider must pass:
 | R3 | `MethodResult<T>` vs new `Result<T>` confusion during transition | Medium | High | Keep both temporarily; `MethodResult` becomes thin wrapper |
 | R4 | Performance regression from blocking fast consumers with Channel removal | Medium | Medium | Use SemaphoreSlim for backpressure; benchmark before/after |
 | R5 | Channel/partitioning adds significant complexity | Medium | High | Phase it in: channels first (Phase 6), partitioning later (Phase 6b) |
-| R6 | AOT compatibility broken by reflection-based handler resolution | Medium | Low | Use source generators or compile-time expressions for handler invocation |
+| R6 | AOT compatibility broken by reflection-based handler resolution | High | Medium | Use `IHandlerRegistry` with compile-time typed delegates (not runtime DI resolution). Remove `ISerializer` non-generic overloads. Document consumer `JsonSerializerContext` requirement. |
 | R7 | NuGet package fragmentation confuses consumers | Medium | Medium | Clear migration guide, meta package with `[Obsolete]` warnings |
 | R8 | Redis Lua script changes break on Redis cluster | Medium | Low | Test against Redis Cluster in CI |
 | R9 | Microsoft.AspNetCore.App removal from Core breaks existing consumers of `ISerializer` or other types | Low | Medium | Keep `Core` offering ASP.NET-friendly overloads at AspNetCore level |
@@ -1008,7 +1026,10 @@ Create a shared test suite that every provider must pass:
 - [ ] Channel support works (per-channel workers + weighted round-robin)
 - [ ] Partition support works (hash-based + lease-based assignment)
 - [ ] AspNetCore endpoints use `IJobSubmitter` (not `IJobManager`)
-- [ ] `HandlerRegistrationTracker` (static global) is eliminated
+- [ ] `HandlerRegistrationTracker` (static global) is replaced by DI-registered `IHandlerRegistry` — typed delegates keyed by job name, preserving the AOT-safe compile-time delegate pattern
+- [ ] `JobDispatcher` uses `IHandlerRegistry` lookup (no runtime reflection to resolve `IJobHandler<T>`)
+- [ ] `ISerializer` non-generic overloads (`Deserialize(string, Type)`, `Serialize(object, Type)`) are removed — typed delegates handle their own serialization
+- [ ] All handler registration is AOT-safe: `AddJobHandler<T>()` captures `T` at compile time in a typed delegate
 - [ ] All examples are updated to use new API
 - [ ] All tests pass (unit + integration)
 - [ ] NuGet meta package provides backward compatibility with `[Obsolete]` warnings

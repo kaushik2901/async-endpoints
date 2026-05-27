@@ -11,7 +11,10 @@ By this phase, all new code is in place across all projects:
 - AspNetCore: Minimal API endpoints
 - Providers: InMemory + Redis implement new IJobStore
 
-Old components **deleted**: JobManager, IJobRecoveryService, HandlerRegistrationTracker, all Background/ Channel-pattern files, IAsyncEndpointRequestHandler, AsyncContext, etc.
+Old components **deleted**: JobManager, IJobRecoveryService, all Background/ Channel-pattern files, IAsyncEndpointRequestHandler, AsyncContext, etc.
+
+Old components **refactored** (not deleted):
+- `HandlerRegistrationTracker` (static global) → `IHandlerRegistry` + `HandlerRegistry` (DI-registered service in Core). The delegate-registry pattern is preserved because it's required for AOT-safe handler dispatch.
 
 Tests for deleted components must be removed. Tests for new components must exist and pass.
 
@@ -19,7 +22,7 @@ Tests for deleted components must be removed. Tests for new components must exis
 - Some unit tests may have been written incrementally (Phases 01-10)
 - Old tests for deleted components may still exist
 - `AsyncEndpoints.Abstractions.UnitTests/` — may be empty or partial
-- `AsyncEndpoints.Core.UnitTests/` — may be empty or partial
+- `AsyncEndpoints.Core.UnitTests/` — may be empty or partial (needs `IHandlerRegistry` + `HandlerRegistry` tests)
 - `AsyncEndpoints.Worker.UnitTests/` — may be empty
 - `AsyncEndpoints.AspNetCore.UnitTests/` — may have integration tests from Phase 07
 - `AsyncEndpoints.UnitTests/` — has old tests that may reference deleted types
@@ -61,7 +64,8 @@ All test projects populated and passing. No tests reference deleted types. Full 
   - GET /jobs/{id} → 404 NotFound
 
 ### 11.5 Update `AsyncEndpoints.UnitTests/`
-- Remove tests for: `JobManager`, `Job` (old class), old `IJobStore`, `HandlerRegistrationTracker`, old worker pipeline
+- Remove tests for: `JobManager`, `Job` (old class), old `IJobStore`, old worker pipeline
+- **Rewrite** (not delete) `HandlerRegistrationTracker` tests → `IHandlerRegistry` + `HandlerRegistry` tests
 - Keep/update tests for: Observability (update for new data model), Serialization (update for new types)
 - Add contract tests for `IJobStore` (run against InMemory provider)
 
@@ -70,9 +74,10 @@ All test projects populated and passing. No tests reference deleted types. Full 
 - Add tests for Lua-script-based Enqueue, Dequeue, Heartbeat, ReclaimStaleJobs
 - Remove tests for: `RedisJobRecoveryService`, old claim-single-job
 
-### 11.7 Remove tests for deleted types
-- Search for test files/classes referencing: `IJobManager`, `JobManager`, `IJobRecoveryService`, `IAsyncEndpointRequestHandler`, `HandlerRegistration`, `HandlerRegistrationTracker`, `AsyncContext`, `NoBodyRequest`, `ErrorType`, `JobClaimingState`, `AsyncContextBuilder`, `JobProducerService`, `JobConsumerService`, `JobClaimingService`, `JobChannelEnqueuer`, `JobProcessorService`, `HandlerExecutionService`, `DelayCalculatorService`, `DistributedJobRecoveryService`, `InMemoryJobRecoveryService`, `RedisJobRecoveryService`
-- Delete or rewrite each
+### 11.7 Remove tests for deleted types / rewrite tests for refactored types
+- Search for test files/classes referencing deleted types: `IJobManager`, `JobManager`, `IJobRecoveryService`, `IAsyncEndpointRequestHandler`, `HandlerRegistration`, `AsyncContext`, `NoBodyRequest`, `ErrorType`, `JobClaimingState`, `AsyncContextBuilder`, `JobProducerService`, `JobConsumerService`, `JobClaimingService`, `JobChannelEnqueuer`, `JobProcessorService`, `HandlerExecutionService`, `DelayCalculatorService`, `DistributedJobRecoveryService`, `InMemoryJobRecoveryService`, `RedisJobRecoveryService`
+- Delete each found test
+- Search for test files/classes referencing **refactored** `HandlerRegistrationTracker` — **rewrite** as `IHandlerRegistry` + `HandlerRegistry` tests (do not delete; the delegate-registry pattern is preserved for AOT safety)
 
 ### 11.8 Run full test suite and fix failures
 
