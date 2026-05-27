@@ -4,7 +4,6 @@ using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -30,20 +29,17 @@ public class JobManagerObservabilityTests
 		Job job)
 	{
 		// Arrange
-		var httpContext = new DefaultHttpContext();
-		httpContext.Request.Headers[AsyncEndpointsConstants.JobIdHeaderName] = job.Id.ToString();
+		var jobId = job.Id;
 
-		// Setup the options to return proper configurations
 		var config = new AsyncEndpointsConfigurations();
 		mockOptions.Setup(x => x.Value).Returns(config);
 
-		// Setup the observability to return null for activity (which is what happens in unit tests)
 		mockMetrics
 			.Setup(x => x.StartJobSubmitActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()))
 			.Returns((Activity?)null);
 
 		mockJobStore.Setup(store => store.GetJobById(job.Id, It.IsAny<CancellationToken>()))
-			.ReturnsAsync(MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {job.Id} not found"))); // No existing job found
+			.ReturnsAsync(MethodResult<Job>.Failure(AsyncEndpointError.FromCode("JOB_NOT_FOUND", $"Job with ID {job.Id} not found")));
 		mockJobStore.Setup(store => store.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult.Success);
 
@@ -54,8 +50,12 @@ public class JobManagerObservabilityTests
 			mockDateTimeProvider.Object,
 			mockMetrics.Object);
 
+		var headers = new Dictionary<string, List<string?>>();
+		var routeParams = new Dictionary<string, object?>();
+		var queryParams = new List<KeyValuePair<string, List<string?>>>();
+
 		// Act
-		await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
+		await jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, CancellationToken.None);
 
 		// Assert
 		mockMetrics.Verify(m => m.RecordJobCreated(jobName, It.IsAny<string>()), Times.Once);

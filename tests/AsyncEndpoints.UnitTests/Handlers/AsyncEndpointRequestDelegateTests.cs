@@ -1,4 +1,4 @@
-using AsyncEndpoints.Configuration;
+using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
@@ -31,7 +31,7 @@ public class AsyncEndpointRequestDelegateTests
 	public void Constructor_CreatesInstance()
 	{
 		// Arrange
-		var configurations = new AsyncEndpointsConfigurations();
+		var configurations = new AsyncEndpointsResponseConfigurations();
 
 		// Act
 		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object, configurations);
@@ -48,7 +48,7 @@ public class AsyncEndpointRequestDelegateTests
 	public async Task HandleAsync_WithCustomHandler_CanBeCalledWithoutError()
 	{
 		// Arrange
-		var configurations = new AsyncEndpointsConfigurations();
+		var configurations = new AsyncEndpointsResponseConfigurations();
 		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object, configurations);
 		var httpContext = CreateHttpContext;
 		var request = new TestRequest { Value = "test" };

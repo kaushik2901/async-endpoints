@@ -1,4 +1,5 @@
-using AsyncEndpoints.Configuration;
+using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Extensions;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using Microsoft.AspNetCore.Http;
@@ -6,13 +7,12 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.Handlers;
 
-/// <inheritdoc />
-public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer, AsyncEndpointsConfigurations configurations) : IAsyncEndpointRequestDelegate
+public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer, AsyncEndpointsResponseConfigurations responseConfigurations) : IAsyncEndpointRequestDelegate
 {
 	private readonly ILogger<AsyncEndpointRequestDelegate> _logger = logger;
 	private readonly IJobManager _jobManager = jobManager;
 	private readonly ISerializer _serializer = serializer;
-	private readonly AsyncEndpointsConfigurations _configurations = configurations;
+	private readonly AsyncEndpointsResponseConfigurations _responseConfigurations = responseConfigurations;
 
 	/// <inheritdoc />
 	public async Task<IResult> HandleAsync<TRequest>(
@@ -37,7 +37,12 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 		var payload = _serializer.Serialize(request);
 		_logger.LogDebug("Serialized request payload for job: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
 
-		var submitJobResult = await _jobManager.SubmitJob(jobName, payload, httpContext, cancellationToken);
+		var jobId = httpContext.GetOrCreateJobId();
+		var headers = httpContext.GetHeadersFromContext();
+		var routeParams = httpContext.GetRouteParamsFromContext();
+		var queryParams = httpContext.GetQueryParamsFromContext();
+
+		var submitJobResult = await _jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, cancellationToken);
 		if (!submitJobResult.IsSuccess)
 		{
 			_logger.LogError("Failed to submit job {JobName}: {ErrorMessage}", jobName, submitJobResult.Error?.Message);
@@ -51,7 +56,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 					submitJobResult.Error.Exception.StackTrace);
 			}
 
-			return await _configurations.ResponseConfigurations.JobSubmissionErrorResponseFactory(
+			return await _responseConfigurations.JobSubmissionErrorResponseFactory(
 				submitJobResult.Error,
 				httpContext);
 		}
@@ -60,7 +65,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 
 		_logger.LogInformation("Successfully created job {JobId} for job: {JobName}", job.Id, jobName);
 
-		return await _configurations.ResponseConfigurations.JobSubmittedResponseFactory(job, httpContext);
+		return await _responseConfigurations.JobSubmittedResponseFactory(job, httpContext);
 	}
 
 	private static async Task<IResult?> HandleRequestDelegate<TRequest>(Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, TRequest request, CancellationToken token)

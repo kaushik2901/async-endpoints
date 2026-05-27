@@ -1,17 +1,17 @@
 using AsyncEndpoints.Utilities;
-using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.JobProcessing;
 
-/// <summary>
-/// Defines a contract for managing the job lifecycle, retries, worker assignment, and scheduling.
-/// </summary>
 public interface IJobManager
 {
-	/// <summary>
-	/// Submits a new job to the system
-	/// </summary>
-	Task<MethodResult<Job>> SubmitJob(string jobName, string payload, HttpContext httpContext, CancellationToken cancellationToken);
+	Task<MethodResult<Job>> SubmitJob(
+		string jobName,
+		string payload,
+		Guid jobId,
+		Dictionary<string, List<string?>> headers,
+		Dictionary<string, object?> routeParams,
+		List<KeyValuePair<string, List<string?>>> queryParams,
+		CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Claims the next available job for processing by a worker

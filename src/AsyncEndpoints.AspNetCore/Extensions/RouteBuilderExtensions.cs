@@ -1,3 +1,5 @@
+using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Serialization;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure.Serialization;
@@ -30,8 +32,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapPost(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapPost(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -47,8 +49,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapPost(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapPost(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -67,8 +69,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapPut(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapPut(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -84,8 +86,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapPut(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapPut(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -104,8 +106,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -121,8 +123,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -141,8 +143,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -158,8 +160,8 @@ public static class RouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
-			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, asyncEndpointsConfigurations, cancellationToken))
+			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
 	/// <summary>
@@ -171,11 +173,11 @@ public static class RouteBuilderExtensions
 	public static IEndpointConventionBuilder MapAsyncGetJobDetails(
 		this IEndpointRouteBuilder endpoints,
 		string pattern = "/jobs/{jobId:guid}") => endpoints
-			.MapGet(pattern, (HttpContext httpContext, [FromRoute] Guid jobId, [FromServices] IJobManager jobManager, [FromServices] AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken) =>
-				HandleGetJobDetailsRequest(httpContext, jobId, jobManager, asyncEndpointsConfigurations, cancellationToken))
+			.MapGet(pattern, (HttpContext httpContext, [FromRoute] Guid jobId, [FromServices] IJobManager jobManager, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
+				HandleGetJobDetailsRequest(httpContext, jobId, jobManager, responseConfig, cancellationToken))
 			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
 
-	private static async Task<IResult> HandleRequestWithBody<TRequest>(string jobName, Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, IJsonBodyParserService jsonBodyParserService, IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken)
+	private static async Task<IResult> HandleRequestWithBody<TRequest>(string jobName, Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, IJsonBodyParserService jsonBodyParserService, IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken)
 	{
 		try
 		{
@@ -189,11 +191,11 @@ public static class RouteBuilderExtensions
 		}
 		catch (Exception ex)
 		{
-			return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+			return await responseConfig.ExceptionResponseFactory(ex, httpContext);
 		}
 	}
 
-	private static async Task<IResult> HandleRequestWithoutBody(string jobName, Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken)
+	private static async Task<IResult> HandleRequestWithoutBody(string jobName, Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken)
 	{
 		try
 		{
@@ -201,20 +203,20 @@ public static class RouteBuilderExtensions
 		}
 		catch (Exception ex)
 		{
-			return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+			return await responseConfig.ExceptionResponseFactory(ex, httpContext);
 		}
 	}
 
-	private static async Task<IResult> HandleGetJobDetailsRequest(HttpContext httpContext, Guid jobId, IJobManager jobManager, AsyncEndpointsConfigurations asyncEndpointsConfigurations, CancellationToken cancellationToken)
+	private static async Task<IResult> HandleGetJobDetailsRequest(HttpContext httpContext, Guid jobId, IJobManager jobManager, AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken)
 	{
 		try
 		{
 			var result = await jobManager.GetJobById(jobId, cancellationToken);
-			return await asyncEndpointsConfigurations.ResponseConfigurations.JobStatusResponseFactory(result, httpContext);
+			return await responseConfig.JobStatusResponseFactory(result, httpContext);
 		}
 		catch (Exception ex)
 		{
-			return await asyncEndpointsConfigurations.ResponseConfigurations.ExceptionResponseFactory(ex, httpContext);
+			return await responseConfig.ExceptionResponseFactory(ex, httpContext);
 		}
 	}
 }

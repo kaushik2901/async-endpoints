@@ -1,4 +1,4 @@
-using AsyncEndpoints.Configuration;
+using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
@@ -27,22 +27,21 @@ public class AsyncEndpointRequestDelegateExceptionTests
 		var failureResult = MethodResult<Job>.Failure(error);
 
 		mockJobManager
-			.Setup(x => x.SubmitJob(jobName, It.IsAny<string>(), httpContext, It.IsAny<CancellationToken>()))
+			.Setup(x => x.SubmitJob(jobName, It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<Dictionary<string, List<string?>>>(), It.IsAny<Dictionary<string, object?>>(), It.IsAny<List<KeyValuePair<string, List<string?>>>>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(failureResult);
 
 		mockSerializer
 			.Setup(x => x.Serialize(request, null))
 			.Returns("{}");
 
-		var configurations = new AsyncEndpointsConfigurations();
-		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, configurations);
+		var responseConfig = new AsyncEndpointsResponseConfigurations();
+		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
 		// Act
 		var result = await requestDelegate.HandleAsync(jobName, httpContext, request, cancellationToken: default);
 
 		// Assert
 		Assert.IsType<ProblemHttpResult>(result);
-		// Note: The internal structure of ProblemHttpResult might be different, so we'll focus on successful execution
 	}
 
 	[Theory, AutoMoqData]
@@ -60,15 +59,15 @@ public class AsyncEndpointRequestDelegateExceptionTests
 		var failureResult = MethodResult<Job>.Failure(error);
 
 		mockJobManager
-			.Setup(x => x.SubmitJob(jobName, It.IsAny<string>(), httpContext, It.IsAny<CancellationToken>()))
+			.Setup(x => x.SubmitJob(jobName, It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<Dictionary<string, List<string?>>>(), It.IsAny<Dictionary<string, object?>>(), It.IsAny<List<KeyValuePair<string, List<string?>>>>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(failureResult);
 
 		mockSerializer
 			.Setup(x => x.Serialize(request, null))
 			.Returns("{}");
 
-		var configurations = new AsyncEndpointsConfigurations();
-		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, configurations);
+		var responseConfig = new AsyncEndpointsResponseConfigurations();
+		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
 		// Act
 		var result = await requestDelegate.HandleAsync(jobName, httpContext, request, cancellationToken: default);

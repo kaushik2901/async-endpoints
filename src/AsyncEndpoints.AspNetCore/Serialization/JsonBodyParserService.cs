@@ -1,17 +1,16 @@
+using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace AsyncEndpoints.Infrastructure.Serialization;
+namespace AsyncEndpoints.AspNetCore.Serialization;
 
-/// <inheritdoc />
 public class JsonBodyParserService(ISerializer serializer, ILogger<JsonBodyParserService> logger) : IJsonBodyParserService
 {
 	private readonly ISerializer _serializer = serializer;
 	private readonly ILogger<JsonBodyParserService> _logger = logger;
 
-	/// <inheritdoc />
 	public async Task<MethodResult<T?>> ParseAsync<T>(HttpContext httpContext, CancellationToken cancellationToken = default)
 	{
 		var requestType = typeof(T).Name;
@@ -25,7 +24,6 @@ public class JsonBodyParserService(ISerializer serializer, ILogger<JsonBodyParse
 				return MethodResult<T?>.Failure("Request has not body");
 			}
 
-			// Check content type
 			var contentType = httpContext.Request.ContentType;
 			if (string.IsNullOrEmpty(contentType) || !contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase))
 			{
@@ -35,13 +33,10 @@ public class JsonBodyParserService(ISerializer serializer, ILogger<JsonBodyParse
 
 			_logger.LogDebug("Request content type validated as JSON for type {RequestType}", requestType);
 
-			// Enable buffering so the stream can be read multiple times
 			httpContext.Request.EnableBuffering();
 
-			// Use the ISerializer to deserialize the JSON stream to the specified type
 			var result = await _serializer.DeserializeAsync<T>(httpContext.Request.Body, cancellationToken: cancellationToken);
 
-			// Reset the stream position so it can be read again by other parts of the pipeline
 			httpContext.Request.Body.Position = 0;
 
 			_logger.LogDebug("Successfully parsed JSON for type {RequestType}", requestType);

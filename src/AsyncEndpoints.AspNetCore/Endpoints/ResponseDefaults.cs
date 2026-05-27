@@ -1,7 +1,8 @@
 using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 
-namespace AsyncEndpoints.Utilities;
+namespace AsyncEndpoints.AspNetCore.Endpoints;
 
 public static class ResponseDefaults
 {

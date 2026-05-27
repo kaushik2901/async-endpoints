@@ -1,8 +1,9 @@
+using AsyncEndpoints.AspNetCore.Endpoints;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
 using Microsoft.AspNetCore.Http;
 
-namespace AsyncEndpoints.Configuration;
+namespace AsyncEndpoints.AspNetCore.Configuration;
 
 public sealed class AsyncEndpointsResponseConfigurations
 {

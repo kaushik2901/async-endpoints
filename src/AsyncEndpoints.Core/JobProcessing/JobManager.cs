@@ -1,9 +1,7 @@
 using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Extensions;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Utilities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -18,33 +16,31 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	private readonly AsyncEndpointsJobManagerConfigurations _jobManagerConfigurations = options.Value.JobManagerConfigurations;
 	private readonly IAsyncEndpointsObservability _metrics = metrics;
 
-	/// <inheritdoc />
-	public async Task<MethodResult<Job>> SubmitJob(string jobName, string payload, HttpContext httpContext, CancellationToken cancellationToken)
+	public async Task<MethodResult<Job>> SubmitJob(
+		string jobName,
+		string payload,
+		Guid jobId,
+		Dictionary<string, List<string?>> headers,
+		Dictionary<string, object?> routeParams,
+		List<KeyValuePair<string, List<string?>>> queryParams,
+		CancellationToken cancellationToken)
 	{
 		using var _ = _logger.BeginScope(new { JobName = jobName });
 
-		var id = httpContext.GetOrCreateJobId();
+		using var activity = _metrics.StartJobSubmitActivity(jobName, _jobStore.GetType().Name, jobId);
 
-		// Start activity only if tracing is enabled
-		using var activity = _metrics.StartJobSubmitActivity(jobName, _jobStore.GetType().Name, id);
-
-		// Use disposable timer to measure total duration
 		using var durationTimer = _metrics.TimeJobProcessingDuration(jobName, "created");
 
 		_logger.LogDebug("Processing job creation for: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
 
-		var result = await _jobStore.GetJobById(id, cancellationToken);
+		var result = await _jobStore.GetJobById(jobId, cancellationToken);
 		if (result.IsSuccess && result.DataOrNull != null)
 		{
-			_logger.LogDebug("Found existing job {JobId} for job: {JobName}, returning existing job", id, jobName);
+			_logger.LogDebug("Found existing job {JobId} for job: {JobName}, returning existing job", jobId, jobName);
 			return MethodResult<Job>.Success(result.Data);
 		}
 
-		var headers = httpContext.GetHeadersFromContext();
-		var routeParams = httpContext.GetRouteParamsFromContext();
-		var queryParams = httpContext.GetQueryParamsFromContext();
-
-		var job = Job.Create(id, jobName, payload, headers, routeParams, queryParams, _jobManagerConfigurations.DefaultMaxRetries, _dateTimeProvider);
+		var job = Job.Create(jobId, jobName, payload, headers, routeParams, queryParams, _jobManagerConfigurations.DefaultMaxRetries, _dateTimeProvider);
 		var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
 		if (createJobResult.IsSuccess)
 		{
@@ -54,7 +50,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 		}
 		else
 		{
-			_logger.LogError("Failed to create job {JobId} in store: {Error}", id, createJobResult.Error?.Message);
+			_logger.LogError("Failed to create job {JobId} in store: {Error}", jobId, createJobResult.Error?.Message);
 			return MethodResult<Job>.Failure(createJobResult.Error!);
 		}
 	}

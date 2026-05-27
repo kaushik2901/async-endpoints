@@ -1,3 +1,5 @@
+using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Serialization;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Handlers;
@@ -33,6 +35,7 @@ public static class ServiceCollectionExtensions
 
 		services.AddHttpContextAccessor();
 		services.AddSingleton<AsyncEndpointsConfigurations>();
+		services.AddSingleton<AsyncEndpointsResponseConfigurations>();
 		services.AddScoped<IJobManager, JobManager>();
 		services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
 		services.AddScoped<IJsonBodyParserService, JsonBodyParserService>();

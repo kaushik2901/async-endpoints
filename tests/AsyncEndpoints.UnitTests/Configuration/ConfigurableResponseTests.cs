@@ -1,3 +1,4 @@
+using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure;
@@ -23,15 +24,12 @@ public class ConfigurableResponseTests
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
 
 		// Create custom configurations with custom response factory
-		var configurations = new AsyncEndpointsConfigurations
+		var responseConfig = new AsyncEndpointsResponseConfigurations
 		{
-			ResponseConfigurations = new AsyncEndpointsResponseConfigurations
+			JobSubmittedResponseFactory = (job, context) =>
 			{
-				JobSubmittedResponseFactory = (job, context) =>
-				{
-					var response = Results.Created($"/api/custom/{job.Id}", new { JobId = job.Id, CustomMessage = "Custom response" });
-					return Task.FromResult(response);
-				}
+				var response = Results.Created($"/api/custom/{job.Id}", new { JobId = job.Id, CustomMessage = "Custom response" });
+				return Task.FromResult(response);
 			}
 		};
 
@@ -49,14 +47,14 @@ public class ConfigurableResponseTests
 
 		var successResult = MethodResult<Job>.Success(job);
 		mockJobManager
-			.Setup(x => x.SubmitJob(It.IsAny<string>(), It.IsAny<string>(), httpContext, It.IsAny<CancellationToken>()))
+			.Setup(x => x.SubmitJob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<Dictionary<string, List<string?>>>(), It.IsAny<Dictionary<string, object?>>(), It.IsAny<List<KeyValuePair<string, List<string?>>>>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(successResult);
 
 		mockSerializer
 			.Setup(x => x.Serialize(request, null))
 			.Returns("{}");
 
-		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, configurations);
+		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
 		// Act
 		var result = await requestDelegate.HandleAsync("test-job", httpContext, request);
@@ -74,15 +72,12 @@ public class ConfigurableResponseTests
 		var mockSerializer = new Mock<ISerializer>();
 
 		// Create custom configurations with custom error response factory
-		var configurations = new AsyncEndpointsConfigurations
+		var responseConfig = new AsyncEndpointsResponseConfigurations
 		{
-			ResponseConfigurations = new AsyncEndpointsResponseConfigurations
+			JobSubmissionErrorResponseFactory = (error, context) =>
 			{
-				JobSubmissionErrorResponseFactory = (error, context) =>
-				{
-					var response = Results.Json(new { Error = "Custom error", Code = "CUSTOM_ERROR" }, statusCode: 422);
-					return Task.FromResult(response);
-				}
+				var response = Results.Json(new { Error = "Custom error", Code = "CUSTOM_ERROR" }, statusCode: 422);
+				return Task.FromResult(response);
 			}
 		};
 
@@ -92,14 +87,14 @@ public class ConfigurableResponseTests
 		var error = new AsyncEndpointError("TEST_ERROR", "Test error message", null);
 		var failureResult = MethodResult<Job>.Failure(error);
 		mockJobManager
-			.Setup(x => x.SubmitJob(It.IsAny<string>(), It.IsAny<string>(), httpContext, It.IsAny<CancellationToken>()))
+			.Setup(x => x.SubmitJob(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<Dictionary<string, List<string?>>>(), It.IsAny<Dictionary<string, object?>>(), It.IsAny<List<KeyValuePair<string, List<string?>>>>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(failureResult);
 
 		mockSerializer
 			.Setup(x => x.Serialize(request, null))
 			.Returns("{}");
 
-		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, configurations);
+		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
 		// Act
 		var result = await requestDelegate.HandleAsync("test-job", httpContext, request);

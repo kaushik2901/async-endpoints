@@ -1,6 +1,4 @@
 using AsyncEndpoints.Infrastructure.Serialization;
-using Microsoft.AspNetCore.Http.Json;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace AsyncEndpoints.UnitTests.Infrastructure.Serialization;
@@ -14,26 +12,18 @@ public class SerializerTests
 	[Fact]
 	public void Constructor_Succeeds_WithValidJsonOptions()
 	{
-		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-
-		// Act
-		var serializer = new Serializer(jsonOptions);
+		// Arrange & Act
+		var serializer = new Serializer();
 
 		// Assert
 		Assert.NotNull(serializer);
 	}
 
-	/// <summary>
-	/// Verifies that the generic Serialize method correctly serializes an object to JSON string.
-	/// This test ensures proper serialization functionality with default options.
-	/// </summary>
 	[Fact]
 	public void Serialize_Generic_WithDefaultOptions_SerializesCorrectly()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var testObject = new { Name = "Test", Value = 123 };
 
 		// Act
@@ -53,8 +43,7 @@ public class SerializerTests
 	public void Serialize_Generic_WithCustomOptions_SerializesWithCustomOptions()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var customOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 		var testObject = new TestClass { PropertyName = "TestValue" };
 
@@ -75,8 +64,7 @@ public class SerializerTests
 	public void Serialize_NonGeneric_SerializesCorrectly()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var testObject = new { Name = "Test", Value = 123 };
 		var type = typeof(object);
 
@@ -97,8 +85,7 @@ public class SerializerTests
 	public void Deserialize_Generic_Succeeds_WithValidJson()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var json = "{\"name\":\"Test\",\"value\":123}";
 
 		// Act
@@ -118,8 +105,7 @@ public class SerializerTests
 	public void Deserialize_Generic_WithCustomOptions_DeserializesWithCustomOptions()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var customOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 		var json = "{\"propertyName\":\"TestValue\"}"; // camelCase JSON
 
@@ -139,8 +125,7 @@ public class SerializerTests
 	public void Deserialize_NonGeneric_Succeeds_WithValidJson()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var json = "{\"name\":\"Test\",\"value\":123}";
 		var type = typeof(TestDto);
 
@@ -163,8 +148,7 @@ public class SerializerTests
 	public void Deserialize_ThrowsException_WhenNullJsonProvided()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 
 		// Act & Assert
 		var exception = Record.Exception(() => serializer.Deserialize<TestDto>((string)null!));
@@ -182,8 +166,7 @@ public class SerializerTests
 	public void Deserialize_HandlesInvalidJson_Gracefully()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var invalidJson = "{invalid json}";
 
 		// Act & Assert
@@ -201,8 +184,7 @@ public class SerializerTests
 	public void Deserialize_Stream_Succeeds_WithValidJson()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var json = "{\"name\":\"Test\",\"value\":123}";
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
@@ -223,8 +205,7 @@ public class SerializerTests
 	public void Deserialize_Stream_HandlesInvalidJson_Gracefully()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var invalidJson = "{invalid json}";
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
 
@@ -243,8 +224,7 @@ public class SerializerTests
 	public void Deserialize_Stream_HandlesIOException_Gracefully()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var stream = new MockStreamThatThrowsIOException();
 		var validJson = "{\"name\":\"Test\",\"value\":123}";
 		var jsonBytes = System.Text.Encoding.UTF8.GetBytes(validJson);
@@ -269,8 +249,7 @@ public class SerializerTests
 	public async Task DeserializeAsync_Stream_Succeeds_WithValidJson()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var json = "{\"name\":\"Test\",\"value\":123}";
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
@@ -291,8 +270,7 @@ public class SerializerTests
 	public async Task DeserializeAsync_Stream_HandlesInvalidJson_Gracefully()
 	{
 		// Arrange
-		var jsonOptions = Options.Create(new JsonOptions());
-		var serializer = new Serializer(jsonOptions);
+		var serializer = new Serializer();
 		var invalidJson = "{invalid json}";
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
 

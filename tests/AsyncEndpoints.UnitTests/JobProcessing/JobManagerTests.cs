@@ -5,7 +5,6 @@ using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 using AutoFixture.Xunit2;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -49,7 +48,6 @@ public class JobManagerTests
 		Job newJob)
 	{
 		// Arrange
-		var httpContext = new DefaultHttpContext();
 		var options = Options.Create(new AsyncEndpointsConfigurations());
 
 		mockJobStore
@@ -61,8 +59,13 @@ public class JobManagerTests
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
+		var jobId = Guid.NewGuid();
+		var headers = new Dictionary<string, List<string?>>();
+		var routeParams = new Dictionary<string, object?>();
+		var queryParams = new List<KeyValuePair<string, List<string?>>>();
+
 		// Act
-		var result = await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
+		var result = await jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);
@@ -86,10 +89,7 @@ public class JobManagerTests
 	{
 		// Arrange
 		var jobId = Guid.NewGuid();
-		var httpContext = new DefaultHttpContext();
 		var options = Options.Create(new AsyncEndpointsConfigurations());
-
-		httpContext.Request.Headers[AsyncEndpointsConstants.JobIdHeaderName] = jobId.ToString();
 
 		mockJobStore
 			.Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
@@ -97,8 +97,12 @@ public class JobManagerTests
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
+		var headers = new Dictionary<string, List<string?>>();
+		var routeParams = new Dictionary<string, object?>();
+		var queryParams = new List<KeyValuePair<string, List<string?>>>();
+
 		// Act
-		var result = await jobManager.SubmitJob(jobName, payload, httpContext, CancellationToken.None);
+		var result = await jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, CancellationToken.None);
 
 		// Assert
 		Assert.True(result.IsSuccess);

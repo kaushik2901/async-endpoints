@@ -1,3 +1,4 @@
+using AsyncEndpoints.AspNetCore.Serialization;
 using AsyncEndpoints.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;

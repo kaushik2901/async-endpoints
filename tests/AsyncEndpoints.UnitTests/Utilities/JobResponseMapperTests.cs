@@ -1,6 +1,6 @@
+using AsyncEndpoints.AspNetCore.Models;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
-using AsyncEndpoints.Utilities;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
 

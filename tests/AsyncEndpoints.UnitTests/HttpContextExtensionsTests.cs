@@ -1,5 +1,5 @@
+using AsyncEndpoints.AspNetCore.Extensions;
 using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Extensions;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 
