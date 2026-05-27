@@ -24,25 +24,25 @@ There are three fundamental pillars:
 
 **Implementations:**
 
-- `'SqlServerJobStore'` (durable, transactional, row-level locking for dequeue)
-- `'PostgresJobStore'` (same, uses `SELECT ... FOR UPDATE SKIP LOCKED` -- excellent for competing consumers)
-- `'RedisJobStore'` (fast, uses Redis Streams or sorted sets)
-- `'InMemoryJobStore'` (dev/test, `ConcurrentQueue` + `ConcurrentDictionary`)
+- `SqlServerJobStore` (durable, transactional, row-level locking for dequeue)
+- `PostgresJobStore` (same, uses `SELECT ... FOR UPDATE SKIP LOCKED` — excellent for competing consumers)
+- `RedisJobStore` (fast, uses lists or sorted sets for atomic pop)
+- `InMemoryJobStore` (dev/test, `ConcurrentQueue` + `ConcurrentDictionary`)
 
-The **dequeue** operation is the most critical piece. It must be **atomic** — only one worker gets a given job.
+The dequeue operation is the most critical piece. It must be atomic — only one worker gets a given job.
 
 | Provider   | Dequeue Mechanism                                                                                            |
 | ---------- | ------------------------------------------------------------------------------------------------------------ |
 | SQL Server | `UPDATE TOP(1) ... SET Status='Processing' OUTPUT` with row lock hints (single atomic statement)             |
 | Postgres   | `BEGIN; SELECT ... FOR UPDATE SKIP LOCKED; UPDATE SET Status='Processing'; COMMIT;` (atomic via transaction) |
-| Redis      | `BLMOVE \| Redis Streams XREADGROUP` (atomic blocking pop)                                                   |
+| Redis      | `ZPOPMIN` (sorted set) or `RPOPLPUSH` pattern for atomic pop                                                 |
 | In-Memory  | `ConcurrentQueue.TryDequeue`                                                                                 |
 
 ### 3. Worker Processing Layer
 
 ```
 JobWorkerService (BackgroundService)
-    |   Poll loop / event-driven listen (via `IJobListener`)
+    |   Adaptive polling loop (via `IJobListener`)
     |   └ job = IJobListener.WaitForNextJobAsync(channel)
     |     └ IJobHandler<TJob>.HandleAsync(job)
     |       └ IJobStore.UpdateStatusAsync(Completed / Failed)
@@ -51,45 +51,13 @@ JobWorkerService (BackgroundService)
               IJobStore.HeartbeatAsync(jobId) // prevents stale job reclaim
 ```
 
-Workers are "BackgroundService" instances.
-Multiple workers can run in the same process or across multiple machines -- the atomic queue guarantees no double-processing.
+Workers are BackgroundService instances. Multiple workers can run in the same process or across multiple machines — the atomic dequeue guarantees no double-processing.
 
-## Worker Notification Abstraction (Event-Driven vs Polling)
+## Polling-Only Worker Strategy
 
-Not all stores have native push/notification capabilities:
+Workers use a single adaptive polling model across all providers.
 
-| Provider   | Native Notification?                                            |
-| ---------- | --------------------------------------------------------------- |
-| Redis      | Yes -- "BRPOP", Streams, "XREADGROUP" (blocking), Pub/Sub       |
-| Postgres   | Partial -- "LISTEN/NOTIFY" (lightweight, built-in)              |
-| SQL Server | Weak -- "Service Broker" / "SqlDependency" (heavy, rarely used) |
-| In-Memory  | Yes -- "SemaphoreSlim", "channel", "TaskCompletionSource"       |
-
-The abstraction can accommodate both event-driven and polling models.
-
-### Layer 1: 'JobNotifier' (Provider-Side Signal)
-
-```text
-IJobNotifier
-└ NotifyJobAvailableAsync(channel) // called by enqueue side
-  └ WaitForJobAsync(channel, timeout) // called by worker side
 ```
-
-Each provider implements this differently:
-
-- **Redis**: `"NotifyJobAvailableAsync"` does `"PUBLISH queue:{channel}"`. `"WaitForJobAsync"` does `"SUBSCRIBE"` + `await`.
-  - This can be used as a `"RedisBlockingListener"` that bypasses the two-step notify+dequeue model for better efficiency (see note below).
-- **Postgres**: `"NotifyJobAvailableAsync"` does `"NOTIFY job_available", "channel"`. `"WaitForJobAsync"` does `"LISTEN job_available"` + await notification.
-- **SQL Server**: No good native option. Falls back to **Layer 2**.
-- **In-Memory**: `"NotifyJobAvailableAsync"` releases a `"SemaphoreSlim"`. `"WaitForJobAsync"` does `await semaphore.WaitAsync(timeout)`.
-
----
-
-### Layer 2: Adaptive Polling fallback
-
-For providers without native signaling (or as a universal fallback), the worker uses **adaptive polling**:
-
-```text
 AdaptivePoller
 - minInterval: 50ms
 - maxInterval: 5s
@@ -105,54 +73,27 @@ Loop:
     await Task.Delay(currentInterval)
 ```
 
-This gives near-instant pickup when the queue is busy, and low CPU/DB cost when idle.
+### Unified `IJobListener` Interface
 
-### Unified 'IJobListener' Interface
-
-The worker engine combines both layers with a single abstraction:
-
-```text
+```
 IJobListener
-  └── WaitForNextJobAsync(channel, cancellationToken) -> JobRecord?
+  -> WaitForNextJobAsync(channel, cancellationToken) -> JobRecord?
 ```
 
-The package ships two implementations:
+Shipped implementation: `PollingJobListener` (adaptive backoff over `IJobStore.Dequeue`). Providers only implement `IJobStore`.
 
-- **EventDrivenJobListener** (wraps 'IJobNotifier' + 'IJobStore.Dequeue')
-  - Calls 'WaitForJobAsync()' to block until signal
-  - Then calls 'DequeueAsync()' to atomically claim the job
-  - Used when the provider supplies an 'IJobNotifier'
-
-- **PollingJobListener** (wraps 'IJobStore.Dequeue' only)
-  - Uses AdaptivePoll loop
-  - Universal fallback, with any store
-
-> **Note on Redis**: Redis's 'BLMOVE' natively combines waiting and dequeueing into a single atomic operation.
->
-> The two-step EventDrivenJobListener (wait for signal, then dequeue separately) adds unnecessary overhead for Redis.
->
-> To handle this, the package can ship a 'RedisBlockingJobListener' that implements 'IJobListener' directly using 'BLMOVE', bypassing the 'IJobNotifier' abstraction entirely.
->
-> This is an internal optimization -- the worker still depends on 'IJobListener' and is unaware of the implementation.
-
-### Provider Registration Decides the Mode
+### Provider Registration
 
 ```csharp
 // Provider registration (pseudo-code)
 services.AddAsyncEndpoints(options => {
     options.UsePostgres(connString);
-    // internally registers PostgresJobStore + PostgresJobNotifier
-    // engine sees IJobNotifier is registered -> picks EventDrivenJobListener
-});
-
-services.AddAsyncEndpoints(options => {
-    options.UseSqlServer(connString);
-    // registers SqlServerJobStore only, no IJobNotifier
-    // engine sees no IJobNotifier -> falls back to PollingJobListener
+    // registers PostgresJobStore
+    // engine wires PollingJobListener (only mode)
 });
 ```
 
-The worker itself never knows or cares which mode it is running in:
+The worker itself never knows or cares which provider it is running against:
 
 ```csharp
 // Inside the BackgroundService
@@ -170,12 +111,12 @@ while (!stoppingToken.IsCancellationRequested)
 
 ### A. Competing Consumers (Horizontal Scaling)
 
-- N workers across M machines all call 'DequeueAsync'. The store's atomic dequeue handles contention.
+- N workers across M machines all call `DequeueAsync`. The store's atomic dequeue handles contention.
 - This is the primary scale-out axis.
 
 ### B. Job Partitioning / Channels
 
-- Jobs can have a 'channel' or 'queue name' (e.g., 'email', 'reports'). Workers subscribe to specific channels.
+- Jobs can have a `channel` or `queue name` (e.g., `email`, `reports`). Workers subscribe to specific channels.
 - This prevents a flood of cheap jobs from starving expensive ones.
 
 ### C. Heartbeat + Stale Job Recovery
@@ -185,13 +126,13 @@ while (!stoppingToken.IsCancellationRequested)
 
 ### D. Backpressure
 
-- Workers control their own concurrency ('maxConcurrentJobs' setting). When all slots are full, the worker simply stops dequeuing.
+- Workers control their own concurrency (`maxConcurrentJobs` setting). When all slots are full, the worker simply stops dequeuing.
 - The queue grows, and you scale out by adding workers.
 
 ### E. Priority Support
 
-- Jobs carry a 'Priority' field. Dequeue queries order by priority first, then enqueue time.
-- This is trivial in SQL ('ORDER BY Priority, CreatedAt') and in Redis (sorted sets scored by priority+timestamp).
+- Jobs carry a `Priority` field. Dequeue queries order by priority first, then enqueue time.
+- This is trivial in SQL (`ORDER BY Priority, CreatedAt`) and in Redis (sorted sets scored by priority+timestamp).
 
 ## Job Lifecycle State Machine
 
@@ -252,7 +193,7 @@ builder.Services.AddAsyncEndpoints(options =>
     options.UsePostgres(connectionString);
 });
 
-// Defaults: single channel, competing consumers, event-driven listener,
+// Defaults: single channel, competing consumers, polling listener,
 // 4 concurrent jobs, 3 retries, exponential backoff, heartbeat 30s
 ```
 
@@ -344,13 +285,13 @@ public class AsyncEndpointsOptionsBuilder
 
 ```
 UsePostgres + no partitioning
-  -> PostgresJobStore + PostgresJobNotifier + EventDrivenJobListener
+  -> PostgresJobStore + PollingJobListener
 
 UseSqlServer + no partitioning
-  -> SqlServerJobStore + PollingJobListener (no native notifier)
+  -> SqlServerJobStore + PollingJobListener
 
 UseRedis + partitioning enabled
-  -> RedisJobStore + RedisBlockingJobListener
+  -> RedisJobStore + PollingJobListener
      + LeaseBasedPartitionAssigner + PartitionAwareWorker
 ```
 
@@ -364,8 +305,7 @@ builder.Services.AddAsyncEndpoints(options =>
 });
 ```
 
-Maps `IJobHandler<SendEmailJob>` to job type `"SendEmailJob"` automatically.  
-Payload type name is stored at enqueue; correct handler resolved from DI at dequeue.
+Maps `IJobHandler<SendEmailJob>` to job type `"SendEmailJob"` automatically. Payload type name is stored at enqueue; correct handler resolved from DI at dequeue.
 
 ### Auto-Mapped Status Endpoints
 
@@ -379,6 +319,6 @@ app.MapAsyncEndpointsEndpoints("/jobs");
 
 ## Summary
 
-The entire design hinges on **one key principle**: the job store's queue must be atomic and provider-native. Everything else (submission, polling, retry, heartbeat) is provider-agnostic code that sits on top of the `IJobStore` abstraction. This keeps the package pluggable while letting each storage backend use its strongest concurrency primitive for scalability.
+The design centers on one principle: the job store's queue must be atomic and provider-native, and workers fetch via a unified adaptive polling loop. Everything else (submission, retry, heartbeat) is provider-agnostic code that sits on top of `IJobStore`. This keeps the package pluggable while letting each storage backend use its strongest concurrency primitive for scalability, without the complexity of pub/sub or provider-specific notification paths.
 
-The consumer-facing API follows **progressive disclosure**: simple things are simple (3 lines to get started), advanced things are possible (channels, partitioning, sharding) via opt-in configuration.
+The consumer-facing API follows progressive disclosure: simple things are simple (3 lines to get started), advanced things are possible (channels, partitioning, sharding) via opt-in configuration.

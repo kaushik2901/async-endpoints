@@ -48,7 +48,7 @@ builder.Services.AddAsyncEndpoints(options =>
 });
 ```
 
-Internally, this spins up one `JobWorkerService` (BackgroundService) per channel, each configured with its own concurrency semaphore and subscribed to the correct channel filter.
+Internally, this spins up one `JobWorkerService` (BackgroundService) per channel, each configured with its own concurrency semaphore and subscribed to the correct channel filter. Each channel's worker uses its own adaptive polling loop; on a successful dequeue the interval resets for that channel, and when idle it backs off up to the configured maximum.
 
 #### Enqueueing to a Channel
 
@@ -67,7 +67,7 @@ ch.Add("email",   weight: 3);  // pull 3 email jobs
 ch.Add("reports", weight: 1);  // for every 1 report job
 ```
 
-The worker's dequeue loop cycles through channels proportionally. This is implemented as a weighted round-robin: for every 4 dequeue calls, 3 go to `email` and 1 to `reports`. The `WeightedChannelSelector` holds a pre-built rotation list like `["email", "email", "email", "reports"]` and advances an index per tick.
+The worker's dequeue loop cycles through channels proportionally. This is implemented as a weighted round-robin: for every 4 dequeue calls, 3 go to `email` and 1 to `reports`. The `WeightedChannelSelector` holds a pre-built rotation list like `["email", "email", "email", "reports"]` and advances an index per tick. The rotation drives polling attempts; each tick performs a single dequeue for the selected channel and applies the channel's adaptive backoff rules.
 
 ---
 

@@ -27,7 +27,7 @@ AsyncEndpoints.sln
 
 # 📦 Package Strategy (IMPORTANT)
 
-This structure enables **clean NuGet packaging**:
+This structure enables clean NuGet packaging:
 
 | Project      | NuGet Package                 | Responsibility           |
 | ------------ | ----------------------------- | ------------------------ |
@@ -37,7 +37,7 @@ This structure enables **clean NuGet packaging**:
 | AspNetCore   | `AsyncEndpoints.AspNetCore`   | Endpoints + minimal API  |
 | Providers    | `AsyncEndpoints.Provider.*`   | Storage implementations  |
 
-👉 This matches your pluggable architecture (especially `IJobStore`) perfectly.
+👉 This matches the pluggable `IJobStore` architecture while standardizing on a single polling listener.
 
 ---
 
@@ -57,7 +57,6 @@ AsyncEndpoints.Abstractions/
 │
 ├── Listener/
 │   ├── IJobListener.cs
-│   ├── IJobNotifier.cs
 │
 ├── Submission/
 │   ├── IJobSubmitter.cs
@@ -71,9 +70,9 @@ AsyncEndpoints.Abstractions/
 
 ### 🔑 Rules
 
-- **ZERO dependencies**
+- ZERO dependencies
 - No DI, no logging, no EF, nothing
-- This is your **public contract surface**
+- This is your public contract surface
 
 ---
 
@@ -98,7 +97,6 @@ AsyncEndpoints.Core/
 │
 ├── Listener/
 │   ├── PollingJobListener.cs
-│   ├── EventDrivenJobListener.cs
 │
 ├── Partitioning/
 │   ├── PartitionManager.cs
@@ -116,8 +114,8 @@ AsyncEndpoints.Core/
 
 ### 🔑 Purpose
 
-- Implements orchestration described in your doc:
-  - Listener selection (event vs polling)
+- Implements orchestration:
+  - Single adaptive polling listener over `IJobStore`
   - Submission flow
   - Channel + partition logic
 
@@ -145,9 +143,7 @@ AsyncEndpoints.Worker/
 
 ### 🔑 Purpose
 
-Matches your design:
-
-> BackgroundService + heartbeat + handler execution
+BackgroundService + heartbeat + handler execution with adaptive polling.
 
 ---
 
@@ -177,27 +173,17 @@ POST → enqueue
 GET  → status
 ```
 
-From your API design section
-
 ---
 
 # 🗄️ 5. Provider Packages (CRITICAL DESIGN)
 
-Each provider is **independent NuGet package**:
-
-Example:
+Each provider is an independent NuGet package:
 
 ```
 AsyncEndpoints.Provider.Postgres/
 │
 ├── Storage/
 │   ├── PostgresJobStore.cs
-│
-├── Notification/
-│   ├── PostgresJobNotifier.cs
-│
-├── Listener/
-│   ├── PostgresListenerExtensions.cs
 │
 └── DependencyInjection/
     ├── PostgresServiceCollectionExtensions.cs
@@ -206,7 +192,7 @@ AsyncEndpoints.Provider.Postgres/
 Same for:
 
 - SqlServer
-- Redis (with special `RedisBlockingJobListener`)
+- Redis
 - InMemory
 
 ### 🔑 Rule
@@ -214,12 +200,13 @@ Same for:
 Each provider:
 
 - Implements `IJobStore`
-- Optionally implements `IJobNotifier`
 - Registers itself via:
 
 ```csharp
 options.UsePostgres(...)
 ```
+
+There are no provider notifiers or event-driven listeners; the engine uses a single `PollingJobListener`.
 
 ---
 
@@ -289,36 +276,34 @@ Providers ───────────────┘
 
 ---
 
-# 💡 Opinionated Improvements (based on your design)
+# 💡 Opinionated Improvements
 
 ### 1. Separate Worker package is the right call
-
-Because:
 
 - Some users only enqueue jobs (API-only apps)
 
 ---
 
-### 2. Redis special case deserves its own listener
+### 2. Standardize on adaptive polling across all providers
 
-Your note about `BLMOVE` is important
-👉 Keep it **inside Redis provider**, not Core.
+- Simplifies mental model and docs; consistent behavior for SQL, Postgres, Redis, and InMemory
+- Removes notifier/event complexity and reduces operational risk
 
 ---
 
 ### 3. Keep "Progressive API" in Core only
 
-Do NOT leak complexity into providers.
+- Do not leak complexity into providers
 
 ---
 
 # 🧭 Final Take
 
-Architecture is already **top-tier**. The folder structure should:
+Architecture remains modular and NuGet-friendly. The folder structure:
 
-- Mirror **your abstractions**
-- Enable **independent evolution of providers**
-- Keep **Core small and orchestration-focused**
-- Make NuGet consumption **modular and predictable**
+- Mirrors abstractions cleanly
+- Enables independent evolution of providers
+- Keeps Core small and orchestration-focused
+- Makes consumption predictable — with a single, polling-based worker model
 
 ---
