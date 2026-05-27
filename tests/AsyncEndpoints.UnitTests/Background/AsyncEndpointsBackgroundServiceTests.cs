@@ -1,9 +1,8 @@
 using AsyncEndpoints.Background;
-using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.UnitTests.TestSupport;
+using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 
 namespace AsyncEndpoints.UnitTests.Background;
@@ -18,12 +17,12 @@ public class AsyncEndpointsBackgroundServiceTests
 		Mock<IDateTimeProvider> mockDateTimeProvider)
 	{
 		// Arrange
-		var configurations = Options.Create(new AsyncEndpointsConfigurations());
+		var workerOptions = new WorkerOptions();
 
 		// Act
 		var service = new AsyncEndpointsBackgroundService(
 			mockLogger.Object,
-			configurations,
+			workerOptions,
 			mockJobProducerService.Object,
 			mockJobConsumerService.Object,
 			mockDateTimeProvider.Object);

@@ -8,6 +8,7 @@ using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -26,15 +27,14 @@ public static class ServiceCollectionExtensions
 	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
 	/// <param name="configureOptions">Optional action to configure AsyncEndpoints options.</param>
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
-	public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services, Action<AsyncEndpointsConfigurations>? configureOptions = null)
+	public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services, Action<AsyncEndpointsOptionsBuilder>? configureOptions = null)
 	{
-		if (configureOptions != null)
-		{
-			services.Configure(configureOptions);
-		}
+		var builder = new AsyncEndpointsOptionsBuilder();
+		configureOptions?.Invoke(builder);
+		var options = builder.Build();
+		services.AddSingleton(options);
 
 		services.AddHttpContextAccessor();
-		services.AddSingleton<AsyncEndpointsConfigurations>();
 		services.AddSingleton<AsyncEndpointsResponseConfigurations>();
 		services.AddScoped<IJobManager, JobManager>();
 		services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
@@ -82,17 +82,26 @@ public static class ServiceCollectionExtensions
 	/// This includes job consumers, producers, processors, and the hosted background service.
 	/// </summary>
 	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-	/// <param name="recoveryConfigurations">Optional configurations for distributed job recovery.</param>
+	/// <param name="configureWorker">Optional action to configure worker options.</param>
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
 	public static IServiceCollection AddAsyncEndpointsWorker(this IServiceCollection services,
-		Action<AsyncEndpointsRecoveryConfigurations>? recoveryConfigurations = null)
+		Action<WorkerOptions>? configureWorker = null)
 	{
-		// Configure recovery options
-		var recoveryConfig = new AsyncEndpointsRecoveryConfigurations();
-		recoveryConfigurations?.Invoke(recoveryConfig);
-
-		// Register recovery configuration as singleton
-		services.AddSingleton(recoveryConfig);
+		services.AddSingleton<WorkerOptions>(sp =>
+		{
+			var options = sp.GetRequiredService<AsyncEndpointsOptions>();
+			var workerOptions = new WorkerOptions
+			{
+				MaxConcurrency = options.MaxConcurrency,
+				PollingIntervalMin = options.PollingMinInterval,
+				PollingIntervalMax = options.PollingMaxInterval,
+				HeartbeatInterval = options.HeartbeatInterval,
+				StaleJobTimeout = options.StaleJobTimeout,
+				MaxQueueSize = options.MaxQueueSize
+			};
+			configureWorker?.Invoke(workerOptions);
+			return workerOptions;
+		});
 
 		// Register worker services
 		services.AddTransient<IJobConsumerService, JobConsumerService>();
@@ -106,11 +115,8 @@ public static class ServiceCollectionExtensions
 		// Always register the main background service
 		services.AddHostedService<AsyncEndpointsBackgroundService>();
 
-		// Conditionally register recovery service based on configuration
-		if (recoveryConfig.EnableDistributedJobRecovery)
-		{
-			services.AddHostedService<DistributedJobRecoveryService>();
-		}
+		// Register recovery service — it will short-circuit if disabled
+		services.AddHostedService<DistributedJobRecoveryService>();
 
 		return services;
 	}

@@ -3,17 +3,16 @@ using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.JobProcessing;
 
 /// <inheritdoc />
-public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions<AsyncEndpointsConfigurations> options, IDateTimeProvider dateTimeProvider, IAsyncEndpointsObservability metrics) : IJobManager
+public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, AsyncEndpointsOptions options, IDateTimeProvider dateTimeProvider, IAsyncEndpointsObservability metrics) : IJobManager
 {
 	private readonly ILogger<JobManager> _logger = logger;
 	private readonly IJobStore _jobStore = jobStore;
 	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
-	private readonly AsyncEndpointsJobManagerConfigurations _jobManagerConfigurations = options.Value.JobManagerConfigurations;
+	private readonly AsyncEndpointsOptions _options = options;
 	private readonly IAsyncEndpointsObservability _metrics = metrics;
 
 	public async Task<MethodResult<Job>> SubmitJob(
@@ -40,7 +39,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 			return MethodResult<Job>.Success(result.Data);
 		}
 
-		var job = Job.Create(jobId, jobName, payload, headers, routeParams, queryParams, _jobManagerConfigurations.DefaultMaxRetries, _dateTimeProvider);
+		var job = Job.Create(jobId, jobName, payload, headers, routeParams, queryParams, _options.MaxRetries, _dateTimeProvider);
 		var createJobResult = await _jobStore.CreateJob(job, cancellationToken);
 		if (createJobResult.IsSuccess)
 		{
@@ -178,6 +177,6 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, IOptions
 	private TimeSpan CalculateRetryDelay(int retryCount)
 	{
 		// Exponential backoff: (2 ^ retryCount) * base delay
-		return TimeSpan.FromSeconds(Math.Pow(2, retryCount) * _jobManagerConfigurations.RetryDelayBaseSeconds);
+		return TimeSpan.FromSeconds(Math.Pow(2, retryCount) * _options.RetryDelayBaseSeconds);
 	}
 }

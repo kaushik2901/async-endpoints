@@ -1,8 +1,7 @@
-using AsyncEndpoints.Configuration;
 using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Threading.Channels;
 
 namespace AsyncEndpoints.Background;
@@ -14,12 +13,12 @@ namespace AsyncEndpoints.Background;
 /// </summary>
 public class JobProducerService(
 	ILogger<JobProducerService> logger,
-	IOptions<AsyncEndpointsConfigurations> configurations,
+	WorkerOptions workerOptions,
 	IDelayCalculatorService delayCalculatorService,
 	IServiceScopeFactory serviceScopeFactory) : IJobProducerService
 {
 	private readonly ILogger<JobProducerService> _logger = logger;
-	private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations = configurations.Value.WorkerConfigurations;
+	private readonly WorkerOptions _workerOptions = workerOptions;
 	private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 	private readonly IDelayCalculatorService _delayCalculatorService = delayCalculatorService;
 
@@ -38,13 +37,13 @@ public class JobProducerService(
 				await using var scope = _serviceScopeFactory.CreateAsyncScope();
 				var jobClaimingService = scope.ServiceProvider.GetRequiredService<IJobClaimingService>();
 
-				using var _ = _logger.BeginScope(new { _workerConfigurations.WorkerId });
+				using var _ = _logger.BeginScope(new { _workerOptions.WorkerId });
 
 				try
 				{
-					var result = await jobClaimingService.ClaimAndEnqueueJobAsync(writerJobChannel, _workerConfigurations.WorkerId, stoppingToken);
+					var result = await jobClaimingService.ClaimAndEnqueueJobAsync(writerJobChannel, _workerOptions.WorkerId, stoppingToken);
 
-					var delay = _delayCalculatorService.CalculateDelay(result, _workerConfigurations);
+					var delay = _delayCalculatorService.CalculateDelay(result, _workerOptions);
 
 					await Task.Delay(delay, stoppingToken);
 				}
@@ -55,7 +54,7 @@ public class JobProducerService(
 				catch (Exception ex)
 				{
 					_logger.LogError(ex, "Error in job producer");
-					var delay = _delayCalculatorService.CalculateDelay(JobClaimingState.ErrorOccurred, _workerConfigurations);
+					var delay = _delayCalculatorService.CalculateDelay(JobClaimingState.ErrorOccurred, _workerOptions);
 					await Task.Delay(delay, stoppingToken);
 				}
 			}

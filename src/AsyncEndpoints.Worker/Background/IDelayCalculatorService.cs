@@ -1,4 +1,4 @@
-using AsyncEndpoints.Configuration;
+using AsyncEndpoints.Worker.Hosting;
 
 namespace AsyncEndpoints.Background;
 
@@ -11,7 +11,7 @@ public interface IDelayCalculatorService
 	/// Calculates the appropriate delay based on the current state and base polling interval
 	/// </summary>
 	/// <param name="state">The current state of job processing</param>
-	/// <param name="workerConfigurations">The worker configurations</param>
+	/// <param name="workerOptions">The worker options</param>
 	/// <returns>The calculated delay as a TimeSpan</returns>
-	TimeSpan CalculateDelay(JobClaimingState state, AsyncEndpointsWorkerConfigurations workerConfigurations);
+	TimeSpan CalculateDelay(JobClaimingState state, WorkerOptions workerOptions);
 }

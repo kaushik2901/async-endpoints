@@ -12,21 +12,22 @@ public class DistributedJobRecoveryServiceTests
 {
 	/// <summary>
 	/// Verifies that the DistributedJobRecoveryService can be constructed with valid dependencies without throwing an exception.
-	/// This test ensures the constructor properly accepts and stores all required dependencies.
 	/// </summary>
 	[Theory, AutoMoqData]
 	public void Constructor_Succeeds_WithValidDependencies(
 		Mock<ILogger<DistributedJobRecoveryService>> mockLogger,
 		Mock<IJobStore> mockJobStore,
-		Mock<IDateTimeProvider> mockDateTimeProvider,
-		AsyncEndpointsRecoveryConfigurations recoveryConfigurations)
+		Mock<IDateTimeProvider> mockDateTimeProvider)
 	{
+		// Arrange
+		var options = new AsyncEndpointsOptions { EnableDistributedJobRecovery = true };
+
 		// Act
 		var service = new DistributedJobRecoveryService(
 			mockLogger.Object,
 			mockJobStore.Object,
 			mockDateTimeProvider.Object,
-			recoveryConfigurations);
+			options);
 
 		// Assert
 		Assert.NotNull(service);

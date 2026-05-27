@@ -14,17 +14,24 @@ public class DistributedJobRecoveryService(
 	ILogger<DistributedJobRecoveryService> logger,
 	IJobStore jobStore,
 	IDateTimeProvider dateTimeProvider,
-	AsyncEndpointsRecoveryConfigurations recoveryConfigurations) : BackgroundService
+	AsyncEndpointsOptions options) : BackgroundService
 {
 	private readonly ILogger<DistributedJobRecoveryService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 	private readonly IJobStore _jobStore = jobStore ?? throw new ArgumentNullException(nameof(jobStore));
 	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
-	private readonly TimeSpan _recoveryInterval = TimeSpan.FromSeconds(recoveryConfigurations.RecoveryCheckIntervalSeconds);
-	private readonly int _jobTimeoutMinutes = recoveryConfigurations.JobTimeoutMinutes;
-	private readonly int _maxRetries = recoveryConfigurations.MaximumRetries;
+	private readonly bool _recoveryEnabled = options.EnableDistributedJobRecovery;
+	private readonly TimeSpan _recoveryInterval = TimeSpan.FromSeconds(options.RecoveryCheckIntervalSeconds);
+	private readonly int _jobTimeoutMinutes = options.JobTimeoutMinutes;
+	private readonly int _maxRetries = options.MaxRetries;
 
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		if (!_recoveryEnabled)
+		{
+			_logger.LogInformation("Distributed job recovery is disabled by configuration");
+			return;
+		}
+
 		if (!_jobStore.SupportsJobRecovery)
 		{
 			_logger.LogWarning("Job Recovery Service is enabled but current job store does not support recovery. Service will not start.");

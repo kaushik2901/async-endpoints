@@ -1,9 +1,9 @@
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Threading.Channels;
 
 namespace AsyncEndpoints.Background;
@@ -17,7 +17,7 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 	private readonly ILogger<AsyncEndpointsBackgroundService> _logger;
 	private readonly IJobProducerService _jobProducerService;
 	private readonly IJobConsumerService _jobConsumerService;
-	private readonly AsyncEndpointsWorkerConfigurations _workerConfigurations;
+	private readonly WorkerOptions _workerOptions;
 	private readonly ChannelReader<Job> _readerJobChannel;
 	private readonly ChannelWriter<Job> _writerJobChannel;
 	private readonly SemaphoreSlim _semaphoreSlim;
@@ -28,18 +28,18 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 
 	public AsyncEndpointsBackgroundService(
 		ILogger<AsyncEndpointsBackgroundService> logger,
-		IOptions<AsyncEndpointsConfigurations> configurations,
+		WorkerOptions workerOptions,
 		IJobProducerService jobProducerService,
 		IJobConsumerService jobConsumerService,
 		IDateTimeProvider dateTimeProvider)
 	{
 		_logger = logger;
-		_workerConfigurations = configurations.Value.WorkerConfigurations;
+		_workerOptions = workerOptions;
 		_jobProducerService = jobProducerService;
 		_jobConsumerService = jobConsumerService;
 		DateTimeProvider = dateTimeProvider;
 
-		var channelOptions = new BoundedChannelOptions(_workerConfigurations.MaximumQueueSize)
+		var channelOptions = new BoundedChannelOptions(_workerOptions.MaxQueueSize)
 		{
 			FullMode = BoundedChannelFullMode.Wait,
 			SingleReader = false,
@@ -50,8 +50,8 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 		_readerJobChannel = jobChannel.Reader;
 		_writerJobChannel = jobChannel.Writer;
 		_semaphoreSlim = new SemaphoreSlim(
-			_workerConfigurations.MaximumConcurrency,
-			_workerConfigurations.MaximumConcurrency
+			_workerOptions.MaxConcurrency,
+			_workerOptions.MaxConcurrency
 		);
 	}
 
@@ -150,7 +150,7 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 		_logger.LogInformation("AsyncEndpoints Background Service is starting");
 
 		var producerTask = _jobProducerService.ProduceJobsAsync(_writerJobChannel, stoppingToken);
-		var consumerTasks = Enumerable.Range(0, _workerConfigurations.MaximumConcurrency)
+		var consumerTasks = Enumerable.Range(0, _workerOptions.MaxConcurrency)
 			.Select(_ => _jobConsumerService.ConsumeJobsAsync(_readerJobChannel, _semaphoreSlim, stoppingToken))
 			.ToArray();
 
@@ -196,7 +196,7 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 		// (All permits available means no work in progress)
 		while (DateTimeProvider.UtcNow < deadline)
 		{
-			if (_semaphoreSlim.CurrentCount == _workerConfigurations.MaximumConcurrency)
+			if (_semaphoreSlim.CurrentCount == _workerOptions.MaxConcurrency)
 			{
 				// All permits available, no work in progress
 				break;
@@ -205,10 +205,10 @@ public sealed class AsyncEndpointsBackgroundService : BackgroundService, IAsyncD
 			await Task.Delay(AsyncEndpointsConstants.BackgroundServiceWaitDelayMs).ConfigureAwait(false);
 		}
 
-		if (_semaphoreSlim.CurrentCount < _workerConfigurations.MaximumConcurrency)
+		if (_semaphoreSlim.CurrentCount < _workerOptions.MaxConcurrency)
 		{
 			_logger.LogWarning("Some work may still be in progress during shutdown. Active jobs: {ActiveJobs}",
-				_workerConfigurations.MaximumConcurrency - _semaphoreSlim.CurrentCount);
+				_workerOptions.MaxConcurrency - _semaphoreSlim.CurrentCount);
 		}
 	}
 }

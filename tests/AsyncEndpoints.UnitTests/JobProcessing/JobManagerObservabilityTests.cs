@@ -5,7 +5,6 @@ using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 using System.Diagnostics;
 
@@ -13,17 +12,12 @@ namespace AsyncEndpoints.UnitTests.JobProcessing;
 
 public class JobManagerObservabilityTests
 {
-	/// <summary>
-	/// Verifies that when a new job is submitted, the observability interface records the job creation metric.
-	/// This ensures proper metric collection for monitoring job creation rates.
-	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task SubmitJob_CreatesNewJob_RecordsJobCreatedMetric(
 		string jobName,
 		string payload,
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IOptions<AsyncEndpointsConfigurations>> mockOptions,
 		Mock<IDateTimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
@@ -31,8 +25,7 @@ public class JobManagerObservabilityTests
 		// Arrange
 		var jobId = job.Id;
 
-		var config = new AsyncEndpointsConfigurations();
-		mockOptions.Setup(x => x.Value).Returns(config);
+		var options = new AsyncEndpointsOptions();
 
 		mockMetrics
 			.Setup(x => x.StartJobSubmitActivity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()))
@@ -46,7 +39,7 @@ public class JobManagerObservabilityTests
 		var jobManager = new JobManager(
 			mockJobStore.Object,
 			mockLogger.Object,
-			mockOptions.Object,
+			options,
 			mockDateTimeProvider.Object,
 			mockMetrics.Object);
 
@@ -61,24 +54,17 @@ public class JobManagerObservabilityTests
 		mockMetrics.Verify(m => m.RecordJobCreated(jobName, It.IsAny<string>()), Times.Once);
 	}
 
-	/// <summary>
-	/// Verifies that when job processing fails and max retries are exceeded, 
-	/// the observability interface records the job failure metric.
-	/// This ensures proper failure tracking for monitoring system health.
-	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProcessJobFailure_MaxRetriesExceeded_RecordsJobFailedMetric(
 		Guid jobId,
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IOptions<AsyncEndpointsConfigurations>> mockOptions,
 		Mock<IDateTimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		AsyncEndpointError error)
 	{
 		// Arrange
-		var config = new AsyncEndpointsConfigurations();
-		mockOptions.Setup(x => x.Value).Returns(config);
+		var options = new AsyncEndpointsOptions();
 
 		var job = Job.Create(
 			jobId,
@@ -87,10 +73,9 @@ public class JobManagerObservabilityTests
 			[],
 			[],
 			[],
-			5, // MaxRetries = 5
+			5,
 			mockDateTimeProvider.Object);
 
-		// Manually set the properties that were set in the original test
 		job = job.CreateCopy(
 			retryCount: 5,
 			lastUpdatedAt: DateTimeOffset.UtcNow,
@@ -103,7 +88,7 @@ public class JobManagerObservabilityTests
 		var jobManager = new JobManager(
 			mockJobStore.Object,
 			mockLogger.Object,
-			mockOptions.Object,
+			options,
 			mockDateTimeProvider.Object,
 			mockMetrics.Object);
 
@@ -114,24 +99,17 @@ public class JobManagerObservabilityTests
 		mockMetrics.Verify(m => m.RecordJobFailed(job.Name, error.Code, It.IsAny<string>()), Times.Once);
 	}
 
-	/// <summary>
-	/// Verifies that when job processing fails but retries are still available,
-	/// the observability interface records the retry metric.
-	/// This ensures proper tracking of retry behavior in the system.
-	/// </summary>
 	[Theory, AutoMoqData]
 	public async Task ProcessJobFailure_RetriesAvailable_RecordsRetryMetric(
 		Guid jobId,
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IOptions<AsyncEndpointsConfigurations>> mockOptions,
 		Mock<IDateTimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		AsyncEndpointError error)
 	{
 		// Arrange
-		var config = new AsyncEndpointsConfigurations();
-		mockOptions.Setup(x => x.Value).Returns(config);
+		var options = new AsyncEndpointsOptions();
 
 		var job = Job.Create(
 			jobId,
@@ -140,10 +118,9 @@ public class JobManagerObservabilityTests
 			[],
 			[],
 			[],
-			5, // MaxRetries = 5
+			5,
 			mockDateTimeProvider.Object);
 
-		// Manually set the properties that were set in the original test
 		job = job.CreateCopy(
 			retryCount: 1,
 			lastUpdatedAt: DateTimeOffset.UtcNow,
@@ -156,7 +133,7 @@ public class JobManagerObservabilityTests
 		var jobManager = new JobManager(
 			mockJobStore.Object,
 			mockLogger.Object,
-			mockOptions.Object,
+			options,
 			mockDateTimeProvider.Object,
 			mockMetrics.Object);
 

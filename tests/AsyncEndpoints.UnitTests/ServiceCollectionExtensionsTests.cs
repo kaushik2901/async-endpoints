@@ -18,9 +18,9 @@ public class ServiceCollectionExtensionsTests
 	{
 		// Arrange
 		var services = new ServiceCollection();
-		services.AddLogging();  // Add logging to resolve ILogger dependencies
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
-		services.AddAsyncEndpointsInMemoryStore(); // Add job store as it's required by the request delegate
+		services.AddLogging();
+		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddAsyncEndpointsInMemoryStore();
 
 		// Act
 		services.AddAsyncEndpoints();
@@ -29,10 +29,9 @@ public class ServiceCollectionExtensionsTests
 		var provider = services.BuildServiceProvider();
 
 		Assert.NotNull(provider.GetService<IHttpContextAccessor>());
-		Assert.NotNull(provider.GetService<AsyncEndpointsConfigurations>());
+		Assert.NotNull(provider.GetService<AsyncEndpointsOptions>());
 		Assert.NotNull(provider.GetService<IAsyncEndpointRequestDelegate>());
 
-		// Verify the correct implementation is registered
 		var requestDelegate = provider.GetService<IAsyncEndpointRequestDelegate>();
 		Assert.IsType<AsyncEndpointRequestDelegate>(requestDelegate);
 	}
@@ -43,16 +42,17 @@ public class ServiceCollectionExtensionsTests
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddLogging();
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
+		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 		services.AddAsyncEndpointsInMemoryStore();
 
-		// Act - Add configuration as a separate step after AddAsyncEndpoints
-		services.AddAsyncEndpoints();
+		// Act
+		services.AddAsyncEndpoints(options => options.WithMaxConcurrency(8).WithMaxRetries(5));
 		var provider = services.BuildServiceProvider();
-		var config = provider.GetRequiredService<AsyncEndpointsConfigurations>();
+		var config = provider.GetRequiredService<AsyncEndpointsOptions>();
 
-		// Test the default values
-		Assert.Equal(AsyncEndpointsConstants.DefaultPollingIntervalMs, config.WorkerConfigurations.PollingIntervalMs);
+		// Assert
+		Assert.Equal(8, config.MaxConcurrency);
+		Assert.Equal(5, config.MaxRetries);
 	}
 
 	[Fact]
@@ -60,9 +60,9 @@ public class ServiceCollectionExtensionsTests
 	{
 		// Arrange
 		var services = new ServiceCollection();
-		services.AddLogging();  // Add logging to resolve ILogger dependencies
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
-		services.AddAsyncEndpoints(); // Add Async endpoints
+		services.AddLogging();
+		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddAsyncEndpoints();
 
 		// Act
 		services.AddAsyncEndpointsInMemoryStore();
@@ -80,10 +80,10 @@ public class ServiceCollectionExtensionsTests
 	{
 		// Arrange
 		var services = new ServiceCollection();
-		services.AddLogging();  // Add logging to resolve ILogger dependencies
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
-		services.AddAsyncEndpointsInMemoryStore(); // Add job store as it's required by worker services
-		services.AddAsyncEndpoints(); // Add the main services including IJobManager
+		services.AddLogging();
+		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddAsyncEndpointsInMemoryStore();
+		services.AddAsyncEndpoints();
 
 		// Act
 		services.AddAsyncEndpointsWorker();
@@ -95,16 +95,14 @@ public class ServiceCollectionExtensionsTests
 		Assert.NotNull(provider.GetService<IJobProducerService>());
 		Assert.NotNull(provider.GetService<IJobProcessorService>());
 		Assert.NotNull(provider.GetService<IHandlerExecutionService>());
-		Assert.NotNull(provider.GetService<IJobManager>()); // Add this check
+		Assert.NotNull(provider.GetService<IJobManager>());
 
-		// Verify the correct implementations are registered
 		Assert.IsType<JobConsumerService>(provider.GetService<IJobConsumerService>());
 		Assert.IsType<JobProducerService>(provider.GetService<IJobProducerService>());
 		Assert.IsType<JobProcessorService>(provider.GetService<IJobProcessorService>());
 		Assert.IsType<HandlerExecutionService>(provider.GetService<IHandlerExecutionService>());
-		Assert.IsType<JobManager>(provider.GetService<IJobManager>()); // Add this verification
+		Assert.IsType<JobManager>(provider.GetService<IJobManager>());
 
-		// Verify background service is registered
 		var hostedServices = provider.GetServices<IHostedService>();
 		var backgroundService = hostedServices.FirstOrDefault(s => s is AsyncEndpointsBackgroundService);
 		Assert.NotNull(backgroundService);
@@ -116,8 +114,8 @@ public class ServiceCollectionExtensionsTests
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddLogging();
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
-		services.AddAsyncEndpointsInMemoryStore(); // Required for the request delegate
+		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddAsyncEndpointsInMemoryStore();
 
 		// Act
 		services.AddAsyncEndpointHandler<TestAsyncEndpointRequestHandler, TestRequest, TestResponse>("test-job");
@@ -130,18 +128,14 @@ public class ServiceCollectionExtensionsTests
 		Assert.IsType<TestAsyncEndpointRequestHandler>(handler);
 	}
 
-	/// <summary>
-	/// Verifies that the AddAsyncEndpointHandler method for no-body requests registers the handler correctly.
-	/// This ensures handlers without request body can be registered and resolved from the service container.
-	/// </summary>
 	[Fact]
 	public void AddAsyncEndpointHandler_NoBody_RegistersHandlerCorrectly()
 	{
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddLogging();
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>(); // Add datetime provider
-		services.AddAsyncEndpointsInMemoryStore(); // Required for the request delegate
+		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddAsyncEndpointsInMemoryStore();
 
 		// Act
 		services.AddAsyncEndpointHandler<TestNoBodyRequestHandler, string>("no-body-test-job");
