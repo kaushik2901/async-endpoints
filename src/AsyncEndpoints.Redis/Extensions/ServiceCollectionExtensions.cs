@@ -1,7 +1,5 @@
+using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.Infrastructure.Observability;
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Redis.Configuration;
 using AsyncEndpoints.Redis.Services;
 using AsyncEndpoints.Redis.Storage;
@@ -11,105 +9,82 @@ using StackExchange.Redis;
 
 namespace AsyncEndpoints.Redis.Extensions;
 
-/// <summary>
-/// Extension methods for configuring and registering AsyncEndpoints Redis services with the dependency injection container.
-/// </summary>
 public static class RedisServiceCollectionExtensions
 {
-	/// <summary>
-	/// Adds a Redis-based job store implementation to the dependency injection container.
-	/// Use this for production deployments that require persistence and distributed processing.
-	/// </summary>
-	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-	/// <param name="connectionString">The Redis connection string.</param>
-	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
-	public static IServiceCollection AddAsyncEndpointsRedisStore(this IServiceCollection services, string connectionString)
-	{
-		if (string.IsNullOrWhiteSpace(connectionString))
-			throw new ArgumentException("Redis connection string cannot be null or empty.", nameof(connectionString));
+    public static IServiceCollection AddAsyncEndpointsRedisStore(this IServiceCollection services, string connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Redis connection string cannot be null or empty.", nameof(connectionString));
 
-		services.AddSingleton<IJobHashConverter, JobHashConverter>();
-		services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
+        services.AddSingleton<IJobHashConverter, JobHashConverter>();
+        services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
 
-		services.AddSingleton<IJobStore>(provider =>
-		{
-			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
-			var serializer = provider.GetRequiredService<ISerializer>();
-			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
-			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
-			var metrics = provider.GetRequiredService<IAsyncEndpointsObservability>();
-			return new RedisJobStore(logger, connectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService, metrics);
-		});
+        services.AddSingleton<IJobStore>(provider =>
+        {
+            var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
+            var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
+            var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
+            var luaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
+            var database = InitializeDatabase(connectionString, logger);
+            return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, luaScriptService);
+        });
 
-		services.AddSingleton<IJobRecoveryService>(provider =>
-		{
-			var logger = provider.GetRequiredService<ILogger<RedisJobRecoveryService>>();
-			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
-			return new RedisJobRecoveryService(logger, connectionString, redisLuaScriptService);
-		});
+        return services;
+    }
 
-		return services;
-	}
+    public static IServiceCollection AddAsyncEndpointsRedisStore(this IServiceCollection services, IConnectionMultiplexer connectionMultiplexer)
+    {
+        ArgumentNullException.ThrowIfNull(connectionMultiplexer);
 
-	/// <summary>
-	/// Adds a Redis-based job store implementation to the dependency injection container.
-	/// Use this for production deployments that require persistence and distributed processing.
-	/// </summary>
-	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-	/// <param name="connectionMultiplexer">The Redis connection multiplexer instance.</param>
-	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
-	public static IServiceCollection AddAsyncEndpointsRedisStore(this IServiceCollection services, IConnectionMultiplexer connectionMultiplexer)
-	{
-		ArgumentNullException.ThrowIfNull(connectionMultiplexer);
+        services.AddSingleton<IJobHashConverter, JobHashConverter>();
+        services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
 
-		services.AddSingleton<IJobHashConverter, JobHashConverter>();
-		services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
+        services.AddSingleton<IJobStore>(provider =>
+        {
+            var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
+            var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
+            var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
+            var luaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
+            var database = connectionMultiplexer.GetDatabase();
+            return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, luaScriptService);
+        });
 
-		services.AddSingleton<IJobStore>(provider =>
-		{
-			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
-			var serializer = provider.GetRequiredService<ISerializer>();
-			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
-			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
-			var metrics = provider.GetRequiredService<IAsyncEndpointsObservability>();
-			var database = connectionMultiplexer.GetDatabase();
-			return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService, metrics);
-		});
+        return services;
+    }
 
-		return services;
-	}
+    public static IServiceCollection AddAsyncEndpointsRedisStore(this IServiceCollection services, Action<RedisConfiguration> setupAction)
+    {
+        var config = new RedisConfiguration();
+        setupAction?.Invoke(config);
 
-	/// <summary>
-	/// Adds a Redis-based job store implementation to the dependency injection container.
-	/// Use this for production deployments that require persistence and distributed processing.
-	/// </summary>
-	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
-	/// <param name="setupAction">Action to configure the Redis connection multiplexer.</param>
-	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
-	public static IServiceCollection AddAsyncEndpointsRedisStore(this IServiceCollection services, Action<RedisConfiguration> setupAction)
-	{
-		var config = new RedisConfiguration();
-		setupAction?.Invoke(config);
+        if (string.IsNullOrWhiteSpace(config.ConnectionString))
+            throw new ArgumentException("Redis connection string cannot be null or empty.");
 
-		if (string.IsNullOrWhiteSpace(config.ConnectionString))
-			throw new ArgumentException("Redis connection string cannot be null or empty.");
+        services.AddSingleton<IJobHashConverter, JobHashConverter>();
+        services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
 
-		services.AddSingleton<IJobHashConverter, JobHashConverter>();
-		services.AddSingleton<IRedisLuaScriptService, RedisLuaScriptService>();
+        services.AddSingleton<IJobStore>(provider =>
+        {
+            var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
+            var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
+            var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
+            var luaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
+            var database = InitializeDatabase(config.ConnectionString, logger);
+            return new RedisJobStore(logger, database, dateTimeProvider, jobHashConverter, luaScriptService);
+        });
 
-		services.AddSingleton<IJobStore>(provider =>
-		{
-			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
-			var serializer = provider.GetRequiredService<ISerializer>();
-			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
-			var redisLuaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
-			var metrics = provider.GetRequiredService<IAsyncEndpointsObservability>();
-			return new RedisJobStore(logger, config.ConnectionString, dateTimeProvider, jobHashConverter, serializer, redisLuaScriptService, metrics);
-		});
+        return services;
+    }
 
-		return services;
-	}
+    private static IDatabase InitializeDatabase(string connectionString, ILogger logger)
+    {
+        var redis = ConnectionMultiplexer.Connect(connectionString);
+
+        redis.ConnectionFailed += (sender, e) =>
+            logger.LogError(e.Exception, "Redis connection failed: {ErrorMessage}", e.Exception?.Message);
+        redis.ConnectionRestored += (sender, e) =>
+            logger.LogInformation("Redis connection restored");
+
+        return redis.GetDatabase();
+    }
 }

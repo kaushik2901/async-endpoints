@@ -1,6 +1,6 @@
 namespace AsyncEndpoints.Abstractions.Jobs;
 
-public class JobRecord
+public record JobRecord
 {
     public Guid JobId { get; init; }
     public string JobName { get; init; } = string.Empty;

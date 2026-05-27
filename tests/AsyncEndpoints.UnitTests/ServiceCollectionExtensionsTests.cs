@@ -1,3 +1,4 @@
+using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Extensions;
@@ -8,6 +9,7 @@ using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Moq;
 
 namespace AsyncEndpoints.UnitTests;
 
@@ -20,6 +22,7 @@ public class ServiceCollectionExtensionsTests
 		var services = new ServiceCollection();
 		services.AddLogging();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddSingleton<AsyncEndpoints.JobProcessing.IJobStore>(Mock.Of<AsyncEndpoints.JobProcessing.IJobStore>());
 		services.AddAsyncEndpointsInMemoryStore();
 
 		// Act
@@ -62,6 +65,7 @@ public class ServiceCollectionExtensionsTests
 		var services = new ServiceCollection();
 		services.AddLogging();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddSingleton<AsyncEndpoints.JobProcessing.IJobStore>(Mock.Of<AsyncEndpoints.JobProcessing.IJobStore>());
 		services.AddAsyncEndpoints();
 
 		// Act
@@ -69,7 +73,7 @@ public class ServiceCollectionExtensionsTests
 
 		// Assert
 		var provider = services.BuildServiceProvider();
-		var jobStore = provider.GetService<IJobStore>();
+		var jobStore = provider.GetService<AsyncEndpoints.Abstractions.Storage.IJobStore>();
 
 		Assert.NotNull(jobStore);
 		Assert.IsType<InMemoryJobStore>(jobStore);
@@ -82,6 +86,7 @@ public class ServiceCollectionExtensionsTests
 		var services = new ServiceCollection();
 		services.AddLogging();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddSingleton<AsyncEndpoints.JobProcessing.IJobStore>(Mock.Of<AsyncEndpoints.JobProcessing.IJobStore>());
 		services.AddAsyncEndpointsInMemoryStore();
 		services.AddAsyncEndpoints();
 

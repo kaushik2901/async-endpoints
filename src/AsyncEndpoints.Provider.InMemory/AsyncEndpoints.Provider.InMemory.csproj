@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\AsyncEndpoints.Core\AsyncEndpoints.Core.csproj" />
+    <ProjectReference Include="..\AsyncEndpoints.Abstractions\AsyncEndpoints.Abstractions.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
 
   <PropertyGroup>

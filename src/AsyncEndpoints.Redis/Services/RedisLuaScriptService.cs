@@ -1,240 +1,138 @@
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.JobProcessing;
-using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Text;
 
 namespace AsyncEndpoints.Redis.Services;
 
-/// <inheritdoc />
-public class RedisLuaScriptService(ILogger<RedisLuaScriptService> logger, IDateTimeProvider dateTimeProvider) : IRedisLuaScriptService
+public class RedisLuaScriptService : IRedisLuaScriptService
 {
-	private readonly ILogger<RedisLuaScriptService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
+    private readonly ILogger<RedisLuaScriptService> _logger;
 
-	/// <inheritdoc />
-	public async Task<MethodResult<RedisValue[]>> ClaimSingleJob(IDatabase database, Guid jobId, Guid workerId)
-	{
-		using var _ = _logger.BeginScope(new { JobId = jobId, WorkerId = workerId });
+    public RedisLuaScriptService(ILogger<RedisLuaScriptService> logger)
+    {
+        _logger = logger;
+    }
 
-		_logger.LogDebug("Starting Redis job claim operation for job {JobId} by worker {WorkerId}", jobId, workerId);
+    public async Task<string> EnqueueJobAsync(IDatabase database, string jobId, string channel, double score, HashEntry[] hashEntries)
+    {
+        var script = @"
+            local jobKey = 'ae:job:' .. ARGV[1]
+            local queueKey = 'ae:queue:' .. ARGV[2]
+            local score = tonumber(ARGV[3])
 
-		var jobKey = GetJobKey(jobId);
+            for i = 4, #ARGV, 2 do
+                redis.call('HSET', jobKey, ARGV[i], ARGV[i + 1])
+            end
 
-		// Use atomic Lua script to check and claim the job in one operation
-		var luaScript = @"
-			local jobKey = ARGV[1]
-			local expectedStatus1 = ARGV[2]  -- Queued
-			local expectedStatus2 = ARGV[3]  -- Scheduled  
-			local newStatus = ARGV[4]        -- InProgress
-			local newWorkerId = ARGV[5]
-			local newStartedAt = ARGV[6]
-			local newLastUpdatedAt = ARGV[7]
-			local queueKey = ARGV[8]
-			local jobId = ARGV[9]
-			local currentTime = ARGV[10]
+            redis.call('ZADD', queueKey, score, ARGV[1])
+            return ARGV[1]
+        ";
 
-			-- Get required fields atomically
-			local currentStatus = redis.call('HGET', jobKey, 'Status')
-			local currentWorkerId = redis.call('HGET', jobKey, 'WorkerId')
-			local currentRetryDelayUntil = redis.call('HGET', jobKey, 'RetryDelayUntil')
+        var args = new List<RedisValue> { jobId, channel, score.ToString() };
+        foreach (var entry in hashEntries)
+        {
+            args.Add(entry.Name);
+            args.Add(entry.Value);
+        }
 
-			-- Check if job can be claimed - all checks in one atomic operation
-			if currentWorkerId and currentWorkerId ~= '' then
-				return redis.error_reply('ALREADY_ASSIGNED')
-			end
+        var result = await database.ScriptEvaluateAsync(script, values: args.ToArray());
+        return result.ToString();
+    }
 
-			if not (currentStatus == expectedStatus1 or currentStatus == expectedStatus2) then
-				return redis.error_reply('WRONG_STATUS')
-			end
+    public async Task<RedisValue[]> DequeueJobAsync(IDatabase database, string channel, string nowIso, string nowUnix, string? partitions)
+    {
+        var script = @"
+            local queueKey = 'ae:queue:' .. KEYS[1]
+            local heartbeatKey = 'ae:heartbeat'
+            local nowIso = ARGV[1]
+            local nowUnix = ARGV[2]
+            local partitionFilter = ARGV[3]
 
-			-- Check retry delay if it exists
-			if currentRetryDelayUntil and currentRetryDelayUntil ~= '' then
-				local retryUntil = tonumber(currentRetryDelayUntil)
-				if retryUntil and retryUntil > tonumber(currentTime) then
-					return redis.error_reply('RETRY_DELAY')
-				end
-			end
+            local jobIds = redis.call('ZRANGE', queueKey, 0, -1)
 
-			-- Get all fields we need to return the complete job object
-			local currentId = redis.call('HGET', jobKey, 'Id')
-			local currentName = redis.call('HGET', jobKey, 'Name')
-			local currentHeaders = redis.call('HGET', jobKey, 'Headers')
-			local currentRouteParams = redis.call('HGET', jobKey, 'RouteParams')
-			local currentQueryParams = redis.call('HGET', jobKey, 'QueryParams')
-			local currentPayload = redis.call('HGET', jobKey, 'Payload')
-			local currentResult = redis.call('HGET', jobKey, 'Result')
-			local currentError = redis.call('HGET', jobKey, 'Error')
-			local currentRetryCount = redis.call('HGET', jobKey, 'RetryCount')
-			local currentMaxRetries = redis.call('HGET', jobKey, 'MaxRetries')
-			local currentCreatedAt = redis.call('HGET', jobKey, 'CreatedAt')
-			local currentCompletedAt = redis.call('HGET', jobKey, 'CompletedAt')
+            for _, jobId in ipairs(jobIds) do
+                local jobKey = 'ae:job:' .. jobId
+                local status = redis.call('HGET', jobKey, 'Status')
 
-			-- Convert startedAt to Unix timestamp for easier comparison in recovery
-			local startedAtUnix = tonumber(currentTime) -- Use the current time provided as Unix timestamp
+                if status and tonumber(status) == 100 then
+                    local partitionOk = true
+                    if partitionFilter and partitionFilter ~= '' then
+                        local jobPartition = redis.call('HGET', jobKey, 'Partition')
+                        partitionOk = false
+                        if jobPartition and jobPartition ~= '' then
+                            for p in string.gmatch(partitionFilter, '([^,]+)') do
+                                if p == jobPartition then
+                                    partitionOk = true
+                                    break
+                                end
+                            end
+                        end
+                    end
 
-			-- Claim the job atomically
-			redis.call('HSET', jobKey, 'Status', newStatus)
-			redis.call('HSET', jobKey, 'WorkerId', newWorkerId)
-			redis.call('HSET', jobKey, 'StartedAt', newStartedAt)
-			redis.call('HSET', jobKey, 'StartedAtUnix', startedAtUnix)
-			redis.call('HSET', jobKey, 'LastUpdatedAt', newLastUpdatedAt)
-			redis.call('ZREM', queueKey, jobId)
-			
-			-- Add to in-progress set with started timestamp as score for efficient recovery scanning
-			redis.call('ZADD', 'ae:jobs:inprogress', startedAtUnix, jobId)
+                    if partitionOk then
+                        redis.call('HSET', jobKey, 'Status', '300', 'StartedAt', nowIso, 'LastHeartbeat', nowIso)
+                        redis.call('ZREM', queueKey, jobId)
+                        redis.call('ZADD', heartbeatKey, nowUnix, jobId)
+                        local data = redis.call('HGETALL', jobKey)
+                        return data
+                    end
+                else
+                    redis.call('ZREM', queueKey, jobId)
+                end
+            end
 
-			-- Return all fields needed to construct the complete job object
-			return { 
-				currentId, currentName, newStatus, currentHeaders, currentRouteParams, 
-				currentQueryParams, currentPayload, currentResult, currentError, 
-				currentRetryCount, currentMaxRetries, currentRetryDelayUntil, 
-				currentWorkerId, currentCreatedAt, newStartedAt, currentCompletedAt, newLastUpdatedAt
-			}
-		";
+            return nil
+        ";
 
-		var now = _dateTimeProvider.DateTimeOffsetNow;
-		var currentTime = now.ToUnixTimeSeconds().ToString();
+        var result = await database.ScriptEvaluateAsync(script, keys: [new RedisKey(channel)], values: [nowIso, nowUnix, partitions ?? ""]);
 
-		var result = await database.ScriptEvaluateAsync(
-			luaScript,
-			values:
-			[
-				jobKey,
-				((int)JobStatus.Queued).ToString(),      // Expected status 1
-                ((int)JobStatus.Scheduled).ToString(),   // Expected status 2
-                ((int)JobStatus.InProgress).ToString(),  // New status
-                workerId.ToString(),                     // New worker ID
-                now.ToString("O"),                       // Started at
-                now.ToString("O"),                       // Last updated at
-                "ae:jobs:queue",                         // Queue key
-                jobId.ToString(),
-				currentTime                              // Current time for retry delay check
-            ]
-		);
+        if (result.IsNull)
+            return [];
 
-		_logger.LogDebug("Redis script execution completed for job claim operation");
+        return (RedisValue[])result!;
+    }
 
-		// Handle the script result
-		if (result.IsNull || result.ToString().StartsWith("NOSCRIPT"))
-		{
-			_logger.LogError("Lua script error occurred during job claim operation");
-			// Lua script error occurred
-			return MethodResult<RedisValue[]>.Failure(AsyncEndpointError.FromCode("JOB_CLAIM_ERROR", "Could not claim job due to script error"));
-		}
+    public async Task HeartbeatJobAsync(IDatabase database, string jobId, string nowIso, string nowUnix)
+    {
+        var script = @"
+            local jobKey = 'ae:job:' .. ARGV[1]
+            local heartbeatKey = 'ae:heartbeat'
 
-		try
-		{
-			// Check if the script returned an error (Redis error reply)
-			if (result.Resp3Type == ResultType.Error)
-			{
-				var error = result.ToString();
-				_logger.LogError("Redis Lua script returned error: {Error}", error);
-				if (error.Contains("ALREADY_ASSIGNED") || error.Contains("WRONG_STATUS") || error.Contains("RETRY_DELAY"))
-				{
-					return MethodResult<RedisValue[]>.Failure(AsyncEndpointError.FromCode("JOB_NOT_CLAIMED", "Could not claim job"));
-				}
-				return MethodResult<RedisValue[]>.Failure(AsyncEndpointError.FromCode("JOB_CLAIM_ERROR", $"Redis Lua script error: {error}"));
-			}
+            redis.call('HSET', jobKey, 'LastHeartbeat', ARGV[2])
+            redis.call('ZADD', heartbeatKey, tonumber(ARGV[3]), ARGV[1])
+        ";
 
-			// Return the Redis values array
-			var resultArray = (RedisValue[])result!;
-			_logger.LogDebug("Successfully claimed job {JobId} for worker {WorkerId}, retrieved {FieldCount} fields", jobId, workerId, resultArray.Length);
-			return MethodResult<RedisValue[]>.Success(resultArray);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Error processing result after claiming job {JobId}", jobId);
-			return MethodResult<RedisValue[]>.Failure(AsyncEndpointError.FromCode("JOB_PROCESSING_ERROR", $"Error processing job claim result: {ex.Message}"));
-		}
-	}
+        await database.ScriptEvaluateAsync(script, values: [jobId, nowIso, nowUnix]);
+    }
 
-	/// <inheritdoc />
-	public async Task<int> RecoverStuckJobs(IDatabase database, long timeoutUnixTime, int maxRetries)
-	{
-		var luaScript = @"
-			local timeoutUnixTime = tonumber(ARGV[1])
-			local maxRetries = tonumber(ARGV[2])
-			local currentTimeUnix = tonumber(ARGV[3])
-			local currentTimeIso = ARGV[4]
-			local inProgressStatus = tonumber(ARGV[5])
-			local scheduledStatus = tonumber(ARGV[6])
-			local failedStatus = tonumber(ARGV[7])
+    public async Task<int> ReclaimStaleJobsAsync(IDatabase database, long staleCutoffUnix, string nowIso, string nowUnix)
+    {
+        var script = @"
+            local heartbeatKey = 'ae:heartbeat'
+            local cutoff = tonumber(ARGV[1])
+            local currentTime = ARGV[3]
 
-			-- Get all in-progress jobs that started before the timeout
-			local inProgressJobIds = redis.call('ZRANGEBYSCORE', 'ae:jobs:inprogress', '-inf', timeoutUnixTime - 1)
+            local staleJobIds = redis.call('ZRANGEBYSCORE', heartbeatKey, '-inf', cutoff)
+            local reclaimed = 0
 
-			local recoveredCount = 0
+            for _, jobId in ipairs(staleJobIds) do
+                local jobKey = 'ae:job:' .. jobId
+                local channel = redis.call('HGET', jobKey, 'Channel')
 
-			for _, jobId in ipairs(inProgressJobIds) do
-				local jobKey = 'ae:job:' .. jobId
-				local status = redis.call('HGET', jobKey, 'Status')
-				local startedAtUnix = redis.call('HGET', jobKey, 'StartedAtUnix')
-				local retryCount = redis.call('HGET', jobKey, 'RetryCount') or '0'
-				local maxRetriesForJob = redis.call('HGET', jobKey, 'MaxRetries') or ARGV[2]
+                redis.call('HSET', jobKey, 'Status', '100', 'StartedAt', '', 'LastHeartbeat', '')
+                redis.call('ZREM', heartbeatKey, jobId)
 
-				-- Check that job is in-progress and has a valid start time before timeout
-				if tonumber(status) == inProgressStatus and startedAtUnix and startedAtUnix ~= '' and tonumber(startedAtUnix) <= timeoutUnixTime then
-					retryCount = tonumber(retryCount)
-					maxRetriesForJob = tonumber(maxRetriesForJob)
+                if channel and channel ~= '' then
+                    redis.call('ZADD', 'ae:queue:' .. channel, tonumber(currentTime), jobId)
+                end
 
-					if retryCount < maxRetriesForJob then
-						-- Recover: reschedule immediately, increment retry count
-						local newRetryCount = retryCount + 1
+                reclaimed = reclaimed + 1
+            end
 
-						redis.call('HSET', jobKey,
-							'Status', tostring(scheduledStatus),
-							'RetryCount', tostring(newRetryCount),
-							'RetryDelayUntil', '',
-							'WorkerId', '',
-							'StartedAt', '',
-							'StartedAtUnix', '',
-							'LastUpdatedAt', currentTimeIso)
+            return reclaimed
+        ";
 
-						redis.call('ZADD', 'ae:jobs:queue', currentTimeUnix, jobId)
-						redis.call('ZREM', 'ae:jobs:inprogress', jobId)
-						recoveredCount = recoveredCount + 1
-					else
-						-- Mark as permanently failed
-						redis.call('HSET', jobKey,
-							'Status', tostring(failedStatus),
-							'Error', 'Job failed after maximum retries',
-							'WorkerId', '',
-							'StartedAt', '',
-							'StartedAtUnix', '',
-							'LastUpdatedAt', currentTimeIso)
-
-						redis.call('ZREM', 'ae:jobs:inprogress', jobId)
-					end
-				end
-			end
-
-			return recoveredCount
-		";
-
-		var now = _dateTimeProvider.DateTimeOffsetNow;
-		var currentTimeUnix = now.ToUnixTimeSeconds();
-		var currentTimeIso = now.ToString("O"); // ISO 8601 format
-
-		var result = await database.ScriptEvaluateAsync(luaScript,
-			values:
-			[
-				timeoutUnixTime.ToString(),
-				maxRetries.ToString(),
-				currentTimeUnix.ToString(),
-				currentTimeIso,
-				((int)JobStatus.InProgress).ToString(),
-				((int)JobStatus.Scheduled).ToString(),
-				((int)JobStatus.Failed).ToString()
-			]);
-
-		return (int)(long)result;
-	}
-
-	/// <summary>
-	/// Generates the Redis key for a job based on its ID.
-	/// </summary>
-	/// <param name="jobId">The unique identifier of the job.</param>
-	/// <returns>The Redis key string for the job.</returns>
-	private static string GetJobKey(Guid jobId) => $"ae:job:{jobId}";
+        var result = await database.ScriptEvaluateAsync(script, values: [staleCutoffUnix.ToString(), nowIso, nowUnix]);
+        return (int)(long)result;
+    }
 }

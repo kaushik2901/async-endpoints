@@ -33,10 +33,12 @@
       <PackagePath>\</PackagePath>
     </None>
     <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AsyncEndpoints\AsyncEndpoints.csproj" />
+    <ProjectReference Include="..\AsyncEndpoints.Abstractions\AsyncEndpoints.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

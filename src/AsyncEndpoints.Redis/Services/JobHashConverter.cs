@@ -1,83 +1,94 @@
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Abstractions.Jobs;
 using StackExchange.Redis;
 using System.Globalization;
+using System.Text.Json;
 
 namespace AsyncEndpoints.Redis.Services;
 
-/// <summary>
-/// Provides functionality to convert between Job objects and Redis hash entries.
-/// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="JobHashConverter"/> class.
-/// </remarks>
-/// <param name="serializer">The serializer service.</param>
-public class JobHashConverter(ISerializer serializer) : IJobHashConverter
+public class JobHashConverter : IJobHashConverter
 {
-	private readonly ISerializer _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+    public HashEntry[] ConvertToHashEntries(JobRecord record)
+    {
+        return
+        [
+            new HashEntry("JobId", record.JobId.ToString()),
+            new HashEntry("JobName", record.JobName ?? ""),
+            new HashEntry("Channel", record.Channel ?? "default"),
+            new HashEntry("Priority", record.Priority),
+            new HashEntry("Partition", record.Partition?.ToString() ?? ""),
+            new HashEntry("Payload", record.Payload ?? ""),
+            new HashEntry("Status", (int)record.Status),
+            new HashEntry("RetryCount", record.RetryCount),
+            new HashEntry("MaxRetries", record.MaxRetries),
+            new HashEntry("CreatedAt", record.CreatedAt.ToString("O")),
+            new HashEntry("StartedAt", record.StartedAt?.ToString("O") ?? ""),
+            new HashEntry("CompletedAt", record.CompletedAt?.ToString("O") ?? ""),
+            new HashEntry("WorkerId", record.WorkerId ?? ""),
+            new HashEntry("LastHeartbeat", record.LastHeartbeat?.ToString("O") ?? ""),
+            new HashEntry("Result", record.Result ?? ""),
+            new HashEntry("ErrorMessage", record.ErrorMessage ?? ""),
+            new HashEntry("Metadata", record.Metadata is not null ? JsonSerializer.Serialize(record.Metadata) : "")
+        ];
+    }
 
-	/// <inheritdoc />
-	public HashEntry[] ConvertToHashEntries(Job job)
-	{
-		return
-		[
-			new HashEntry(nameof(Job.Id), job.Id.ToString()),
-			new HashEntry(nameof(Job.Name), job.Name),
-			new HashEntry(nameof(Job.Status), (int)job.Status),
-			new HashEntry(nameof(Job.Headers), Serialize(job.Headers)),
-			new HashEntry(nameof(Job.RouteParams), Serialize(job.RouteParams)),
-			new HashEntry(nameof(Job.QueryParams), Serialize(job.QueryParams)),
-			new HashEntry(nameof(Job.Payload), job.Payload),
-			new HashEntry(nameof(Job.Result), job.Result ?? ""),
-			new HashEntry(nameof(Job.Error), job.Error != null ? Serialize(job.Error) : ""),
-			new HashEntry(nameof(Job.RetryCount), job.RetryCount),
-			new HashEntry(nameof(Job.MaxRetries), job.MaxRetries),
-			new HashEntry(nameof(Job.RetryDelayUntil), job.RetryDelayUntil?.ToString("O") ?? ""),
-			new HashEntry(nameof(Job.WorkerId), job.WorkerId?.ToString() ?? ""),
-			new HashEntry(nameof(Job.CreatedAt), job.CreatedAt.ToString("O")),
-			new HashEntry(nameof(Job.StartedAt), job.StartedAt?.ToString("O") ?? ""),
-			new HashEntry(nameof(Job.CompletedAt), job.CompletedAt?.ToString("O") ?? ""),
-			new HashEntry(nameof(Job.LastUpdatedAt), job.LastUpdatedAt.ToString("O"))
-		];
-	}
+    public JobRecord ConvertFromHashEntries(HashEntry[] hashEntries)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in hashEntries)
+        {
+            dict[entry.Name.ToString()] = entry.Value.ToString();
+        }
 
-	/// <inheritdoc />
-	public Job ConvertFromHashEntries(HashEntry[] hashEntries)
-	{
-		var dict = hashEntries.ToDictionary(x => x.Name.ToString(), x => x.Value.ToString());
+        return new JobRecord
+        {
+            JobId = TryParseGuid(dict.GetValueOrDefault("JobId")) ?? Guid.Empty,
+            JobName = dict.GetValueOrDefault("JobName") ?? "",
+            Channel = dict.GetValueOrDefault("Channel") ?? "default",
+            Priority = int.TryParse(dict.GetValueOrDefault("Priority"), out var p) ? p : 0,
+            Partition = TryParseInt(dict.GetValueOrDefault("Partition")),
+            Payload = dict.GetValueOrDefault("Payload") ?? "",
+            Status = (Abstractions.Jobs.JobStatus)int.Parse(dict.GetValueOrDefault("Status", "100")),
+            RetryCount = int.TryParse(dict.GetValueOrDefault("RetryCount"), out var rc) ? rc : 0,
+            MaxRetries = int.TryParse(dict.GetValueOrDefault("MaxRetries"), out var mr) ? mr : 3,
+            CreatedAt = TryParseDateTime(dict.GetValueOrDefault("CreatedAt")) ?? DateTime.UtcNow,
+            StartedAt = TryParseDateTime(dict.GetValueOrDefault("StartedAt")),
+            CompletedAt = TryParseDateTime(dict.GetValueOrDefault("CompletedAt")),
+            WorkerId = string.IsNullOrEmpty(dict.GetValueOrDefault("WorkerId")) ? null : dict["WorkerId"],
+            LastHeartbeat = TryParseDateTime(dict.GetValueOrDefault("LastHeartbeat")),
+            Result = string.IsNullOrEmpty(dict.GetValueOrDefault("Result")) ? null : dict["Result"],
+            ErrorMessage = string.IsNullOrEmpty(dict.GetValueOrDefault("ErrorMessage")) ? null : dict["ErrorMessage"],
+            Metadata = DeserializeMetadata(dict.GetValueOrDefault("Metadata"))
+        };
+    }
 
-		return new Job
-		{
-			Id = Guid.Parse(dict[nameof(Job.Id)]),
-			Name = dict[nameof(Job.Name)],
-			Status = (JobStatus)int.Parse(dict[nameof(Job.Status)]),
-			Headers = string.IsNullOrEmpty(dict[nameof(Job.Headers)]) ? [] : Deserialize<Dictionary<string, List<string?>>>(dict[nameof(Job.Headers)]) ?? [],
-			RouteParams = string.IsNullOrEmpty(dict[nameof(Job.RouteParams)]) ? [] : Deserialize<Dictionary<string, object?>>(dict[nameof(Job.RouteParams)]) ?? [],
-			QueryParams = string.IsNullOrEmpty(dict[nameof(Job.QueryParams)]) ? [] : Deserialize<List<KeyValuePair<string, List<string?>>>>(dict[nameof(Job.QueryParams)]) ?? [],
-			Payload = dict[nameof(Job.Payload)],
-			Result = string.IsNullOrEmpty(dict[nameof(Job.Result)]) ? null : dict[nameof(Job.Result)],
-			Error = string.IsNullOrEmpty(dict[nameof(Job.Error)]) ? null : Deserialize<AsyncEndpointError>(dict[nameof(Job.Error)]),
-			RetryCount = int.Parse(dict[nameof(Job.RetryCount)]),
-			MaxRetries = int.Parse(dict[nameof(Job.MaxRetries)]),
-			RetryDelayUntil = string.IsNullOrEmpty(dict[nameof(Job.RetryDelayUntil)]) ? null : DateTime.ParseExact(dict[nameof(Job.RetryDelayUntil)], "O", CultureInfo.InvariantCulture),
-			WorkerId = string.IsNullOrEmpty(dict[nameof(Job.WorkerId)]) ? null : Guid.Parse(dict[nameof(Job.WorkerId)]),
-			CreatedAt = DateTimeOffset.ParseExact(dict[nameof(Job.CreatedAt)], "O", CultureInfo.InvariantCulture),
-			StartedAt = string.IsNullOrEmpty(dict[nameof(Job.StartedAt)]) ? null : DateTimeOffset.ParseExact(dict[nameof(Job.StartedAt)], "O", CultureInfo.InvariantCulture),
-			CompletedAt = string.IsNullOrEmpty(dict[nameof(Job.CompletedAt)]) ? null : DateTimeOffset.ParseExact(dict[nameof(Job.CompletedAt)], "O", CultureInfo.InvariantCulture),
-			LastUpdatedAt = DateTimeOffset.ParseExact(dict[nameof(Job.LastUpdatedAt)], "O", CultureInfo.InvariantCulture)
-		};
-	}
+    private static Guid? TryParseGuid(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return null;
+        if (Guid.TryParse(value, out var guid)) return guid;
+        return null;
+    }
 
-	private string Serialize(object obj)
-	{
-		if (obj == null) return "";
-		return _serializer.Serialize(obj);
-	}
+    private static int? TryParseInt(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return null;
+        if (int.TryParse(value, out var result)) return result;
+        return null;
+    }
 
-	private T? Deserialize<T>(string value)
-	{
-		if (string.IsNullOrEmpty(value)) return default!;
-		return _serializer.Deserialize<T>(value);
-	}
+    private static DateTime? TryParseDateTime(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return null;
+        if (DateTime.TryParseExact(value, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt))
+            return dt;
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt2))
+            return dt2;
+        return null;
+    }
+
+    private static Dictionary<string, string>? DeserializeMetadata(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return null;
+        try { return JsonSerializer.Deserialize<Dictionary<string, string>>(value); }
+        catch { return null; }
+    }
 }

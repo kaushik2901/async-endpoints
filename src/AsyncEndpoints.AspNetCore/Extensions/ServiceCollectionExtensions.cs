@@ -4,6 +4,7 @@ using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Provider.InMemory.DependencyInjection;
 using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
@@ -55,9 +56,7 @@ public static class ServiceCollectionExtensions
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
 	public static IServiceCollection AddAsyncEndpointsInMemoryStore(this IServiceCollection services)
 	{
-		services.AddSingleton<IJobStore, InMemoryJobStore>();
-		services.AddSingleton<IJobRecoveryService, InMemoryJobRecoveryService>();
-
+		services.AddAsyncEndpointsInMemory();
 		return services;
 	}
 
