@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         configure?.Invoke(optionsBuilder);
         var options = optionsBuilder.Build();
 
+        services.AddSingleton(options);
         services.AddSingleton<IOptions<AsyncEndpointsOptions>>(new OptionsWrapper<AsyncEndpointsOptions>(options));
 
         services.TryAddSingleton<ISerializer, Serializer>();

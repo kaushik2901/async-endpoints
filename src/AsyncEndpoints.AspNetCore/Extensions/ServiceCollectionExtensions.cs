@@ -1,7 +1,7 @@
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Serialization;
-using AsyncEndpoints.Background;
 using AsyncEndpoints.Configuration;
+using AsyncEndpoints.DependencyInjection;
 using AsyncEndpoints.Handlers;
 using AsyncEndpoints.Infrastructure;
 using AsyncEndpoints.Provider.InMemory.DependencyInjection;
@@ -9,8 +9,10 @@ using AsyncEndpoints.Infrastructure.Observability;
 using AsyncEndpoints.Infrastructure.Serialization;
 using AsyncEndpoints.JobProcessing;
 using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Worker.DependencyInjection;
 using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization.Metadata;
@@ -30,10 +32,7 @@ public static class ServiceCollectionExtensions
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
 	public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services, Action<AsyncEndpointsOptionsBuilder>? configureOptions = null)
 	{
-		var builder = new AsyncEndpointsOptionsBuilder();
-		configureOptions?.Invoke(builder);
-		var options = builder.Build();
-		services.AddSingleton(options);
+		services.AddAsyncEndpointsCore(configureOptions);
 
 		services.AddHttpContextAccessor();
 		services.AddSingleton<AsyncEndpointsResponseConfigurations>();
@@ -41,7 +40,7 @@ public static class ServiceCollectionExtensions
 		services.AddScoped<IAsyncEndpointRequestDelegate, AsyncEndpointRequestDelegate>();
 		services.AddScoped<IJsonBodyParserService, JsonBodyParserService>();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-		services.AddSingleton<ISerializer, Serializer>();
+		services.TryAddSingleton<ISerializer, Serializer>();
 		services.AddSingleton<IAsyncEndpointsObservability, AsyncEndpointsObservability>();
 		services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsJsonSerializationContext.Default);
 
@@ -77,8 +76,7 @@ public static class ServiceCollectionExtensions
 	}
 
 	/// <summary>
-	/// Adds the background worker services required to process async jobs.
-	/// This includes job consumers, producers, processors, and the hosted background service.
+	/// Adds the background worker services required to process async jobs using the new polling-based worker engine.
 	/// </summary>
 	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
 	/// <param name="configureWorker">Optional action to configure worker options.</param>
@@ -86,37 +84,7 @@ public static class ServiceCollectionExtensions
 	public static IServiceCollection AddAsyncEndpointsWorker(this IServiceCollection services,
 		Action<WorkerOptions>? configureWorker = null)
 	{
-		services.AddSingleton<WorkerOptions>(sp =>
-		{
-			var options = sp.GetRequiredService<AsyncEndpointsOptions>();
-			var workerOptions = new WorkerOptions
-			{
-				MaxConcurrency = options.MaxConcurrency,
-				PollingIntervalMin = options.PollingMinInterval,
-				PollingIntervalMax = options.PollingMaxInterval,
-				HeartbeatInterval = options.HeartbeatInterval,
-				StaleJobTimeout = options.StaleJobTimeout,
-				MaxQueueSize = options.MaxQueueSize
-			};
-			configureWorker?.Invoke(workerOptions);
-			return workerOptions;
-		});
-
-		// Register worker services
-		services.AddTransient<IJobConsumerService, JobConsumerService>();
-		services.AddTransient<IJobProducerService, JobProducerService>();
-		services.AddTransient<IJobProcessorService, JobProcessorService>();
-		services.AddTransient<IJobChannelEnqueuer, JobChannelEnqueuer>();
-		services.AddTransient<IJobClaimingService, JobClaimingService>();
-		services.AddTransient<IHandlerExecutionService, HandlerExecutionService>();
-		services.AddTransient<IDelayCalculatorService, DelayCalculatorService>();
-
-		// Always register the main background service
-		services.AddHostedService<AsyncEndpointsBackgroundService>();
-
-		// Register recovery service — it will short-circuit if disabled
-		services.AddHostedService<DistributedJobRecoveryService>();
-
+		AsyncEndpoints.Worker.DependencyInjection.ServiceCollectionExtensions.AddAsyncEndpointsWorker(services, configureWorker);
 		return services;
 	}
 
