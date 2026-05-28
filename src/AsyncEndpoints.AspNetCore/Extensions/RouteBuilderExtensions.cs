@@ -13,7 +13,7 @@ namespace AsyncEndpoints.AspNetCore.Extensions;
 /// <summary>
 /// Extension methods for mapping asynchronous endpoints in ASP.NET Core.
 /// </summary>
-[Obsolete("Use the new pipeline pattern with IJobSubmitter and minimal APIs directly.")]
+[Obsolete("Use MapAsyncEndpointsEndpoints extension method instead.")]
 public static class RouteBuilderExtensions
 {
 	/// <summary>
