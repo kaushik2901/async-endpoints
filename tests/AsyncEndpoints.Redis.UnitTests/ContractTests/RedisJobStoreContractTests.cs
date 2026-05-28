@@ -1,7 +1,7 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.Abstractions.UnitTests.ContractTests;
 using AsyncEndpoints.Redis.Services;
 using AsyncEndpoints.Redis.Storage;
-using AsyncEndpoints.Abstractions.UnitTests.ContractTests;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using StackExchange.Redis;
