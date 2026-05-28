@@ -199,7 +199,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		try
 		{
 			var jsonPayload = JsonSerializer.Serialize(httpPayload, AsyncEndpointsAspNetCoreJsonSerializationContext.Default.HttpJobPayload);
-			var jobId = await submitter.SubmitRawAsync(jobName, jsonPayload, channel, partitionKey, ct);
+			var jobId = await submitter.SubmitAsync(jobName, jsonPayload, channel, partitionKey, ct);
 			var response = await responseConfig.JobSubmittedResponseFactory(jobId, httpContext);
 			await response.ExecuteAsync(httpContext);
 		}

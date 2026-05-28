@@ -57,7 +57,7 @@ public static class JobEndpoints
 		try
 		{
 			var jsonPayload = JsonSerializer.Serialize(httpPayload, AsyncEndpointsAspNetCoreJsonSerializationContext.Default.HttpJobPayload);
-			jobId = await submitter.SubmitRawAsync(jobName, jsonPayload, channel, partitionKey, ct);
+			jobId = await submitter.SubmitAsync(jobName, jsonPayload, channel, partitionKey, ct);
 		}
 		catch (Exception ex)
 		{
