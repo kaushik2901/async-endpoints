@@ -1,8 +1,8 @@
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.AspNetCore.Endpoints;
+using AsyncEndpoints.Core.DependencyInjection;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
-using AsyncEndpoints.Provider.InMemory.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,7 +16,7 @@ public class JobResultEndpointTests
 		services.AddLogging();
 		services.AddSingleton(TimeProvider.System);
 		services.AddSingleton<ISerializer, Serializer>();
-		services.AddAsyncEndpointsInMemory();
+		services.AddInMemoryStore();
 		var provider = services.BuildServiceProvider();
 		var store = provider.GetRequiredService<IJobStore>();
 		return (provider, store);

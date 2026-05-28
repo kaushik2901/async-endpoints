@@ -1,5 +1,6 @@
 using AsyncEndpoints.Abstractions.Listener;
 using AsyncEndpoints.Abstractions.Partitioning;
+using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.Abstractions.Submission;
 using AsyncEndpoints.Core.Channels;
 using AsyncEndpoints.Core.Configuration;
@@ -7,6 +8,7 @@ using AsyncEndpoints.Core.Execution;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using AsyncEndpoints.Core.Listener;
 using AsyncEndpoints.Core.Partitioning;
+using AsyncEndpoints.Core.Storage;
 using AsyncEndpoints.Core.Submission;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -48,6 +50,12 @@ public static class ServiceCollectionExtensions
 			services.TryAddSingleton<PartitionManager>();
 		}
 
+		return services;
+	}
+
+	public static IServiceCollection AddInMemoryStore(this IServiceCollection services)
+	{
+		services.AddSingleton<IJobStore, InMemoryJobStore>();
 		return services;
 	}
 }

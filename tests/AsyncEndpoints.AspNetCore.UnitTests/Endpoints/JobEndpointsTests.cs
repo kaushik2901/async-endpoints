@@ -1,8 +1,8 @@
 using AsyncEndpoints.Abstractions.Submission;
 using AsyncEndpoints.AspNetCore.Endpoints;
+using AsyncEndpoints.Core.DependencyInjection;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using AsyncEndpoints.Core.Submission;
-using AsyncEndpoints.Provider.InMemory.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text;
@@ -17,7 +17,7 @@ public class JobEndpointsTests
 		services.AddLogging();
 		services.AddSingleton(TimeProvider.System);
 		services.AddSingleton<ISerializer, Serializer>();
-		services.AddAsyncEndpointsInMemory();
+		services.AddInMemoryStore();
 		services.AddSingleton<IJobSubmitter, JobSubmitter>();
 		var provider = services.BuildServiceProvider();
 		var submitter = provider.GetRequiredService<IJobSubmitter>();
