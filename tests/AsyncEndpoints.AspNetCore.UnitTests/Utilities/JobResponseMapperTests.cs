@@ -1,8 +1,8 @@
 using AsyncEndpoints.AspNetCore.Models;
+using AsyncEndpoints.AspNetCore.UnitTests.TestSupport;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
-using AsyncEndpoints.UnitTests.TestSupport;
 
-namespace AsyncEndpoints.UnitTests.Utilities;
+namespace AsyncEndpoints.AspNetCore.UnitTests.Utilities;
 
 public class JobResponseMapperTests
 {
@@ -10,10 +10,8 @@ public class JobResponseMapperTests
 	public void ToResponse_ReturnsCorrectJobResponse(
 		Job job)
 	{
-		// Act
 		var result = JobResponseMapper.ToResponse(job);
 
-		// Assert
 		Assert.NotNull(result);
 		Assert.Equal(job.Id, result.Id);
 		Assert.Equal(job.Name, result.Name);
@@ -31,16 +29,13 @@ public class JobResponseMapperTests
 	[Theory, AutoMoqData]
 	public void ToResponse_HandlesNullValues(Job job)
 	{
-		// Arrange
 		job.Result = null;
 		job.Error = null;
 		job.StartedAt = null;
 		job.CompletedAt = null;
 
-		// Act
 		var result = JobResponseMapper.ToResponse(job);
 
-		// Assert
 		Assert.NotNull(result);
 		Assert.Equal(job.Id, result.Id);
 		Assert.Equal(job.Name, result.Name);

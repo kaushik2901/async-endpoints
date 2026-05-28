@@ -1,36 +1,30 @@
 using AsyncEndpoints.AspNetCore.Extensions;
-using AsyncEndpoints.UnitTests.TestSupport;
+using AsyncEndpoints.AspNetCore.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 
-namespace AsyncEndpoints.UnitTests;
+namespace AsyncEndpoints.AspNetCore.UnitTests;
 
 public class HttpContextExtensionsTests
 {
 	[Fact]
 	public void GetOrCreateJobId_ReturnsJobIdFromHeader_WhenJobIdHeaderExists()
 	{
-		// Arrange
 		var expectedJobId = Guid.NewGuid();
 		var httpContext = new DefaultHttpContext();
 		httpContext.Request.Headers["X-Async-Request-Id"] = expectedJobId.ToString();
 
-		// Act
 		var result = httpContext.GetOrCreateJobId();
 
-		// Assert
 		Assert.Equal(expectedJobId, result);
 	}
 
 	[Fact]
 	public void GetOrCreateJobId_CreatesNewJobId_WhenJobIdHeaderDoesNotExist()
 	{
-		// Arrange
 		var httpContext = new DefaultHttpContext();
 
-		// Act
 		var result = httpContext.GetOrCreateJobId();
 
-		// Assert
 		Assert.NotEqual(Guid.Empty, result);
 	}
 
@@ -39,14 +33,11 @@ public class HttpContextExtensionsTests
 		string headerName,
 		string headerValue)
 	{
-		// Arrange
 		var httpContext = new DefaultHttpContext();
 		httpContext.Request.Headers[headerName] = headerValue;
 
-		// Act
 		var result = httpContext.GetHeadersFromContext();
 
-		// Assert
 		Assert.NotNull(result);
 		Assert.Contains(headerName, result.Keys);
 		Assert.Contains(headerValue, result[headerName]);
@@ -57,14 +48,11 @@ public class HttpContextExtensionsTests
 		string routeParamName,
 		string routeParamValue)
 	{
-		// Arrange
 		var httpContext = new DefaultHttpContext();
 		httpContext.Request.RouteValues[routeParamName] = routeParamValue;
 
-		// Act
 		var result = httpContext.GetRouteParamsFromContext();
 
-		// Assert
 		Assert.NotNull(result);
 		Assert.Contains(routeParamName, result.Keys);
 		Assert.Equal(routeParamValue, result[routeParamName]);
@@ -75,14 +63,11 @@ public class HttpContextExtensionsTests
 		string queryParamName,
 		string queryParamValue)
 	{
-		// Arrange
 		var httpContext = new DefaultHttpContext();
 		httpContext.Request.QueryString = new QueryString($"?{queryParamName}={queryParamValue}");
 
-		// Act
 		var result = httpContext.GetQueryParamsFromContext();
 
-		// Assert
 		Assert.NotNull(result);
 		var param = result.FirstOrDefault(p => p.Key == queryParamName);
 		Assert.NotEqual(default, param);

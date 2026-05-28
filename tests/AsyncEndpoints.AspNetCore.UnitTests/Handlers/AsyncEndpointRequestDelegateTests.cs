@@ -1,14 +1,14 @@
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Handlers;
+using AsyncEndpoints.AspNetCore.UnitTests.TestSupport;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
-using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Handlers;
+namespace AsyncEndpoints.AspNetCore.UnitTests.Handlers;
 
 public class AsyncEndpointRequestDelegateTests
 {
@@ -23,31 +23,19 @@ public class AsyncEndpointRequestDelegateTests
 		_mockSerializer = new Mock<ISerializer>();
 	}
 
-	/// <summary>
-	/// Verifies that the AsyncEndpointRequestDelegate can be constructed with valid dependencies without throwing an exception.
-	/// This test ensures the constructor properly accepts and stores all required dependencies.
-	/// </summary>
 	[Fact]
 	public void Constructor_CreatesInstance()
 	{
-		// Arrange
 		var configurations = new AsyncEndpointsResponseConfigurations();
 
-		// Act
 		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object, configurations);
 
-		// Assert
 		Assert.NotNull(requestDelegate);
 	}
 
-	/// <summary>
-	/// Verifies that the AsyncEndpointRequestDelegate can handle requests with a custom handler without throwing exceptions.
-	/// This test ensures the request delegate properly supports custom handler execution.
-	/// </summary>
 	[Fact]
 	public async Task HandleAsync_WithCustomHandler_CanBeCalledWithoutError()
 	{
-		// Arrange
 		var configurations = new AsyncEndpointsResponseConfigurations();
 		var requestDelegate = new AsyncEndpointRequestDelegate(_mockLogger.Object, _mockJobManager.Object, _mockSerializer.Object, configurations);
 		var httpContext = CreateHttpContext;
@@ -56,10 +44,8 @@ public class AsyncEndpointRequestDelegateTests
 		Func<HttpContext, TestRequest, CancellationToken, Task<IResult?>> customHandler =
 			(ctx, req, token) => Task.FromResult<IResult?>(expectedResponse);
 
-		// Act
 		var result = await requestDelegate.HandleAsync("test-job", httpContext, request, customHandler);
 
-		// Assert - The main thing is that it doesn't throw an exception when custom handler is provided
 		Assert.NotNull(result);
 	}
 
@@ -72,7 +58,6 @@ public class AsyncEndpointRequestDelegateTests
 			context.Request.Path = "/test";
 			context.Request.ContentLength = 0;
 
-			// Set up a basic service provider
 			var serviceProvider = new ServiceCollection().BuildServiceProvider();
 			context.RequestServices = serviceProvider;
 

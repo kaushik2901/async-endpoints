@@ -1,8 +1,9 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Provider.InMemory.JobProcessing;
+using AsyncEndpoints.UnitTests.ContractTests;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.ContractTests;
+namespace AsyncEndpoints.Provider.InMemory.UnitTests.ContractTests;
 
 public class InMemoryJobStoreContractTests : JobStoreContractTestsBase
 {

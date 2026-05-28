@@ -1,15 +1,15 @@
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Handlers;
+using AsyncEndpoints.AspNetCore.UnitTests.TestSupport;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
-using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Handlers;
+namespace AsyncEndpoints.AspNetCore.UnitTests.Handlers;
 
 public class AsyncEndpointRequestDelegateExceptionTests
 {
@@ -22,7 +22,6 @@ public class AsyncEndpointRequestDelegateExceptionTests
 		Mock<IJobManager> mockJobManager,
 		Mock<ISerializer> mockSerializer)
 	{
-		// Arrange
 		var error = new AsyncEndpointError("SUBMISSION_ERROR", "Failed to submit job", null);
 		var failureResult = MethodResult<Job>.Failure(error);
 
@@ -37,10 +36,8 @@ public class AsyncEndpointRequestDelegateExceptionTests
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
-		// Act
 		var result = await requestDelegate.HandleAsync(jobName, httpContext, request, cancellationToken: default);
 
-		// Assert
 		Assert.IsType<ProblemHttpResult>(result);
 	}
 
@@ -53,7 +50,6 @@ public class AsyncEndpointRequestDelegateExceptionTests
 		Mock<IJobManager> mockJobManager,
 		Mock<ISerializer> mockSerializer)
 	{
-		// Arrange
 		var exception = new InvalidOperationException("Test exception");
 		var error = new AsyncEndpointError("SUBMISSION_ERROR", "Failed to submit job", exception);
 		var failureResult = MethodResult<Job>.Failure(error);
@@ -69,10 +65,8 @@ public class AsyncEndpointRequestDelegateExceptionTests
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
-		// Act
 		var result = await requestDelegate.HandleAsync(jobName, httpContext, request, cancellationToken: default);
 
-		// Assert - Check that the logger was called appropriately
 		mockLogger.Verify(
 			x => x.Log(
 				LogLevel.Error,

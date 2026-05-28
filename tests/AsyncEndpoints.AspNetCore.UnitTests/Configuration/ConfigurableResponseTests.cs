@@ -8,21 +8,19 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Configuration;
+namespace AsyncEndpoints.AspNetCore.UnitTests.Configuration;
 
 public class ConfigurableResponseTests
 {
 	[Fact]
 	public async Task AsyncEndpointRequestDelegate_UsesCustomJobSubmittedResponseFactory_WhenConfigured()
 	{
-		// Arrange
 		var mockLogger = new Mock<ILogger<AsyncEndpointRequestDelegate>>();
 		var mockJobManager = new Mock<IJobManager>();
 		var mockSerializer = new Mock<ISerializer>();
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
 
-		// Create custom configurations with custom response factory
 		var responseConfig = new AsyncEndpointsResponseConfigurations
 		{
 			JobSubmittedResponseFactory = (job, context) =>
@@ -55,22 +53,18 @@ public class ConfigurableResponseTests
 
 		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
-		// Act
 		var result = await requestDelegate.HandleAsync("test-job", httpContext, request);
 
-		// Assert - Just ensure we get a result back without error
 		Assert.NotNull(result);
 	}
 
 	[Fact]
 	public async Task AsyncEndpointRequestDelegate_UsesCustomErrorResponseFactory_WhenJobSubmissionFails()
 	{
-		// Arrange
 		var mockLogger = new Mock<ILogger<AsyncEndpointRequestDelegate>>();
 		var mockJobManager = new Mock<IJobManager>();
 		var mockSerializer = new Mock<ISerializer>();
 
-		// Create custom configurations with custom error response factory
 		var responseConfig = new AsyncEndpointsResponseConfigurations
 		{
 			JobSubmissionErrorResponseFactory = (error, context) =>
@@ -95,10 +89,8 @@ public class ConfigurableResponseTests
 
 		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
 
-		// Act
 		var result = await requestDelegate.HandleAsync("test-job", httpContext, request);
 
-		// Assert
 		Assert.NotNull(result);
 	}
 }
