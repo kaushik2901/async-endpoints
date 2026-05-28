@@ -6,6 +6,7 @@ namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 /// Defines a contract for storing and managing asynchronous jobs.
 /// Provides methods for creating, retrieving, updating, and querying jobs.
 /// </summary>
+[Obsolete("Use AsyncEndpoints.Abstractions.Storage.IJobStore instead.")]
 public interface IJobStore
 {
 	/// <summary>

@@ -2,6 +2,7 @@ using AsyncEndpoints.Abstractions.Utilities;
 
 namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
+[Obsolete("Use the new pipeline with IJobStore/IJobSubmitter directly.")]
 public interface IJobManager
 {
 	Task<MethodResult<Job>> SubmitJob(

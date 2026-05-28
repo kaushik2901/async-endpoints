@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace AsyncEndpoints.Core.Legacy.Observability;
 
+[Obsolete("Use System.Diagnostics.Metrics APIs directly.")]
 public class MetricTimer : IDisposable
 {
 	private readonly Action<double> _onDispose;

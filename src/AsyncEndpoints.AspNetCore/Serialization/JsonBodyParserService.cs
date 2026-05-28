@@ -35,7 +35,7 @@ public class JsonBodyParserService(ISerializer serializer, ILogger<JsonBodyParse
 
 			httpContext.Request.EnableBuffering();
 
-			var result = await _serializer.DeserializeAsync<T>(httpContext.Request.Body, cancellationToken: cancellationToken);
+			var result = await _serializer.DeserializeAsync<T>(httpContext.Request.Body, (System.Text.Json.JsonSerializerOptions?)null, cancellationToken);
 
 			httpContext.Request.Body.Position = 0;
 

@@ -2,6 +2,7 @@ using AsyncEndpoints.Abstractions.Utilities;
 
 namespace AsyncEndpoints.AspNetCore.Models;
 
+[Obsolete("Use the new pipeline's JobRecord-based response instead.")]
 public sealed class JobResponse
 {
 	public Guid Id { get; set; }

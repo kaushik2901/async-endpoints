@@ -9,6 +9,12 @@ namespace AsyncEndpoints.Worker.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
+	private static readonly HashSet<string> _registeredChannels = [];
+
+	/// <summary>
+	/// Registers the main background worker for the default channel.
+	/// Each call to <c>AddChannelWorker</c> adds a dedicated polling loop for that channel.
+	/// </summary>
 	public static IServiceCollection AddAsyncEndpointsWorker(
 		this IServiceCollection services,
 		Action<WorkerOptions>? configure = null)
@@ -27,8 +33,10 @@ public static class ServiceCollectionExtensions
 		services.AddSingleton<IHostedService>(sp =>
 		{
 			var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<WorkerOptions>>();
+			var channel = options.Value.DefaultChannel;
+			EnsureChannelNotDuplicate(channel);
 			return new JobWorkerService(
-				options.Value.DefaultChannel,
+				channel,
 				sp.GetRequiredService<Abstractions.Listener.IJobListener>(),
 				sp.GetRequiredService<JobExecutionPipeline>(),
 				sp.GetRequiredService<WorkerConcurrencyManager>(),
@@ -42,6 +50,11 @@ public static class ServiceCollectionExtensions
 		return services;
 	}
 
+	/// <summary>
+	/// Adds a dedicated background worker for a specific channel with its own polling loop.
+	/// Multiple calls for different channel names are supported (competing-consumers pattern).
+	/// Duplicate registrations for the same channel name will throw.
+	/// </summary>
 	public static IServiceCollection AddChannelWorker(
 		this IServiceCollection services,
 		string channelName)
@@ -49,6 +62,7 @@ public static class ServiceCollectionExtensions
 		services.AddSingleton<IHostedService>(sp =>
 		{
 			var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<WorkerOptions>>();
+			EnsureChannelNotDuplicate(channelName);
 			return new JobWorkerService(
 				channelName,
 				sp.GetRequiredService<Abstractions.Listener.IJobListener>(),
@@ -60,5 +74,16 @@ public static class ServiceCollectionExtensions
 		});
 
 		return services;
+	}
+
+	private static void EnsureChannelNotDuplicate(string channel)
+	{
+		if (!_registeredChannels.Add(channel))
+		{
+			throw new InvalidOperationException(
+				$"A worker for channel '{channel}' is already registered. " +
+				"Use a different channel name, or if competing-consumers are intentional, " +
+				"register the worker manually via AddSingleton<IHostedService>.");
+		}
 	}
 }

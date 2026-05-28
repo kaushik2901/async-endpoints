@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace AsyncEndpoints.Core.Infrastructure.Serialization;
 
@@ -8,76 +10,98 @@ namespace AsyncEndpoints.Core.Infrastructure.Serialization;
 public interface ISerializer
 {
 	/// <summary>
-	/// Serializes an object to JSON string.
+	/// Serializes an object to JSON string using source-generated JsonTypeInfo (AOT-safe).
 	/// </summary>
-	/// <typeparam name="T">The type of the object to serialize.</typeparam>
-	/// <param name="value">The object to serialize.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for serialization.</param>
-	/// <returns>A JSON string representation of the object.</returns>
-	string Serialize<T>(T value, JsonSerializerOptions? options = null);
+	string Serialize<T>(T value, JsonTypeInfo<T> jsonTypeInfo);
 
 	/// <summary>
 	/// Serializes an object to JSON string.
 	/// </summary>
-	/// <param name="value">The object to serialize.</param>
-	/// <param name="type">The type of the object to deserialize.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for serialization.</param>
-	/// <returns>A JSON string representation of the object.</returns>
-	string Serialize(object value, Type type, JsonSerializerOptions? options = null);
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	string Serialize<T>(T value, JsonSerializerOptions? options);
+
+	/// <summary>
+	/// Serializes an object to JSON string using source-generated JsonTypeInfo (AOT-safe).
+	/// </summary>
+	string Serialize(object value, Type type, JsonTypeInfo jsonTypeInfo);
+
+	/// <summary>
+	/// Serializes an object to JSON string.
+	/// </summary>
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	string Serialize(object value, Type type, JsonSerializerOptions? options);
+
+	/// <summary>
+	/// Deserializes a JSON string using source-generated JsonTypeInfo (AOT-safe).
+	/// </summary>
+	T? Deserialize<T>(string json, JsonTypeInfo<T> jsonTypeInfo);
 
 	/// <summary>
 	/// Deserializes a JSON string to an object of type T.
 	/// </summary>
-	/// <typeparam name="T">The type of the object to deserialize.</typeparam>
-	/// <param name="json">The JSON string to deserialize.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
-	/// <returns>The deserialized object.</returns>
-	T? Deserialize<T>(string json, JsonSerializerOptions? options = null);
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	T? Deserialize<T>(string json, JsonSerializerOptions? options);
+
+	/// <summary>
+	/// Deserializes a JSON string using source-generated JsonTypeInfo (AOT-safe).
+	/// </summary>
+	object? Deserialize(string json, Type type, JsonTypeInfo jsonTypeInfo);
 
 	/// <summary>
 	/// Deserializes a JSON string to an object of the specified type.
 	/// </summary>
-	/// <param name="json">The JSON string to deserialize.</param>
-	/// <param name="type">The type of the object to deserialize.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
-	/// <returns>The deserialized object.</returns>
-	object? Deserialize(string json, Type type, JsonSerializerOptions? options = null);
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	object? Deserialize(string json, Type type, JsonSerializerOptions? options);
+
+	/// <summary>
+	/// Deserializes a JSON stream using source-generated JsonTypeInfo (AOT-safe).
+	/// </summary>
+	T? Deserialize<T>(Stream stream, JsonTypeInfo<T> jsonTypeInfo);
 
 	/// <summary>
 	/// Deserializes a JSON stream to an object of type T.
 	/// </summary>
-	/// <typeparam name="T">The type of the object to deserialize.</typeparam>
-	/// <param name="stream">The stream containing JSON data.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
-	/// <returns>The deserialized object.</returns>
-	T? Deserialize<T>(Stream stream, JsonSerializerOptions? options = null);
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	T? Deserialize<T>(Stream stream, JsonSerializerOptions? options);
+
+	/// <summary>
+	/// Deserializes a JSON stream using source-generated JsonTypeInfo (AOT-safe).
+	/// </summary>
+	object? Deserialize(Stream stream, Type type, JsonTypeInfo jsonTypeInfo);
 
 	/// <summary>
 	/// Deserializes a JSON stream to an object of the specified type.
 	/// </summary>
-	/// <param name="stream">The stream containing JSON data.</param>
-	/// <param name="type">The type of the object to deserialize.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
-	/// <returns>The deserialized object.</returns>
-	object? Deserialize(Stream stream, Type type, JsonSerializerOptions? options = null);
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	object? Deserialize(Stream stream, Type type, JsonSerializerOptions? options);
+
+	/// <summary>
+	/// Deserializes a JSON stream using source-generated JsonTypeInfo (AOT-safe).
+	/// </summary>
+	Task<T?> DeserializeAsync<T>(Stream stream, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Deserializes a JSON stream to an object of type T asynchronously.
 	/// </summary>
-	/// <typeparam name="T">The type of the object to deserialize.</typeparam>
-	/// <param name="stream">The stream containing JSON data.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
-	/// <param name="cancellationToken">Cancellation token.</param>
-	/// <returns>A task that represents the asynchronous operation. The task result contains the deserialized object.</returns>
-	Task<T?> DeserializeAsync<T>(Stream stream, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default);
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	Task<T?> DeserializeAsync<T>(Stream stream, JsonSerializerOptions? options, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Deserializes a JSON stream using source-generated JsonTypeInfo (AOT-safe).
+	/// </summary>
+	Task<object?> DeserializeAsync(Stream stream, Type type, JsonTypeInfo jsonTypeInfo, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Deserializes a JSON stream to an object of the specified type asynchronously.
 	/// </summary>
-	/// <param name="stream">The stream containing JSON data.</param>
-	/// <param name="type">The type of the object to deserialize.</param>
-	/// <param name="options">Optional JsonSerializerOptions to use for deserialization.</param>
-	/// <param name="cancellationToken">Cancellation token.</param>
-	/// <returns>A task that represents the asynchronous operation. The task result contains the deserialized object.</returns>
-	Task<object?> DeserializeAsync(Stream stream, Type type, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default);
+	[RequiresUnreferencedCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	[RequiresDynamicCode("Use the JsonTypeInfo overload for AOT compatibility.")]
+	Task<object?> DeserializeAsync(Stream stream, Type type, JsonSerializerOptions? options, CancellationToken cancellationToken = default);
 }

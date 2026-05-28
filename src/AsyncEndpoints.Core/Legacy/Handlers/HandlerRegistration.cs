@@ -3,6 +3,7 @@ namespace AsyncEndpoints.Core.Legacy.Handlers;
 /// <summary>
 /// Represents a registration of a handler for processing async endpoint requests.
 /// </summary>
+[Obsolete("Use IHandlerRegistry.Register with the new pipeline pattern instead.")]
 public sealed class HandlerRegistration(string jobName, Type requestType, Type responseType)
 {
 	/// <summary>

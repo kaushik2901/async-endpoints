@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Endpoints;
 
+[Obsolete("Use the new pipeline's response pattern instead.")]
 public static class ResponseDefaults
 {
 	public static Task<IResult> DefaultJobSubmittedResponseFactory(Job job, HttpContext _)

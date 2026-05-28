@@ -96,6 +96,7 @@ public static class ServiceCollectionExtensions
 	/// <param name="services">The <see cref="IServiceCollection"/> to add services to.</param>
 	/// <param name="jobName">The unique name of the job, used to identify the specific handler.</param>
 	/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+	[Obsolete("Use IHandlerRegistry.Register directly with the new pipeline pattern instead.")]
 	public static IServiceCollection AddAsyncEndpointHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TAsyncEndpointRequestHandler, TRequest, TResponse>(this IServiceCollection services, string jobName)
 		where TAsyncEndpointRequestHandler : class, IAsyncEndpointRequestHandler<TRequest, TResponse>
 	{
@@ -112,14 +113,7 @@ public static class ServiceCollectionExtensions
 		return services;
 	}
 
-	/// <summary>
-	/// Adds an asynchronous endpoint handler for requests without body to the service collection.
-	/// </summary>
-	/// <typeparam name="TAsyncEndpointRequestHandler">The type of the handler that implements IAsyncEndpointRequestHandler<TResponse>.</typeparam>
-	/// <typeparam name="TResponse">The type of the response object.</typeparam>
-	/// <param name="services">The service collection to add the handler to.</param>
-	/// <param name="jobName">A unique name for the async job, used for identifying the handler.</param>
-	/// <returns>The service collection for method chaining.</returns>
+	[Obsolete("Use IHandlerRegistry.Register directly with the new pipeline pattern instead.")]
 	public static IServiceCollection AddAsyncEndpointHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TAsyncEndpointRequestHandler, TResponse>(
 		this IServiceCollection services,
 		string jobName)

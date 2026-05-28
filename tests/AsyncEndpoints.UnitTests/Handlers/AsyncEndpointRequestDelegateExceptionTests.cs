@@ -31,7 +31,7 @@ public class AsyncEndpointRequestDelegateExceptionTests
 			.ReturnsAsync(failureResult);
 
 		mockSerializer
-			.Setup(x => x.Serialize(request, null))
+			.Setup(x => x.Serialize(request, (System.Text.Json.JsonSerializerOptions?)null))
 			.Returns("{}");
 
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
@@ -63,7 +63,7 @@ public class AsyncEndpointRequestDelegateExceptionTests
 			.ReturnsAsync(failureResult);
 
 		mockSerializer
-			.Setup(x => x.Serialize(request, null))
+			.Setup(x => x.Serialize(request, (System.Text.Json.JsonSerializerOptions?)null))
 			.Returns("{}");
 
 		var responseConfig = new AsyncEndpointsResponseConfigurations();

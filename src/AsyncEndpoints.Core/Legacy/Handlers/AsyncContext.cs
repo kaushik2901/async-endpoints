@@ -6,6 +6,7 @@ namespace AsyncEndpoints.Core.Legacy.Handlers;
 /// <param name="headers">The HTTP headers from the original request.</param>
 /// <param name="routeParams">The route parameters from the original request.</param>
 /// <param name="query">The query parameters from the original request.</param>
+[Obsolete("Use the new pipeline pattern with JobRecord instead.")]
 public class AsyncContext(
 	IDictionary<string, List<string?>> headers,
 	IDictionary<string, object?> routeParams,
@@ -35,6 +36,7 @@ public class AsyncContext(
 /// <param name="headers">The HTTP headers from the original request.</param>
 /// <param name="routeParams">The route parameters from the original request.</param>
 /// <param name="query">The query parameters from the original request.</param>
+[Obsolete("Use the new pipeline pattern with JobRecord instead.")]
 public sealed class AsyncContext<TRequest>(
 	TRequest request,
 	IDictionary<string, List<string?>> headers,

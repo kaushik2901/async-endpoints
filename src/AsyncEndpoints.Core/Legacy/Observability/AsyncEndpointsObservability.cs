@@ -7,6 +7,7 @@ using System.Diagnostics.Metrics;
 namespace AsyncEndpoints.Core.Legacy.Observability;
 
 /// <inheritdoc />
+[Obsolete("Use the new OpenTelemetry-based observability in the new pipeline instead.")]
 public class AsyncEndpointsObservability : IAsyncEndpointsObservability
 {
 	private readonly Counter<long>? _jobsCreated;

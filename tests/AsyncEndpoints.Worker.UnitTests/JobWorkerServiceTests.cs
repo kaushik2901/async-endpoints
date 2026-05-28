@@ -88,6 +88,7 @@ public class JobWorkerServiceTests
 				return async (sp, record, ct) =>
 				{
 					await Task.Delay(500, ct);
+					return (string?)null;
 				};
 			});
 
@@ -135,7 +136,7 @@ public class JobWorkerServiceTests
 	{
 		var handlerRegistry = new Mock<IHandlerRegistry>();
 		handlerRegistry.Setup(r => r.GetInvoker(It.IsAny<string>()))
-			.Returns<string>((jobName) => (sp, record, ct) => Task.CompletedTask);
+			.Returns<string>((jobName) => (sp, record, ct) => Task.FromResult<string?>(null));
 
 		var dispatcher = new JobDispatcher(
 			Mock.Of<IServiceProvider>(),

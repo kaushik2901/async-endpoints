@@ -3,6 +3,7 @@ namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 /// <summary>
 /// Represents the status of an asynchronous job in the system.
 /// </summary>
+[Obsolete("Use AsyncEndpoints.Abstractions.Jobs.JobStatus instead.")]
 public enum JobStatus
 {
 	/// <summary>

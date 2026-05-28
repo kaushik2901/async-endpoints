@@ -6,6 +6,7 @@ namespace AsyncEndpoints.Core.Legacy.Observability;
 /// <summary>
 /// Provides metric and tracing capabilities for AsyncEndpoints library
 /// </summary>
+[Obsolete("Use the new OpenTelemetry-based observability in the new pipeline instead.")]
 public interface IAsyncEndpointsObservability
 {
 	/// <summary>

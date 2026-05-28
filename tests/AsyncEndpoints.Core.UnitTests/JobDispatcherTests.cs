@@ -15,10 +15,10 @@ public class JobDispatcherTests
 		var serviceProvider = Mock.Of<IServiceProvider>();
 		var invoked = false;
 
-		handlerRegistry.Register<string>("test-job", (sp, record, ct) =>
+		handlerRegistry.Register("test-job", (sp, record, ct) =>
 		{
 			invoked = true;
-			return Task.CompletedTask;
+			return Task.FromResult<string?>(null);
 		});
 
 		var dispatcher = new JobDispatcher(serviceProvider, handlerRegistry, logger);
@@ -38,10 +38,10 @@ public class JobDispatcherTests
 		var serviceProvider = new Mock<IServiceProvider>();
 		IServiceProvider? capturedProvider = null;
 
-		handlerRegistry.Register<string>("test-job", (sp, record, ct) =>
+		handlerRegistry.Register("test-job", (sp, record, ct) =>
 		{
 			capturedProvider = sp;
-			return Task.CompletedTask;
+			return Task.FromResult<string?>(null);
 		});
 
 		var dispatcher = new JobDispatcher(serviceProvider.Object, handlerRegistry, logger);
@@ -75,7 +75,7 @@ public class JobDispatcherTests
 		var logger = Mock.Of<ILogger<JobDispatcher>>();
 		var serviceProvider = Mock.Of<IServiceProvider>();
 
-		handlerRegistry.Register<string>("failing-job", (sp, record, ct) =>
+		handlerRegistry.Register("failing-job", (sp, record, ct) =>
 		{
 			throw new InvalidOperationException("Handler error");
 		});
@@ -96,9 +96,9 @@ public class JobDispatcherTests
 		var logger = Mock.Of<ILogger<JobDispatcher>>();
 		var serviceProvider = Mock.Of<IServiceProvider>();
 
-		handlerRegistry.Register<CustomPayload>("typed-job", (sp, record, ct) =>
+		handlerRegistry.Register("typed-job", (sp, record, ct) =>
 		{
-			return Task.CompletedTask;
+			return Task.FromResult<string?>(null);
 		});
 
 		var dispatcher = new JobDispatcher(serviceProvider, handlerRegistry, logger);

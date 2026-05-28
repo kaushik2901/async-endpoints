@@ -21,8 +21,6 @@ public sealed class PollingJobListener : IJobListener
 
 	public async Task<JobRecord?> WaitForNextJobAsync(string channel, IReadOnlySet<int>? partitions, CancellationToken ct = default)
 	{
-		await Task.Delay(_currentInterval, ct);
-
 		var job = await _store.DequeueAsync(channel, partitions, ct);
 
 		if (job is not null)
@@ -34,6 +32,8 @@ public sealed class PollingJobListener : IJobListener
 			var doubled = TimeSpan.FromMilliseconds(_currentInterval.TotalMilliseconds * 2);
 			_currentInterval = doubled > _options.PollingMaxInterval ? _options.PollingMaxInterval : doubled;
 		}
+
+		await Task.Delay(_currentInterval, ct);
 
 		return job;
 	}

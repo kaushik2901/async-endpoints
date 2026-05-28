@@ -27,7 +27,7 @@ public class SerializerTests
 		var testObject = new { Name = "Test", Value = 123 };
 
 		// Act
-		var result = serializer.Serialize(testObject);
+		var result = serializer.Serialize(testObject, (System.Text.Json.JsonSerializerOptions?)null);
 
 		// Assert
 		Assert.NotNull(result);
@@ -69,7 +69,7 @@ public class SerializerTests
 		var type = typeof(object);
 
 		// Act
-		var result = serializer.Serialize(testObject, type);
+		var result = serializer.Serialize(testObject, type, (System.Text.Json.JsonSerializerOptions?)null);
 
 		// Assert
 		Assert.NotNull(result);
@@ -89,7 +89,7 @@ public class SerializerTests
 		var json = "{\"name\":\"Test\",\"value\":123}";
 
 		// Act
-		var result = serializer.Deserialize<TestDto>((string)json);
+		var result = serializer.Deserialize<TestDto>((string)json, (System.Text.Json.JsonSerializerOptions?)null);
 
 		// Assert
 		Assert.NotNull(result);
@@ -130,7 +130,7 @@ public class SerializerTests
 		var type = typeof(TestDto);
 
 		// Act
-		var result = serializer.Deserialize(json, type);
+		var result = serializer.Deserialize(json, type, (System.Text.Json.JsonSerializerOptions?)null);
 
 		// Assert
 		Assert.NotNull(result);
@@ -151,7 +151,7 @@ public class SerializerTests
 		var serializer = new Serializer();
 
 		// Act & Assert
-		var exception = Record.Exception(() => serializer.Deserialize<TestDto>((string)null!));
+		var exception = Record.Exception(() => serializer.Deserialize<TestDto>((string)null!, (System.Text.Json.JsonSerializerOptions?)null));
 
 		Assert.NotNull(exception);
 		Assert.IsType<ArgumentNullException>(exception);
@@ -170,7 +170,7 @@ public class SerializerTests
 		var invalidJson = "{invalid json}";
 
 		// Act & Assert
-		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(invalidJson));
+		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(invalidJson, (System.Text.Json.JsonSerializerOptions?)null));
 
 		Assert.NotNull(exception);
 		Assert.IsType<JsonException>(exception);
@@ -189,7 +189,7 @@ public class SerializerTests
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
 		// Act
-		var result = serializer.Deserialize<TestDto>(stream);
+		var result = serializer.Deserialize<TestDto>(stream, (System.Text.Json.JsonSerializerOptions?)null);
 
 		// Assert
 		Assert.NotNull(result);
@@ -210,7 +210,7 @@ public class SerializerTests
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
 
 		// Act & Assert
-		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(stream));
+		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(stream, (System.Text.Json.JsonSerializerOptions?)null));
 
 		Assert.NotNull(exception);
 		Assert.IsType<JsonException>(exception);
@@ -234,7 +234,7 @@ public class SerializerTests
 		stream.Seek(0, SeekOrigin.Begin);
 
 		// Act & Assert
-		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(stream));
+		var exception = Record.Exception(() => serializer.Deserialize<TestDto>(stream, (System.Text.Json.JsonSerializerOptions?)null));
 
 		Assert.NotNull(exception);
 		Assert.IsType<InvalidOperationException>(exception);
@@ -254,7 +254,7 @@ public class SerializerTests
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
 		// Act
-		var result = await serializer.DeserializeAsync<TestDto>(stream);
+		var result = await serializer.DeserializeAsync<TestDto>(stream, (System.Text.Json.JsonSerializerOptions?)null);
 
 		// Assert
 		Assert.NotNull(result);
@@ -275,7 +275,7 @@ public class SerializerTests
 		var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(invalidJson));
 
 		// Act & Assert
-		var exception = await Record.ExceptionAsync(() => serializer.DeserializeAsync<TestDto>(stream));
+		var exception = await Record.ExceptionAsync(() => serializer.DeserializeAsync<TestDto>(stream, (System.Text.Json.JsonSerializerOptions?)null));
 
 		Assert.NotNull(exception);
 		Assert.IsType<JsonException>(exception);

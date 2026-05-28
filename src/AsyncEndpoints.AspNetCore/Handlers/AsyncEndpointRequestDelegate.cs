@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AsyncEndpoints.AspNetCore.Handlers;
 
+[Obsolete("Use the new pipeline pattern with IJobSubmitter directly.")]
 public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer, AsyncEndpointsResponseConfigurations responseConfigurations) : IAsyncEndpointRequestDelegate
 {
 	private readonly ILogger<AsyncEndpointRequestDelegate> _logger = logger;
@@ -34,7 +35,7 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 		}
 
 		_logger.LogDebug("Serializing request payload for job: {JobName}", jobName);
-		var payload = _serializer.Serialize(request);
+		var payload = _serializer.Serialize(request, (System.Text.Json.JsonSerializerOptions?)null);
 		_logger.LogDebug("Serialized request payload for job: {JobName}, payload length: {PayloadLength}", jobName, payload.Length);
 
 		var jobId = httpContext.GetOrCreateJobId();

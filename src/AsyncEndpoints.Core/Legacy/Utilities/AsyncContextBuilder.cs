@@ -6,6 +6,7 @@ namespace AsyncEndpoints.Core.Legacy.Utilities;
 /// <summary>
 /// Provides methods for building AsyncContext instances from job information.
 /// </summary>
+[Obsolete("Use the new pipeline pattern with JobRecord instead.")]
 public static class AsyncContextBuilder
 {
 	/// <summary>

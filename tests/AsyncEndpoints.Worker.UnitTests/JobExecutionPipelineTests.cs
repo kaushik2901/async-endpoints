@@ -43,7 +43,7 @@ public class JobExecutionPipelineTests
 				return (sp, record, ct) =>
 				{
 					if (succeeds)
-						return Task.CompletedTask;
+						return Task.FromResult<string?>(null);
 					throw new InvalidOperationException(errorMessage ?? "handler error");
 				};
 			});
@@ -58,7 +58,7 @@ public class JobExecutionPipelineTests
 	{
 		var handlerRegistry = new Mock<IHandlerRegistry>();
 		handlerRegistry.Setup(r => r.GetInvoker(It.IsAny<string>()))
-			.Returns((Func<IServiceProvider, JobRecord, CancellationToken, Task>?)null);
+			.Returns((Func<IServiceProvider, JobRecord, CancellationToken, Task<string?>>?)null);
 
 		return new JobDispatcher(
 			Mock.Of<IServiceProvider>(),

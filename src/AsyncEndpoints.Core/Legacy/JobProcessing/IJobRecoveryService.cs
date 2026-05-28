@@ -1,5 +1,6 @@
 namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
+[Obsolete("Use the new pipeline's IJobStore directly for recovery.")]
 public interface IJobRecoveryService
 {
 	/// <summary>

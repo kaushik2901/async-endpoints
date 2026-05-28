@@ -38,7 +38,7 @@ public sealed class JobExecutionPipeline
 			if (result.IsSuccess)
 			{
 				_logger.LogInformation("Job {JobId} completed successfully", record.JobId);
-				await _store.UpdateStatusAsync(record.JobId, JobStatus.Completed, result.ErrorMessage, ct);
+				await _store.UpdateStatusAsync(record.JobId, JobStatus.Completed, result.Result, ct);
 			}
 			else
 			{

@@ -9,6 +9,7 @@ namespace AsyncEndpoints.Core.Legacy.Utilities;
 /// Tracks registered handlers for async endpoints and provides methods to retrieve them.
 /// This class maintains a registry of job name to handler mappings.
 /// </summary>
+[Obsolete("Use IHandlerRegistry.Register with the new pipeline pattern instead.")]
 public static class HandlerRegistrationTracker
 {
 	private static readonly ConcurrentDictionary<string, HandlerRegistration> _handlers = [];

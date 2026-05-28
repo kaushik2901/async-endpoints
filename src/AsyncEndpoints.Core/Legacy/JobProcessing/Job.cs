@@ -10,6 +10,7 @@ namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 /// Initializes a new instance of the <see cref="Job"/> class with a specific time.
 /// </remarks>
 /// <param name="currentTime">The current time to use for timestamps.</param>
+[Obsolete("Use JobRecord from Abstractions instead.")]
 public sealed class Job(DateTimeOffset currentTime)
 {
 	/// <summary>

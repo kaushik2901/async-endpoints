@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Configuration;
 
+[Obsolete("Use standard ASP.NET patterns (IResult) directly in endpoint code instead.")]
 public sealed class AsyncEndpointsResponseConfigurations
 {
 	public Func<Job, HttpContext, Task<IResult>> JobSubmittedResponseFactory { get; set; }

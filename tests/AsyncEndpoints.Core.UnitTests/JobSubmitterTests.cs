@@ -16,7 +16,7 @@ public class JobSubmitterTests
 		var payload = new { Value = "test" };
 		var serialized = "{\"Value\":\"test\"}";
 
-		mockSerializer.Setup(s => s.Serialize(payload, null)).Returns(serialized);
+		mockSerializer.Setup(s => s.Serialize(payload, (System.Text.Json.JsonSerializerOptions?)null)).Returns(serialized);
 		mockStore.Setup(s => s.EnqueueAsync(It.IsAny<JobDescriptor>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(Guid.NewGuid());
 
@@ -24,7 +24,7 @@ public class JobSubmitterTests
 		var id = await submitter.SubmitAsync(payload, null, null, CancellationToken.None);
 
 		Assert.NotEqual(Guid.Empty, id);
-		mockSerializer.Verify(s => s.Serialize(payload, null), Times.Once);
+		mockSerializer.Verify(s => s.Serialize(payload, (System.Text.Json.JsonSerializerOptions?)null), Times.Once);
 		mockStore.Verify(s => s.EnqueueAsync(It.Is<JobDescriptor>(d => d.Payload == serialized), It.IsAny<CancellationToken>()), Times.Once);
 	}
 
@@ -35,7 +35,7 @@ public class JobSubmitterTests
 		var mockSerializer = new Mock<ISerializer>();
 		var expectedId = Guid.NewGuid();
 
-		mockSerializer.Setup(s => s.Serialize(It.IsAny<object>(), null)).Returns("{}");
+		mockSerializer.Setup(s => s.Serialize(It.IsAny<object>(), (System.Text.Json.JsonSerializerOptions?)null)).Returns("{}");
 		mockStore.Setup(s => s.EnqueueAsync(It.IsAny<JobDescriptor>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(expectedId);
 
@@ -51,7 +51,7 @@ public class JobSubmitterTests
 		var mockStore = new Mock<IJobStore>();
 		var mockSerializer = new Mock<ISerializer>();
 
-		mockSerializer.Setup(s => s.Serialize(It.IsAny<object>(), null)).Returns("{}");
+		mockSerializer.Setup(s => s.Serialize(It.IsAny<object>(), (System.Text.Json.JsonSerializerOptions?)null)).Returns("{}");
 		mockStore.Setup(s => s.EnqueueAsync(It.IsAny<JobDescriptor>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(Guid.NewGuid());
 

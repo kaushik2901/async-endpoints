@@ -28,8 +28,8 @@ public sealed class JobDispatcher
 
 		try
 		{
-			await invoker(_serviceProvider, record, ct);
-			return DispatchResult.Success();
+			var result = await invoker(_serviceProvider, record, ct);
+			return DispatchResult.Success(result);
 		}
 		catch (Exception ex)
 		{
@@ -43,7 +43,8 @@ public sealed record DispatchResult
 {
 	public bool IsSuccess { get; init; }
 	public string? ErrorMessage { get; init; }
+	public string? Result { get; init; }
 
-	public static DispatchResult Success() => new() { IsSuccess = true };
+	public static DispatchResult Success(string? result = null) => new() { IsSuccess = true, Result = result };
 	public static DispatchResult Failure(string error) => new() { IsSuccess = false, ErrorMessage = error };
 }

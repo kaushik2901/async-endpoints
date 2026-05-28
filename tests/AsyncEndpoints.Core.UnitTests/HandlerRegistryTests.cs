@@ -9,9 +9,9 @@ public class HandlerRegistryTests
 	public void Register_StoresDelegate_ByJobName()
 	{
 		var registry = new HandlerRegistry();
-		Func<IServiceProvider, JobRecord, CancellationToken, Task> invoker = (sp, r, ct) => Task.CompletedTask;
+		Func<IServiceProvider, JobRecord, CancellationToken, Task<string?>> invoker = (sp, r, ct) => Task.FromResult<string?>(null);
 
-		registry.Register<string>("test-job", invoker);
+		registry.Register("test-job", invoker);
 
 		var retrieved = registry.GetInvoker("test-job");
 		Assert.NotNull(retrieved);
@@ -39,8 +39,8 @@ public class HandlerRegistryTests
 			var jobName = $"job-{i}";
 			tasks.Add(Task.Run(() =>
 			{
-				Func<IServiceProvider, JobRecord, CancellationToken, Task> invoker = (sp, r, ct) => Task.CompletedTask;
-				registry.Register<string>(jobName, invoker);
+				Func<IServiceProvider, JobRecord, CancellationToken, Task<string?>> invoker = (sp, r, ct) => Task.FromResult<string?>(null);
+				registry.Register(jobName, invoker);
 			}));
 		}
 
@@ -58,10 +58,10 @@ public class HandlerRegistryTests
 		var registry = new HandlerRegistry();
 		string? capturedTypeName = null;
 
-		registry.Register<string>("typed-job", (sp, record, ct) =>
+		registry.Register("typed-job", (sp, record, ct) =>
 		{
 			capturedTypeName = typeof(string).Name;
-			return Task.CompletedTask;
+			return Task.FromResult<string?>(null);
 		});
 
 		var invoker = registry.GetInvoker("typed-job");
@@ -79,16 +79,16 @@ public class HandlerRegistryTests
 		var invoked1 = false;
 		var invoked2 = false;
 
-		registry.Register<string>("job-1", (sp, r, ct) =>
+		registry.Register("job-1", (sp, r, ct) =>
 		{
 			invoked1 = true;
-			return Task.CompletedTask;
+			return Task.FromResult<string?>(null);
 		});
 
-		registry.Register<string>("job-2", (sp, r, ct) =>
+		registry.Register("job-2", (sp, r, ct) =>
 		{
 			invoked2 = true;
-			return Task.CompletedTask;
+			return Task.FromResult<string?>(null);
 		});
 
 		var invoker1 = registry.GetInvoker("job-1");

@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace AsyncEndpoints;
 
+#pragma warning disable CS0618 // Type or member is obsolete - intentionally supporting legacy types for backward compat
 [JsonSerializable(typeof(Job), TypeInfoPropertyName = "Job")]
 [JsonSerializable(typeof(NoBodyRequest))]
 [JsonSerializable(typeof(AsyncEndpointError))]
@@ -15,6 +16,7 @@ namespace AsyncEndpoints;
 [JsonSerializable(typeof(JobDescriptor), TypeInfoPropertyName = "JobDescriptor")]
 [JsonSerializable(typeof(Core.Legacy.JobProcessing.JobStatus), TypeInfoPropertyName = "CoreJobStatus")]
 [JsonSerializable(typeof(Abstractions.Jobs.JobStatus), TypeInfoPropertyName = "AbstractionsJobStatus")]
+#pragma warning restore CS0618
 public partial class AsyncEndpointsJsonSerializationContext : JsonSerializerContext
 {
 }

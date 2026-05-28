@@ -3,6 +3,7 @@ namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 /// <summary>
 /// Represents the type of error that occurred during job processing.
 /// </summary>
+[Obsolete("No longer used in the new pipeline; exceptions are handled directly.")]
 public enum ErrorType
 {
 	/// <summary>

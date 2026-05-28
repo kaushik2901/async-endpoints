@@ -14,7 +14,6 @@ public class AsyncEndpointsOptionsTests
 		// Assert
 		Assert.Equal(Environment.ProcessorCount, options.MaxConcurrency);
 		Assert.Equal(3, options.MaxRetries);
-		Assert.Equal(2.0, options.RetryDelayBaseSeconds);
 		Assert.Equal(TimeSpan.FromSeconds(30), options.HeartbeatInterval);
 		Assert.Equal(TimeSpan.FromSeconds(120), options.StaleJobTimeout);
 		Assert.Equal(TimeSpan.FromMilliseconds(100), options.PollingMinInterval);
@@ -22,10 +21,6 @@ public class AsyncEndpointsOptionsTests
 		Assert.Equal("default", options.DefaultChannel);
 		Assert.False(options.EnablePartitioning);
 		Assert.True(options.ObservabilityEnabled);
-		Assert.True(options.EnableDistributedJobRecovery);
-		Assert.Equal(30, options.JobTimeoutMinutes);
-		Assert.Equal(300, options.RecoveryCheckIntervalSeconds);
-		Assert.Equal(50, options.MaxQueueSize);
 		Assert.Null(options.SerializerOptions);
 	}
 

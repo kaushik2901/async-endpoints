@@ -2,6 +2,7 @@ using AsyncEndpoints.Abstractions.Utilities;
 
 namespace AsyncEndpoints.Core.Legacy.Handlers;
 
+[Obsolete("Use the new pipeline pattern with IHandlerRegistry.Register instead.")]
 /// <summary>
 /// Defines a contract for handling asynchronous endpoint requests of type TRequest and returning responses of type TResponse.
 /// </summary>
@@ -18,6 +19,7 @@ public interface IAsyncEndpointRequestHandler<TRequest, TResponse>
 	Task<MethodResult<TResponse>> HandleAsync(AsyncContext<TRequest> context, CancellationToken token);
 }
 
+[Obsolete("Use the new pipeline pattern with IHandlerRegistry.Register instead.")]
 /// <summary>
 /// Defines a contract for handling asynchronous endpoint requests without body data, returning responses of type TResponse.
 /// </summary>

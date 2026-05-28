@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AsyncEndpoints.AspNetCore.Endpoints;
 
+[Obsolete("Use the new pipeline's IResult pattern instead.")]
 public class JobResultResponse(Job job, int statusCode = 200) : IResult
 {
 	private readonly Job _job = job;
@@ -27,7 +28,7 @@ public class JobResultResponse(Job job, int statusCode = 200) : IResult
 		jobResponse.Result = "{{JOB_RESULT_PLACEHOLDER}}";
 
 		var serializer = httpContext.RequestServices.GetRequiredService<ISerializer>();
-		var serializedResponse = serializer.Serialize(jobResponse);
+		var serializedResponse = serializer.Serialize(jobResponse, (System.Text.Json.JsonSerializerOptions?)null);
 		var jobResult = string.IsNullOrEmpty(_job.Result) ? "null" : _job.Result;
 		var responseString = serializedResponse.Replace($"\"{"{{JOB_RESULT_PLACEHOLDER}}"}\"", jobResult);
 

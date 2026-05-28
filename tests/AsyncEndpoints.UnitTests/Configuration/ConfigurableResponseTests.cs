@@ -50,7 +50,7 @@ public class ConfigurableResponseTests
 			.ReturnsAsync(successResult);
 
 		mockSerializer
-			.Setup(x => x.Serialize(request, null))
+			.Setup(x => x.Serialize(request, (System.Text.Json.JsonSerializerOptions?)null))
 			.Returns("{}");
 
 		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);
@@ -90,7 +90,7 @@ public class ConfigurableResponseTests
 			.ReturnsAsync(failureResult);
 
 		mockSerializer
-			.Setup(x => x.Serialize(request, null))
+			.Setup(x => x.Serialize(request, (System.Text.Json.JsonSerializerOptions?)null))
 			.Returns("{}");
 
 		var requestDelegate = new AsyncEndpointRequestDelegate(mockLogger.Object, mockJobManager.Object, mockSerializer.Object, responseConfig);

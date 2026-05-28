@@ -5,6 +5,7 @@ namespace AsyncEndpoints.AspNetCore.Handlers;
 /// <summary>
 /// Defines a contract for handling asynchronous endpoint requests and managing their lifecycle.
 /// </summary>
+[Obsolete("Use the new pipeline pattern with IJobSubmitter directly.")]
 public interface IAsyncEndpointRequestDelegate
 {
 	/// <summary>

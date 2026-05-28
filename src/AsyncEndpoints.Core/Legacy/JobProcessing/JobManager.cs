@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 /// <inheritdoc />
+[Obsolete("Use the new pipeline with IJobStore/IJobSubmitter directly.")]
 public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, AsyncEndpointsOptions options, IDateTimeProvider dateTimeProvider, IAsyncEndpointsObservability metrics) : IJobManager
 {
 	private readonly ILogger<JobManager> _logger = logger;
@@ -177,6 +178,6 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, AsyncEnd
 	private TimeSpan CalculateRetryDelay(int retryCount)
 	{
 		// Exponential backoff: (2 ^ retryCount) * base delay
-		return TimeSpan.FromSeconds(Math.Pow(2, retryCount) * _options.RetryDelayBaseSeconds);
+		return TimeSpan.FromSeconds(Math.Pow(2, retryCount) * 2.0);
 	}
 }
