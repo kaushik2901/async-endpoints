@@ -1,12 +1,12 @@
+using AsyncEndpoints.Abstractions.Submission;
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Endpoints;
 using AsyncEndpoints.AspNetCore.Models;
-using AsyncEndpoints.Abstractions.Submission;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
@@ -19,12 +19,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPost(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			[FromServices] ISerializer serializer,
-			CancellationToken ct) =>
-			HandleRequestWithBody(jobName, httpContext, submitter, responseConfig, serializer, handler, ct))
+		endpoints.MapPost(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPost(
@@ -32,11 +27,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPost(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			CancellationToken ct) =>
-			HandleRequestWithoutBody(jobName, httpContext, submitter, responseConfig, handler, ct))
+		endpoints.MapPost(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPut<TRequest>(
@@ -44,12 +35,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPut(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			[FromServices] ISerializer serializer,
-			CancellationToken ct) =>
-			HandleRequestWithBody(jobName, httpContext, submitter, responseConfig, serializer, handler, ct))
+		endpoints.MapPut(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPut(
@@ -57,11 +43,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPut(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			CancellationToken ct) =>
-			HandleRequestWithoutBody(jobName, httpContext, submitter, responseConfig, handler, ct))
+		endpoints.MapPut(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPatch<TRequest>(
@@ -69,12 +51,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPatch(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			[FromServices] ISerializer serializer,
-			CancellationToken ct) =>
-			HandleRequestWithBody(jobName, httpContext, submitter, responseConfig, serializer, handler, ct))
+		endpoints.MapPatch(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPatch(
@@ -82,11 +59,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPatch(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			CancellationToken ct) =>
-			HandleRequestWithoutBody(jobName, httpContext, submitter, responseConfig, handler, ct))
+		endpoints.MapPatch(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncDelete<TRequest>(
@@ -94,12 +67,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapDelete(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			[FromServices] ISerializer serializer,
-			CancellationToken ct) =>
-			HandleRequestWithBody(jobName, httpContext, submitter, responseConfig, serializer, handler, ct))
+		endpoints.MapDelete(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncDelete(
@@ -107,79 +75,94 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapDelete(pattern, (HttpContext httpContext,
-			[FromServices] IJobSubmitter submitter,
-			[FromServices] AsyncEndpointsResponseConfigurations responseConfig,
-			CancellationToken ct) =>
-			HandleRequestWithoutBody(jobName, httpContext, submitter, responseConfig, handler, ct))
+		endpoints.MapDelete(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncGetJobDetails(
 		this IEndpointRouteBuilder endpoints,
 		string pattern = "/jobs/{jobId:guid}") =>
-		endpoints.MapGet(pattern, (HttpContext httpContext,
-			[FromRoute] Guid jobId,
-			[FromServices] IJobSubmitter submitter) =>
-			Results.Ok())
+		endpoints.MapGet(pattern, CreateJobDetailsRequestDelegate())
 		.WithTags("AsyncEndpoint");
 
-	private static async Task<IResult> HandleRequestWithBody<TRequest>(
+	private static RequestDelegate CreateRequestDelegate<TRequest>(
 		string jobName,
-		HttpContext httpContext,
-		IJobSubmitter submitter,
-		AsyncEndpointsResponseConfigurations responseConfig,
-		ISerializer serializer,
-		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler,
-		CancellationToken ct)
+		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler)
 	{
-		string bodyText;
-		try
+		return async httpContext =>
 		{
-			using var reader = new StreamReader(httpContext.Request.Body);
-			bodyText = await reader.ReadToEndAsync(ct);
-		}
-		catch (Exception ex)
-		{
-			return Results.Problem(detail: ex.Message, statusCode: 400);
-		}
+			var submitter = httpContext.RequestServices.GetRequiredService<IJobSubmitter>();
+			var responseConfig = httpContext.RequestServices.GetRequiredService<AsyncEndpointsResponseConfigurations>();
+			var serializer = httpContext.RequestServices.GetRequiredService<ISerializer>();
+			var ct = httpContext.RequestAborted;
 
-		TRequest? request;
-		try
-		{
-			request = DeserializeBody<TRequest>(serializer, bodyText);
-		}
-		catch (Exception ex)
-		{
-			return Results.Problem(detail: $"Invalid request body: {ex.Message}", statusCode: 400);
-		}
+			string bodyText;
+			try
+			{
+				using var reader = new StreamReader(httpContext.Request.Body);
+				bodyText = await reader.ReadToEndAsync(ct);
+			}
+			catch (Exception ex)
+			{
+				await Results.Problem(detail: ex.Message, statusCode: 400).ExecuteAsync(httpContext);
+				return;
+			}
 
-		if (handler is not null)
-		{
-			var handlerResult = await handler(httpContext, request!, ct);
-			if (handlerResult is not null)
-				return handlerResult;
-		}
+			TRequest? request;
+			try
+			{
+				request = DeserializeBody<TRequest>(serializer, bodyText);
+			}
+			catch (Exception ex)
+			{
+				await Results.Problem(detail: $"Invalid request body: {ex.Message}", statusCode: 400).ExecuteAsync(httpContext);
+				return;
+			}
 
-		return await SubmitJobAndReturn(jobName, httpContext, submitter, responseConfig, bodyText, ct);
+			if (handler is not null)
+			{
+				var handlerResult = await handler(httpContext, request!, ct);
+				if (handlerResult is not null)
+				{
+					await handlerResult.ExecuteAsync(httpContext);
+					return;
+				}
+			}
+
+			await SubmitJobAndExecute(jobName, httpContext, submitter, responseConfig, bodyText, ct);
+		};
 	}
 
-	private static async Task<IResult> HandleRequestWithoutBody(
+	private static RequestDelegate CreateRequestDelegate(
 		string jobName,
-		HttpContext httpContext,
-		IJobSubmitter submitter,
-		AsyncEndpointsResponseConfigurations responseConfig,
-		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler,
-		CancellationToken ct)
+		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler)
 	{
-		if (handler is not null)
+		return async httpContext =>
 		{
-			var handlerResult = await handler(httpContext, ct);
-			if (handlerResult is not null)
-				return handlerResult;
-		}
+			var submitter = httpContext.RequestServices.GetRequiredService<IJobSubmitter>();
+			var responseConfig = httpContext.RequestServices.GetRequiredService<AsyncEndpointsResponseConfigurations>();
+			var ct = httpContext.RequestAborted;
 
-		var bodyText = await ReadBodyAsync(httpContext, ct);
-		return await SubmitJobAndReturn(jobName, httpContext, submitter, responseConfig, bodyText, ct);
+			if (handler is not null)
+			{
+				var handlerResult = await handler(httpContext, ct);
+				if (handlerResult is not null)
+				{
+					await handlerResult.ExecuteAsync(httpContext);
+					return;
+				}
+			}
+
+			var bodyText = await ReadBodyAsync(httpContext, ct);
+			await SubmitJobAndExecute(jobName, httpContext, submitter, responseConfig, bodyText, ct);
+		};
+	}
+
+	private static RequestDelegate CreateJobDetailsRequestDelegate()
+	{
+		return async httpContext =>
+		{
+			await Results.Ok().ExecuteAsync(httpContext);
+		};
 	}
 
 	private static async Task<string> ReadBodyAsync(HttpContext httpContext, CancellationToken ct)
@@ -201,7 +184,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		return serializer.Deserialize<TRequest>(bodyText, (JsonSerializerOptions?)null);
 	}
 
-	private static async Task<IResult> SubmitJobAndReturn(
+	private static async Task SubmitJobAndExecute(
 		string jobName,
 		HttpContext httpContext,
 		IJobSubmitter submitter,
@@ -220,20 +203,19 @@ public static class AsyncEndpointRouteBuilderExtensions
 			QueryParams = httpContext.GetQueryParamsFromContext()
 		};
 
-		Guid jobId;
 		try
 		{
 			var jsonPayload = JsonSerializer.Serialize(httpPayload, AsyncEndpointsAspNetCoreJsonSerializationContext.Default.HttpJobPayload);
-			jobId = await submitter.SubmitRawAsync(jobName, jsonPayload, channel, partitionKey, ct);
+			var jobId = await submitter.SubmitRawAsync(jobName, jsonPayload, channel, partitionKey, ct);
+			var response = await responseConfig.JobSubmittedResponseFactory(jobId, httpContext);
+			await response.ExecuteAsync(httpContext);
 		}
 		catch (Exception ex)
 		{
-			return Results.Problem(
+			await Results.Problem(
 				detail: ex.Message,
 				title: "Job submission failed",
-				statusCode: StatusCodes.Status500InternalServerError);
+				statusCode: StatusCodes.Status500InternalServerError).ExecuteAsync(httpContext);
 		}
-
-		return await responseConfig.JobSubmittedResponseFactory(jobId, httpContext);
 	}
 }
