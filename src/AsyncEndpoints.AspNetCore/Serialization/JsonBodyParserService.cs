@@ -1,4 +1,4 @@
-using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Abstractions.Common;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;

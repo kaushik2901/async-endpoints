@@ -1,5 +1,5 @@
+using AsyncEndpoints.Abstractions.Common;
 using AsyncEndpoints.Abstractions.Jobs;
-using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Legacy.Handlers;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using System.Text.Json.Serialization;

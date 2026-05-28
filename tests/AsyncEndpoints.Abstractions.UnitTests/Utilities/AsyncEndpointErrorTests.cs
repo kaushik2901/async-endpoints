@@ -1,5 +1,5 @@
+using AsyncEndpoints.Abstractions.Common;
 using AsyncEndpoints.Abstractions.UnitTests.TestSupport;
-using AsyncEndpoints.Abstractions.Utilities;
 
 namespace AsyncEndpoints.Abstractions.UnitTests.Utilities;
 

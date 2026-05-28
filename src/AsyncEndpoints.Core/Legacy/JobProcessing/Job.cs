@@ -1,4 +1,4 @@
-using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Abstractions.Common;
 
 namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 

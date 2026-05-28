@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Abstractions.Utilities;
+namespace AsyncEndpoints.Abstractions.Common;
 
 /// <summary>
 /// Represents an error that occurred during async endpoint processing.

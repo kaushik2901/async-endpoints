@@ -1,4 +1,4 @@
-using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Abstractions.Common;
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Legacy.Observability;
 using Microsoft.Extensions.Logging;

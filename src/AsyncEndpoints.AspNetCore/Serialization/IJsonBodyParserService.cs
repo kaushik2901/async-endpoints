@@ -1,4 +1,4 @@
-using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Abstractions.Common;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Serialization;

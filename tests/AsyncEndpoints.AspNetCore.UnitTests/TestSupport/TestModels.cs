@@ -1,4 +1,4 @@
-using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Abstractions.Common;
 using AsyncEndpoints.Core.Legacy.Handlers;
 
 namespace AsyncEndpoints.AspNetCore.UnitTests.TestSupport;

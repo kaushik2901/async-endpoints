@@ -1,4 +1,4 @@
-using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Abstractions.Common;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using AsyncEndpoints.Core.Legacy.Utilities;
 using AsyncEndpoints.Core.UnitTests.TestSupport;
