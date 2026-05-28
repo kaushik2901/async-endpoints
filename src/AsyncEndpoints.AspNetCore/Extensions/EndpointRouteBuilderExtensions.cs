@@ -14,7 +14,6 @@ public static class EndpointRouteBuilderExtensions
 	{
 		var resolvedPrefix = prefix ?? "/jobs";
 
-		routes.MapPost(resolvedPrefix, JobEndpoints.PostJob);
 		routes.MapGet($"{resolvedPrefix}/{{jobId:guid}}", JobStatusEndpoint.GetJobStatus);
 		routes.MapGet($"{resolvedPrefix}/{{jobId:guid}}/result", JobResultEndpoint.GetJobResult);
 
