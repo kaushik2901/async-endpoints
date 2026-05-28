@@ -1,15 +1,15 @@
 using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Handlers;
 using AsyncEndpoints.AspNetCore.Serialization;
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Handlers;
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.Handlers;
+using AsyncEndpoints.Core.JobProcessing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace AsyncEndpoints.Extensions;
+namespace AsyncEndpoints.AspNetCore.Extensions;
 
 /// <summary>
 /// Extension methods for mapping asynchronous endpoints in ASP.NET Core.

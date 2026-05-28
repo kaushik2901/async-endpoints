@@ -1,4 +1,4 @@
-using AsyncEndpoints.Configuration;
+using AsyncEndpoints.Core.Configuration;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Extensions;

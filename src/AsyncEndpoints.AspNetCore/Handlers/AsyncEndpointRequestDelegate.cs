@@ -1,11 +1,11 @@
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Extensions;
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Core.Infrastructure.Serialization;
+using AsyncEndpoints.Core.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace AsyncEndpoints.Handlers;
+namespace AsyncEndpoints.AspNetCore.Handlers;
 
 public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDelegate> logger, IJobManager jobManager, ISerializer serializer, AsyncEndpointsResponseConfigurations responseConfigurations) : IAsyncEndpointRequestDelegate
 {

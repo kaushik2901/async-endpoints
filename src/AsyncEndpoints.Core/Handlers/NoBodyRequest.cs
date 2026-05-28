@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Handlers;
+namespace AsyncEndpoints.Core.Handlers;
 
 /// <summary>
 /// A placeholder class representing an empty request body for endpoints that don't require request data.

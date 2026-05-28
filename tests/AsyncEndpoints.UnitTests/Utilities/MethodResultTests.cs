@@ -1,4 +1,4 @@
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Abstractions.Utilities;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
 

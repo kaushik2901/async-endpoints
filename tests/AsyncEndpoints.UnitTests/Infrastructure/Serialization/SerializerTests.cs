@@ -1,4 +1,4 @@
-using AsyncEndpoints.Infrastructure.Serialization;
+using AsyncEndpoints.Core.Infrastructure.Serialization;
 using System.Text.Json;
 
 namespace AsyncEndpoints.UnitTests.Infrastructure.Serialization;

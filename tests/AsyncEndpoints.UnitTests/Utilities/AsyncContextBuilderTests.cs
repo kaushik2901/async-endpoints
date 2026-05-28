@@ -1,6 +1,7 @@
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Utilities;
 using AsyncEndpoints.UnitTests.TestSupport;
-using AsyncEndpoints.Utilities;
 using Moq;
 
 namespace AsyncEndpoints.UnitTests.Utilities;
@@ -27,7 +28,7 @@ public class AsyncContextBuilderTests
 		TestRequest request)
 	{
 		// Arrange
-		var mockDateTimeProvider = new Mock<AsyncEndpoints.Infrastructure.IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<Abstractions.Infrastructure.IDateTimeProvider>();
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
 		var job = Job.Create(
 			Guid.NewGuid(),
@@ -36,7 +37,7 @@ public class AsyncContextBuilderTests
 			[],
 			[],
 			[],
-			AsyncEndpoints.Configuration.AsyncEndpointsConstants.MaximumRetries,
+			AsyncEndpointsConstants.MaximumRetries,
 			mockDateTimeProvider.Object);
 
 		// Act

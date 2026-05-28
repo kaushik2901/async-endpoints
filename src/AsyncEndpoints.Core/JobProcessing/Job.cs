@@ -1,8 +1,8 @@
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Core.Configuration;
 
-namespace AsyncEndpoints.JobProcessing;
+namespace AsyncEndpoints.Core.JobProcessing;
 
 /// <summary>
 /// Represents an asynchronous job in the AsyncEndpoints system.

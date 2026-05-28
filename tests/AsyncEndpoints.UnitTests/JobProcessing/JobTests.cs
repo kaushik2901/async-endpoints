@@ -1,6 +1,7 @@
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.JobProcessing;
 using Moq;
 
 namespace AsyncEndpoints.UnitTests.JobProcessing;
@@ -271,7 +272,7 @@ public class JobTests
 			QueryParams = [new("query1", ["value1"])],
 			Payload = "{\"data\":\"value\"}",
 			Result = "Success",
-			Error = new AsyncEndpoints.Utilities.AsyncEndpointError("TEST_ERROR", "Test error", null),
+			Error = new AsyncEndpointError("TEST_ERROR", "Test error", null),
 			RetryCount = 2,
 			MaxRetries = 5,
 			RetryDelayUntil = DateTime.UtcNow.AddMinutes(10),

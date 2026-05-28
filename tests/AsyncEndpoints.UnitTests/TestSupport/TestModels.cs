@@ -1,5 +1,5 @@
-using AsyncEndpoints.Handlers;
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Core.Handlers;
 
 namespace AsyncEndpoints.UnitTests.TestSupport;
 

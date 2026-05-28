@@ -1,9 +1,10 @@
-using AsyncEndpoints.Abstractions.Storage;
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Extensions;
-using AsyncEndpoints.Handlers;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.AspNetCore.Extensions;
+using AsyncEndpoints.AspNetCore.Handlers;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.Handlers;
+using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Provider.InMemory.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using AsyncEndpoints.Worker.Concurrency;
 using AsyncEndpoints.Worker.Execution;
@@ -25,7 +26,7 @@ public class ServiceCollectionExtensionsTests
 		var services = new ServiceCollection();
 		services.AddLogging();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-		services.AddSingleton<AsyncEndpoints.JobProcessing.IJobStore>(Mock.Of<AsyncEndpoints.JobProcessing.IJobStore>());
+		services.AddSingleton(Mock.Of<IJobStore>());
 		services.AddAsyncEndpointsInMemoryStore();
 
 		// Act
@@ -68,7 +69,7 @@ public class ServiceCollectionExtensionsTests
 		var services = new ServiceCollection();
 		services.AddLogging();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-		services.AddSingleton<AsyncEndpoints.JobProcessing.IJobStore>(Mock.Of<AsyncEndpoints.JobProcessing.IJobStore>());
+		services.AddSingleton(Mock.Of<IJobStore>());
 		services.AddAsyncEndpoints();
 
 		// Act
@@ -76,7 +77,7 @@ public class ServiceCollectionExtensionsTests
 
 		// Assert
 		var provider = services.BuildServiceProvider();
-		var jobStore = provider.GetService<AsyncEndpoints.Abstractions.Storage.IJobStore>();
+		var jobStore = provider.GetService<Abstractions.Storage.IJobStore>();
 
 		Assert.NotNull(jobStore);
 		Assert.IsType<InMemoryJobStore>(jobStore);
@@ -89,7 +90,7 @@ public class ServiceCollectionExtensionsTests
 		var services = new ServiceCollection();
 		services.AddLogging();
 		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-		services.AddSingleton<AsyncEndpoints.JobProcessing.IJobStore>(Mock.Of<AsyncEndpoints.JobProcessing.IJobStore>());
+		services.AddSingleton(Mock.Of<IJobStore>());
 		services.AddAsyncEndpointsInMemoryStore();
 		services.AddAsyncEndpoints();
 

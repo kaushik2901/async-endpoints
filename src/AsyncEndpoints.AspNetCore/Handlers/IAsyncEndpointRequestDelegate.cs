@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace AsyncEndpoints.Handlers;
+namespace AsyncEndpoints.AspNetCore.Handlers;
 
 /// <summary>
 /// Defines a contract for handling asynchronous endpoint requests and managing their lifecycle.

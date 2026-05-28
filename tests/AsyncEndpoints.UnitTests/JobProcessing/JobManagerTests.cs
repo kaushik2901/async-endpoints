@@ -1,9 +1,9 @@
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.Infrastructure.Observability;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.Infrastructure.Observability;
+using AsyncEndpoints.Core.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
-using AsyncEndpoints.Utilities;
 using AutoFixture.Xunit2;
 using Microsoft.Extensions.Logging;
 using Moq;

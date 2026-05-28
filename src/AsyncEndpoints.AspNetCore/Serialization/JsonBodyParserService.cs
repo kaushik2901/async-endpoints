@@ -1,5 +1,5 @@
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;

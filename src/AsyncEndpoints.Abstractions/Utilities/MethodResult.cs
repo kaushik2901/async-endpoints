@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Utilities;
+namespace AsyncEndpoints.Abstractions.Utilities;
 
 /// <summary>
 /// Represents the result of a method operation, indicating whether it was successful or failed.

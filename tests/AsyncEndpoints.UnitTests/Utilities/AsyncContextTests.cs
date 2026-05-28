@@ -1,4 +1,4 @@
-using AsyncEndpoints.Handlers;
+using AsyncEndpoints.Core.Handlers;
 using AsyncEndpoints.UnitTests.TestSupport;
 
 namespace AsyncEndpoints.UnitTests.Utilities;

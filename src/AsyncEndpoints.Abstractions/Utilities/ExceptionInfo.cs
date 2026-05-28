@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Utilities;
+namespace AsyncEndpoints.Abstractions.Utilities;
 
 /// <summary>
 /// Contains serializable information about an exception.

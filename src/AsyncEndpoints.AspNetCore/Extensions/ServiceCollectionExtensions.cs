@@ -1,23 +1,22 @@
+using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Handlers;
 using AsyncEndpoints.AspNetCore.Serialization;
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.DependencyInjection;
-using AsyncEndpoints.Handlers;
-using AsyncEndpoints.Infrastructure;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.DependencyInjection;
+using AsyncEndpoints.Core.Handlers;
+using AsyncEndpoints.Core.Infrastructure.Observability;
+using AsyncEndpoints.Core.Infrastructure.Serialization;
+using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Utilities;
 using AsyncEndpoints.Provider.InMemory.DependencyInjection;
-using AsyncEndpoints.Infrastructure.Observability;
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
-using AsyncEndpoints.Utilities;
-using AsyncEndpoints.Worker.DependencyInjection;
 using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization.Metadata;
 
-namespace AsyncEndpoints.Extensions;
+namespace AsyncEndpoints.AspNetCore.Extensions;
 
 /// <summary>
 /// Extension methods for configuring and registering AsyncEndpoints services with the dependency injection container.

@@ -1,5 +1,4 @@
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.UnitTests.TestSupport;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Hosting;
 
 namespace AsyncEndpoints.UnitTests.Configuration;

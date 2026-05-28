@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Infrastructure;
+namespace AsyncEndpoints.Abstractions.Infrastructure;
 
 /// <summary>
 /// Provides access to current date and time values in a testable manner.

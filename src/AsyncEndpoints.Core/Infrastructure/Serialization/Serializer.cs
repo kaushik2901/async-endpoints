@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace AsyncEndpoints.Infrastructure.Serialization;
+namespace AsyncEndpoints.Core.Infrastructure.Serialization;
 
 public class Serializer(JsonSerializerOptions? jsonOptions = null) : ISerializer
 {

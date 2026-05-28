@@ -1,8 +1,9 @@
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.Abstractions.Utilities;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Utilities;
 using AsyncEndpoints.UnitTests.TestSupport;
-using AsyncEndpoints.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 

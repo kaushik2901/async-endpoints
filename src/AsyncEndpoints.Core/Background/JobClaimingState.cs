@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Background;
+namespace AsyncEndpoints.Core.Background;
 
 /// <summary>
 /// Represents the state in job claiming and enqueuing

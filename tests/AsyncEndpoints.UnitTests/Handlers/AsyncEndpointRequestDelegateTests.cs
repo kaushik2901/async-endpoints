@@ -1,7 +1,7 @@
 using AsyncEndpoints.AspNetCore.Configuration;
-using AsyncEndpoints.Handlers;
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.AspNetCore.Handlers;
+using AsyncEndpoints.Core.Infrastructure.Serialization;
+using AsyncEndpoints.Core.JobProcessing;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;

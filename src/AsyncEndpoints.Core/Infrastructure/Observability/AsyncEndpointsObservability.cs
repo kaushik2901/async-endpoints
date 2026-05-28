@@ -1,10 +1,10 @@
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.JobProcessing;
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Utilities;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace AsyncEndpoints.Infrastructure.Observability;
+namespace AsyncEndpoints.Core.Infrastructure.Observability;
 
 /// <inheritdoc />
 public class AsyncEndpointsObservability : IAsyncEndpointsObservability

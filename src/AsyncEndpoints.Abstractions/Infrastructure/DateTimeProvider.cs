@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Infrastructure;
+namespace AsyncEndpoints.Abstractions.Infrastructure;
 
 /// <inheritdoc />
 public class DateTimeProvider : IDateTimeProvider

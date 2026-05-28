@@ -1,10 +1,10 @@
+using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.AspNetCore.Configuration;
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Handlers;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
-using AsyncEndpoints.Utilities;
+using AsyncEndpoints.AspNetCore.Handlers;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.Infrastructure.Serialization;
+using AsyncEndpoints.Core.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;

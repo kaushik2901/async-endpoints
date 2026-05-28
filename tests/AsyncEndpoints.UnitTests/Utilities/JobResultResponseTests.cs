@@ -1,8 +1,8 @@
+using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.AspNetCore.Endpoints;
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Infrastructure;
-using AsyncEndpoints.Infrastructure.Serialization;
-using AsyncEndpoints.JobProcessing;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.Infrastructure.Serialization;
+using AsyncEndpoints.Core.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -114,7 +114,7 @@ public class JobResultResponseTests
 			.Returns(expectedSerialized);
 
 		var serviceCollection = new ServiceCollection();
-		serviceCollection.AddSingleton<ISerializer>(mockSerializer.Object);
+		serviceCollection.AddSingleton(mockSerializer.Object);
 		var serviceProvider = serviceCollection.BuildServiceProvider();
 		httpContext.RequestServices = serviceProvider;
 
@@ -185,7 +185,7 @@ public class JobResultResponseTests
 			.Returns(expectedSerialized);
 
 		var serviceCollection = new ServiceCollection();
-		serviceCollection.AddSingleton<ISerializer>(mockSerializer.Object);
+		serviceCollection.AddSingleton(mockSerializer.Object);
 		var serviceProvider = serviceCollection.BuildServiceProvider();
 		httpContext.RequestServices = serviceProvider;
 

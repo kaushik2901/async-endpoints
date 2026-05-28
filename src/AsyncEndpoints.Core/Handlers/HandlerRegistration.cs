@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Handlers;
+namespace AsyncEndpoints.Core.Handlers;
 
 /// <summary>
 /// Represents a registration of a handler for processing async endpoint requests.

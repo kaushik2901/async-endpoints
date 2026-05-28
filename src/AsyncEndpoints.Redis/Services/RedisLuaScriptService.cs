@@ -1,21 +1,20 @@
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-using System.Text;
 
 namespace AsyncEndpoints.Redis.Services;
 
 public class RedisLuaScriptService : IRedisLuaScriptService
 {
-    private readonly ILogger<RedisLuaScriptService> _logger;
+	private readonly ILogger<RedisLuaScriptService> _logger;
 
-    public RedisLuaScriptService(ILogger<RedisLuaScriptService> logger)
-    {
-        _logger = logger;
-    }
+	public RedisLuaScriptService(ILogger<RedisLuaScriptService> logger)
+	{
+		_logger = logger;
+	}
 
-    public async Task<string> EnqueueJobAsync(IDatabase database, string jobId, string channel, double score, HashEntry[] hashEntries)
-    {
-        var script = @"
+	public async Task<string> EnqueueJobAsync(IDatabase database, string jobId, string channel, double score, HashEntry[] hashEntries)
+	{
+		var script = @"
             local jobKey = 'ae:job:' .. ARGV[1]
             local queueKey = 'ae:queue:' .. ARGV[2]
             local score = tonumber(ARGV[3])
@@ -28,20 +27,20 @@ public class RedisLuaScriptService : IRedisLuaScriptService
             return ARGV[1]
         ";
 
-        var args = new List<RedisValue> { jobId, channel, score.ToString() };
-        foreach (var entry in hashEntries)
-        {
-            args.Add(entry.Name);
-            args.Add(entry.Value);
-        }
+		var args = new List<RedisValue> { jobId, channel, score.ToString() };
+		foreach (var entry in hashEntries)
+		{
+			args.Add(entry.Name);
+			args.Add(entry.Value);
+		}
 
-        var result = await database.ScriptEvaluateAsync(script, values: args.ToArray());
-        return result.ToString();
-    }
+		var result = await database.ScriptEvaluateAsync(script, values: args.ToArray());
+		return result.ToString();
+	}
 
-    public async Task<RedisValue[]> DequeueJobAsync(IDatabase database, string channel, string nowIso, string nowUnix, string? partitions)
-    {
-        var script = @"
+	public async Task<RedisValue[]> DequeueJobAsync(IDatabase database, string channel, string nowIso, string nowUnix, string? partitions)
+	{
+		var script = @"
             local queueKey = 'ae:queue:' .. KEYS[1]
             local heartbeatKey = 'ae:heartbeat'
             local nowIso = ARGV[1]
@@ -84,17 +83,17 @@ public class RedisLuaScriptService : IRedisLuaScriptService
             return nil
         ";
 
-        var result = await database.ScriptEvaluateAsync(script, keys: [new RedisKey(channel)], values: [nowIso, nowUnix, partitions ?? ""]);
+		var result = await database.ScriptEvaluateAsync(script, keys: [new RedisKey(channel)], values: [nowIso, nowUnix, partitions ?? ""]);
 
-        if (result.IsNull)
-            return [];
+		if (result.IsNull)
+			return [];
 
-        return (RedisValue[])result!;
-    }
+		return (RedisValue[])result!;
+	}
 
-    public async Task HeartbeatJobAsync(IDatabase database, string jobId, string nowIso, string nowUnix)
-    {
-        var script = @"
+	public async Task HeartbeatJobAsync(IDatabase database, string jobId, string nowIso, string nowUnix)
+	{
+		var script = @"
             local jobKey = 'ae:job:' .. ARGV[1]
             local heartbeatKey = 'ae:heartbeat'
 
@@ -102,12 +101,12 @@ public class RedisLuaScriptService : IRedisLuaScriptService
             redis.call('ZADD', heartbeatKey, tonumber(ARGV[3]), ARGV[1])
         ";
 
-        await database.ScriptEvaluateAsync(script, values: [jobId, nowIso, nowUnix]);
-    }
+		await database.ScriptEvaluateAsync(script, values: [jobId, nowIso, nowUnix]);
+	}
 
-    public async Task<int> ReclaimStaleJobsAsync(IDatabase database, long staleCutoffUnix, string nowIso, string nowUnix)
-    {
-        var script = @"
+	public async Task<int> ReclaimStaleJobsAsync(IDatabase database, long staleCutoffUnix, string nowIso, string nowUnix)
+	{
+		var script = @"
             local heartbeatKey = 'ae:heartbeat'
             local cutoff = tonumber(ARGV[1])
             local currentTime = ARGV[3]
@@ -132,7 +131,7 @@ public class RedisLuaScriptService : IRedisLuaScriptService
             return reclaimed
         ";
 
-        var result = await database.ScriptEvaluateAsync(script, values: [staleCutoffUnix.ToString(), nowIso, nowUnix]);
-        return (int)(long)result;
-    }
+		var result = await database.ScriptEvaluateAsync(script, values: [staleCutoffUnix.ToString(), nowIso, nowUnix]);
+		return (int)(long)result;
+	}
 }

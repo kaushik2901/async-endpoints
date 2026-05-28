@@ -5,6 +5,6 @@ namespace AsyncEndpoints.Redis.Services;
 
 public interface IJobHashConverter
 {
-    HashEntry[] ConvertToHashEntries(JobRecord record);
-    JobRecord ConvertFromHashEntries(HashEntry[] hashEntries);
+	HashEntry[] ConvertToHashEntries(JobRecord record);
+	JobRecord ConvertFromHashEntries(HashEntry[] hashEntries);
 }

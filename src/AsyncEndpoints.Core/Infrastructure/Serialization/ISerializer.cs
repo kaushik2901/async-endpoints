@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace AsyncEndpoints.Infrastructure.Serialization;
+namespace AsyncEndpoints.Core.Infrastructure.Serialization;
 
 /// <summary>
 /// Provides methods for serializing and deserializing objects to and from JSON.

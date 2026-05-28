@@ -1,7 +1,6 @@
-using AsyncEndpoints.Configuration;
-using AsyncEndpoints.Infrastructure.Observability;
+using AsyncEndpoints.Core.Configuration;
+using AsyncEndpoints.Core.Infrastructure.Observability;
 using AsyncEndpoints.UnitTests.TestSupport;
-using Moq;
 
 namespace AsyncEndpoints.UnitTests.Infrastructure.Observability;
 
