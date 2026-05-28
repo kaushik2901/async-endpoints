@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.Provider.Redis.Services;
@@ -11,14 +10,14 @@ public class RedisJobStore : IJobStore
 {
 	private readonly ILogger<RedisJobStore> _logger;
 	private readonly IDatabase _database;
-	private readonly IDateTimeProvider _dateTimeProvider;
+	private readonly TimeProvider _dateTimeProvider;
 	private readonly IJobHashConverter _jobHashConverter;
 	private readonly IRedisLuaScriptService _luaScriptService;
 
 	public RedisJobStore(
 		ILogger<RedisJobStore> logger,
 		IDatabase database,
-		IDateTimeProvider dateTimeProvider,
+		TimeProvider dateTimeProvider,
 		IJobHashConverter jobHashConverter,
 		IRedisLuaScriptService luaScriptService)
 	{
@@ -46,11 +45,11 @@ public class RedisJobStore : IJobStore
 			Partition = partition,
 			Payload = descriptor.Payload,
 			Status = JobStatus.Queued,
-			CreatedAt = _dateTimeProvider.UtcNow,
+			CreatedAt = _dateTimeProvider.GetUtcNow().UtcDateTime,
 			Metadata = descriptor.Metadata
 		};
 
-		var score = descriptor.Priority * 1_000_000_000_000L + _dateTimeProvider.DateTimeOffsetNow.ToUnixTimeSeconds();
+		var score = descriptor.Priority * 1_000_000_000_000L + _dateTimeProvider.GetUtcNow().ToUnixTimeSeconds();
 		var hashEntries = _jobHashConverter.ConvertToHashEntries(record);
 
 		await _luaScriptService.EnqueueJobAsync(_database, jobId.ToString(), channel, score, hashEntries);
@@ -59,8 +58,8 @@ public class RedisJobStore : IJobStore
 
 	public async Task<JobRecord?> DequeueAsync(string channel, IReadOnlySet<int>? partitions, CancellationToken ct = default)
 	{
-		var nowIso = _dateTimeProvider.DateTimeOffsetNow.ToString("O");
-		var nowUnix = _dateTimeProvider.DateTimeOffsetNow.ToUnixTimeSeconds().ToString();
+		var nowIso = _dateTimeProvider.GetUtcNow().ToString("O");
+		var nowUnix = _dateTimeProvider.GetUtcNow().ToUnixTimeSeconds().ToString();
 		var partitionStr = partitions is not null && partitions.Count > 0
 			? string.Join(",", partitions)
 			: "";
@@ -97,7 +96,7 @@ public class RedisJobStore : IJobStore
 
 		if (status is JobStatus.Completed or JobStatus.Failed or JobStatus.DeadLettered)
 		{
-			var nowIso = _dateTimeProvider.DateTimeOffsetNow.ToString("O");
+			var nowIso = _dateTimeProvider.GetUtcNow().ToString("O");
 			batch.Add(new HashEntry("CompletedAt", nowIso));
 		}
 
@@ -117,17 +116,17 @@ public class RedisJobStore : IJobStore
 
 	public async Task HeartbeatAsync(Guid jobId, CancellationToken ct = default)
 	{
-		var nowIso = _dateTimeProvider.DateTimeOffsetNow.ToString("O");
-		var nowUnix = _dateTimeProvider.DateTimeOffsetNow.ToUnixTimeSeconds().ToString();
+		var nowIso = _dateTimeProvider.GetUtcNow().ToString("O");
+		var nowUnix = _dateTimeProvider.GetUtcNow().ToUnixTimeSeconds().ToString();
 
 		await _luaScriptService.HeartbeatJobAsync(_database, jobId.ToString(), nowIso, nowUnix);
 	}
 
 	public async Task<int> ReclaimStaleJobsAsync(TimeSpan staleTimeout, CancellationToken ct = default)
 	{
-		var cutoff = _dateTimeProvider.DateTimeOffsetNow.Add(-staleTimeout).ToUnixTimeSeconds();
-		var nowIso = _dateTimeProvider.DateTimeOffsetNow.ToString("O");
-		var nowUnix = _dateTimeProvider.DateTimeOffsetNow.ToUnixTimeSeconds().ToString();
+		var cutoff = _dateTimeProvider.GetUtcNow().Add(-staleTimeout).ToUnixTimeSeconds();
+		var nowIso = _dateTimeProvider.GetUtcNow().ToString("O");
+		var nowUnix = _dateTimeProvider.GetUtcNow().ToUnixTimeSeconds().ToString();
 
 		return await _luaScriptService.ReclaimStaleJobsAsync(_database, cutoff, nowIso, nowUnix);
 	}

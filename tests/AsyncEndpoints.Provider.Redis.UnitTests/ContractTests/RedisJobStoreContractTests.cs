@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.UnitTests.ContractTests;
 using AsyncEndpoints.Provider.Redis.Services;
 using AsyncEndpoints.Provider.Redis.Storage;
@@ -19,9 +18,8 @@ public class RedisJobStoreContractTests : JobStoreContractTestsBase, IAsyncLifet
 		if (_database is null)
 			throw new InvalidOperationException("Redis not initialized. Set REDIS_CONNECTION_STRING environment variable.");
 
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.UtcNow).Returns(() => DateTime.UtcNow);
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(() => DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(() => DateTimeOffset.UtcNow);
 
 		return new RedisJobStore(
 			NullLogger<RedisJobStore>.Instance,

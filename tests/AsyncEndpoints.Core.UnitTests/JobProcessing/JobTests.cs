@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Moq;
@@ -17,9 +16,9 @@ public class JobTests
 		var routeParams = new Dictionary<string, object?> { { "param1", "value1" } };
 		var queryParams = new List<KeyValuePair<string, List<string?>>> { new("query1", ["value1"]) };
 		var maxRetries = 2;
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 
 		var job = Job.Create(id, name, payload, headers, routeParams, queryParams, maxRetries, mockDateTimeProvider.Object);
 
@@ -39,9 +38,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_UpdatesStatusAndLastUpdatedAt()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var newTime = DateTimeOffset.UtcNow.AddSeconds(1);
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(newTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(newTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
 		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
@@ -54,9 +53,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithCompletedStatus_SetsCompletedAt()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
 		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object);
@@ -68,9 +67,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithFailedStatus_SetsCompletedAt()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
 		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object);
@@ -82,9 +81,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithCanceledStatus_SetsCompletedAt()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
 		job.UpdateStatus(JobStatus.Canceled, mockDateTimeProvider.Object);
@@ -96,9 +95,9 @@ public class JobTests
 	[Fact]
 	public void SetResult_UpdatesStatusAndResult()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 		var result = "Success";
 
@@ -162,9 +161,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithValidStateTransition_Succeeds()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
 		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
@@ -177,9 +176,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithValidRetryTransition_Succeeds()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object);
 
@@ -190,9 +189,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithInvalidStateTransition_ThrowsInvalidOperationException()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object);
 
@@ -204,9 +203,9 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithSameState_DoesNotThrow()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
 		job.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
@@ -216,13 +215,13 @@ public class JobTests
 	[Fact]
 	public void CreateCopy_CreatesNewInstanceWithSameProperties()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var startedTime = DateTimeOffset.UtcNow.AddMinutes(1);
 		var completedTime = DateTimeOffset.UtcNow.AddMinutes(2);
 		var lastUpdatedTime = DateTimeOffset.UtcNow.AddMinutes(3);
 
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(lastUpdatedTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(lastUpdatedTime);
 
 		var id = Guid.NewGuid();
 		var job = new Job(createdTime)
@@ -283,13 +282,13 @@ public class JobTests
 	[Fact]
 	public void CreateCopy_UpdatesSpecifiedPropertiesOnly()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var currentTime = DateTimeOffset.UtcNow.AddMinutes(5);
 		var startedTime = DateTimeOffset.UtcNow.AddMinutes(1);
 		var completedTime = DateTimeOffset.UtcNow.AddMinutes(2);
 
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(currentTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(currentTime);
 
 		var id = Guid.NewGuid();
 		var job = new Job(createdTime)
@@ -333,11 +332,11 @@ public class JobTests
 	[Fact]
 	public void CreateCopy_UsesDateTimeProviderForLastUpdatedTime()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var newTime = DateTimeOffset.UtcNow.AddMinutes(10);
 
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(newTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(newTime);
 
 		var job = new Job(createdTime)
 		{
@@ -353,11 +352,11 @@ public class JobTests
 	[Fact]
 	public void CreateCopy_UpdatesStartedAtWhenInProgress()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
+		var mockDateTimeProvider = new Mock<TimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var newTime = DateTimeOffset.UtcNow.AddMinutes(10);
 
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(newTime);
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(newTime);
 
 		var job = new Job(createdTime)
 		{

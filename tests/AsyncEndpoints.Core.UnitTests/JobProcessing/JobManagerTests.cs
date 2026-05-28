@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
@@ -16,7 +15,7 @@ public class JobManagerTests
 	public void Constructor_Succeeds_WithValidDependencies(
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<TimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
 		var options = new AsyncEndpointsOptions();
@@ -30,7 +29,7 @@ public class JobManagerTests
 	public async Task SubmitJob_CreatesNewJob_WhenJobDoesNotExist(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<TimeProvider> mockDateTimeProvider,
 		string jobName,
 		string payload,
 		Job newJob)
@@ -62,7 +61,7 @@ public class JobManagerTests
 	public async Task SubmitJob_ReturnsExistingJob_WhenJobAlreadyExists(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<TimeProvider> mockDateTimeProvider,
 		string jobName,
 		string payload,
 		Job existingJob)
@@ -91,7 +90,7 @@ public class JobManagerTests
 	public async Task ClaimNextAvailableJob_ReturnsJob_WhenJobAvailable(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<TimeProvider> mockDateTimeProvider,
 		Guid workerId,
 		Job job)
 	{
@@ -113,7 +112,7 @@ public class JobManagerTests
 	public async Task ProcessJobSuccess_UpdatesJobWithResult_WhenJobExists(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<TimeProvider> mockDateTimeProvider,
 		Guid jobId,
 		string resultData,
 		Job job)
@@ -140,7 +139,7 @@ public class JobManagerTests
 	public async Task ProcessJobSuccess_ReturnsFailure_WhenJobDoesNotExist(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<TimeProvider> mockDateTimeProvider,
 		Guid jobId,
 		string resultData)
 	{
@@ -161,7 +160,7 @@ public class JobManagerTests
 	public async Task ProcessJobFailure_SetsError_WhenMaxRetriesReached(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<TimeProvider> mockDateTimeProvider,
 		Guid jobId,
 		string error,
 		Job job)
@@ -189,7 +188,7 @@ public class JobManagerTests
 	public async Task ProcessJobFailure_SchedulesRetry_WhenRetriesAvailable(
 		[Frozen] Mock<IJobStore> mockJobStore,
 		[Frozen] Mock<ILogger<JobManager>> mockLogger,
-		[Frozen] Mock<IDateTimeProvider> mockDateTimeProvider,
+		[Frozen] Mock<TimeProvider> mockDateTimeProvider,
 		Guid jobId,
 		string error,
 		Job job)

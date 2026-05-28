@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
 using System.Collections.Concurrent;
@@ -7,17 +6,17 @@ namespace AsyncEndpoints.Provider.InMemory.Storage;
 
 public class InMemoryJobStore : IJobStore
 {
-	private readonly IDateTimeProvider _dateTimeProvider;
+	private readonly TimeProvider _dateTimeProvider;
 	private readonly ConcurrentDictionary<Guid, JobRecord> _jobs = new();
 
-	public InMemoryJobStore(IDateTimeProvider dateTimeProvider)
+	public InMemoryJobStore(TimeProvider dateTimeProvider)
 	{
 		_dateTimeProvider = dateTimeProvider;
 	}
 
 	public Task<Guid> EnqueueAsync(JobDescriptor descriptor, CancellationToken ct = default)
 	{
-		var now = _dateTimeProvider.UtcNow;
+		var now = _dateTimeProvider.GetUtcNow().UtcDateTime;
 		var jobId = Guid.NewGuid();
 		var partition = descriptor.PartitionKey is not null
 			? Math.Abs(descriptor.PartitionKey.GetHashCode(StringComparison.Ordinal)) % 100
@@ -59,8 +58,8 @@ public class InMemoryJobStore : IJobStore
 			var updated = record with
 			{
 				Status = JobStatus.Processing,
-				StartedAt = _dateTimeProvider.UtcNow,
-				LastHeartbeat = _dateTimeProvider.UtcNow
+				StartedAt = _dateTimeProvider.GetUtcNow().UtcDateTime,
+				LastHeartbeat = _dateTimeProvider.GetUtcNow().UtcDateTime
 			};
 
 			if (_jobs.TryUpdate(record.JobId, updated, record))
@@ -87,7 +86,7 @@ public class InMemoryJobStore : IJobStore
 				StartedAt = status is JobStatus.Queued ? null : record.StartedAt,
 				WorkerId = status is JobStatus.Queued ? null : record.WorkerId,
 				CompletedAt = status is JobStatus.Completed or JobStatus.Failed or JobStatus.DeadLettered
-					? _dateTimeProvider.UtcNow
+					? _dateTimeProvider.GetUtcNow().UtcDateTime
 					: record.CompletedAt
 			};
 
@@ -109,7 +108,7 @@ public class InMemoryJobStore : IJobStore
 			if (!_jobs.TryGetValue(jobId, out var record))
 				throw new KeyNotFoundException($"Job {jobId} not found");
 
-			var updated = record with { LastHeartbeat = _dateTimeProvider.UtcNow };
+			var updated = record with { LastHeartbeat = _dateTimeProvider.GetUtcNow().UtcDateTime };
 			if (_jobs.TryUpdate(jobId, updated, record))
 				return Task.CompletedTask;
 		}
@@ -117,7 +116,7 @@ public class InMemoryJobStore : IJobStore
 
 	public Task<int> ReclaimStaleJobsAsync(TimeSpan staleTimeout, CancellationToken ct = default)
 	{
-		var cutoff = _dateTimeProvider.UtcNow - staleTimeout;
+		var cutoff = _dateTimeProvider.GetUtcNow().UtcDateTime - staleTimeout;
 		var reclaimed = 0;
 
 		foreach (var kvp in _jobs)

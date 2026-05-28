@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Legacy.Observability;
@@ -8,11 +7,11 @@ namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 /// <inheritdoc />
 [Obsolete("Use the new pipeline with IJobStore/IJobSubmitter directly.")]
-public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, AsyncEndpointsOptions options, IDateTimeProvider dateTimeProvider, IAsyncEndpointsObservability metrics) : IJobManager
+public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, AsyncEndpointsOptions options, TimeProvider dateTimeProvider, IAsyncEndpointsObservability metrics) : IJobManager
 {
 	private readonly ILogger<JobManager> _logger = logger;
 	private readonly IJobStore _jobStore = jobStore;
-	private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
+	private readonly TimeProvider _dateTimeProvider = dateTimeProvider;
 	private readonly AsyncEndpointsOptions _options = options;
 	private readonly IAsyncEndpointsObservability _metrics = metrics;
 
@@ -141,7 +140,7 @@ public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, AsyncEnd
 			job.IncrementRetryCount();
 			_metrics.RecordJobRetries(job.Name, _jobStore.GetType().Name);
 			var retryDelay = CalculateRetryDelay(job.RetryCount);
-			job.SetRetryTime(_dateTimeProvider.UtcNow.Add(retryDelay));
+			job.SetRetryTime(_dateTimeProvider.GetUtcNow().UtcDateTime.Add(retryDelay));
 			job.UpdateStatus(JobStatus.Scheduled, _dateTimeProvider);
 			job.WorkerId = null; // Release from current worker
 			job.Error = error;

@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Handlers;
@@ -18,8 +17,8 @@ public class ConfigurableResponseTests
 		var mockLogger = new Mock<ILogger<AsyncEndpointRequestDelegate>>();
 		var mockJobManager = new Mock<IJobManager>();
 		var mockSerializer = new Mock<ISerializer>();
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
 
 		var responseConfig = new AsyncEndpointsResponseConfigurations
 		{

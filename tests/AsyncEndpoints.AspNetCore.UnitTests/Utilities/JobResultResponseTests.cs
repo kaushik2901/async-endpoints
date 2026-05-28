@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.AspNetCore.Endpoints;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
@@ -14,8 +13,8 @@ public class JobResultResponseTests
 	[Fact]
 	public void Constructor_Succeeds_WithValidParameters()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
 		var job = Job.Create(
 			Guid.NewGuid(),
 			"TestJob",
@@ -35,8 +34,8 @@ public class JobResultResponseTests
 	[Fact]
 	public void Constructor_UsesDefaultStatusCode_WhenNotProvided()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
 		var job = Job.Create(
 			Guid.NewGuid(),
 			"TestJob",
@@ -56,8 +55,8 @@ public class JobResultResponseTests
 	public async Task ExecuteAsync_SetsCorrectResponse()
 	{
 		var jobId = Guid.NewGuid();
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
 		var job = Job.Create(
 			jobId,
 			"TestJob",
@@ -113,8 +112,8 @@ public class JobResultResponseTests
 		var jobId = Guid.NewGuid();
 		var complexResult = new { Message = "Success", Data = new { Id = 123, Name = "Test" } };
 		var jobResultJson = JsonSerializer.Serialize(complexResult);
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
 		var job = Job.Create(
 			jobId,
 			"ComplexJob",

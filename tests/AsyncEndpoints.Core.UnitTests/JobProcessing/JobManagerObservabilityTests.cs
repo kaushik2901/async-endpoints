@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
@@ -18,7 +17,7 @@ public class JobManagerObservabilityTests
 		string payload,
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<TimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
@@ -56,7 +55,7 @@ public class JobManagerObservabilityTests
 		Guid jobId,
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<TimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		AsyncEndpointError error)
 	{
@@ -98,7 +97,7 @@ public class JobManagerObservabilityTests
 		Guid jobId,
 		Mock<IJobStore> mockJobStore,
 		Mock<ILogger<JobManager>> mockLogger,
-		Mock<IDateTimeProvider> mockDateTimeProvider,
+		Mock<TimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		AsyncEndpointError error)
 	{

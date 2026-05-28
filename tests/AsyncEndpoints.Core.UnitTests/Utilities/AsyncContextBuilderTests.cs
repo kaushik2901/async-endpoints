@@ -24,8 +24,8 @@ public class AsyncContextBuilderTests
 	public void Build_WithEmptyCollections_HandlesCorrectly(
 		TestRequest request)
 	{
-		var mockDateTimeProvider = new Mock<Abstractions.Infrastructure.IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
 		var job = Job.Create(
 			Guid.NewGuid(),
 			"",

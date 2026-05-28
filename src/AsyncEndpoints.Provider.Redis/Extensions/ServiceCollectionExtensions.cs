@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.Provider.Redis.Configuration;
 using AsyncEndpoints.Provider.Redis.Services;
@@ -22,7 +21,7 @@ public static class RedisServiceCollectionExtensions
 		services.AddSingleton<IJobStore>(provider =>
 		{
 			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
+			var dateTimeProvider = provider.GetRequiredService<TimeProvider>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
 			var luaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
 			var database = InitializeDatabase(connectionString, logger);
@@ -42,7 +41,7 @@ public static class RedisServiceCollectionExtensions
 		services.AddSingleton<IJobStore>(provider =>
 		{
 			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
+			var dateTimeProvider = provider.GetRequiredService<TimeProvider>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
 			var luaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
 			var database = connectionMultiplexer.GetDatabase();
@@ -66,7 +65,7 @@ public static class RedisServiceCollectionExtensions
 		services.AddSingleton<IJobStore>(provider =>
 		{
 			var logger = provider.GetRequiredService<ILogger<RedisJobStore>>();
-			var dateTimeProvider = provider.GetRequiredService<IDateTimeProvider>();
+			var dateTimeProvider = provider.GetRequiredService<TimeProvider>();
 			var jobHashConverter = provider.GetRequiredService<IJobHashConverter>();
 			var luaScriptService = provider.GetRequiredService<IRedisLuaScriptService>();
 			var database = InitializeDatabase(config.ConnectionString, logger);

@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using AsyncEndpoints.Core.Legacy.Utilities;
@@ -39,8 +38,8 @@ public class HandlerRegistrationTrackerTests
 	{
 		var jobName = nameof(GetInvoker_ReturnsInvokerForRegisteredJob);
 		var serviceProvider = new ServiceCollection().BuildServiceProvider();
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(DateTimeOffset.UtcNow);
 		var testJob = Job.Create(
 			Guid.NewGuid(),
 			"TestJob",

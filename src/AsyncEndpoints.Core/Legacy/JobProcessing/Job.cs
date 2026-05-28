@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 
 namespace AsyncEndpoints.Core.Legacy.JobProcessing;
@@ -125,9 +124,9 @@ public sealed class Job(DateTimeOffset currentTime)
 		Dictionary<string, object?> routeParams,
 		List<KeyValuePair<string, List<string?>>> queryParams,
 		int maxRetries,
-		IDateTimeProvider dateTimeProvider)
+		TimeProvider dateTimeProvider)
 	{
-		var now = dateTimeProvider.DateTimeOffsetNow;
+		var now = dateTimeProvider.GetUtcNow();
 		return new Job
 		{
 			Id = id,
@@ -147,7 +146,7 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// </summary>
 	/// <param name="status">The new status to set for the job.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	public void UpdateStatus(JobStatus status, IDateTimeProvider dateTimeProvider)
+	public void UpdateStatus(JobStatus status, TimeProvider dateTimeProvider)
 	{
 		// Validate legal state transitions
 		if (!IsValidStateTransition(Status, status))
@@ -156,7 +155,7 @@ public sealed class Job(DateTimeOffset currentTime)
 		}
 
 		Status = status;
-		var now = dateTimeProvider.DateTimeOffsetNow;
+		var now = dateTimeProvider.GetUtcNow();
 		LastUpdatedAt = now;
 
 		switch (status)
@@ -208,7 +207,7 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// </summary>
 	/// <param name="result">The result of the job execution.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	public void SetResult(string result, IDateTimeProvider dateTimeProvider)
+	public void SetResult(string result, TimeProvider dateTimeProvider)
 	{
 		Result = result;
 		UpdateStatus(JobStatus.Completed, dateTimeProvider);
@@ -219,7 +218,7 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// </summary>
 	/// <param name="error">The error that occurred during job execution.</param>
 	/// <param name="dateTimeProvider">Provider for current date and time.</param>
-	public void SetError(AsyncEndpointError error, IDateTimeProvider dateTimeProvider)
+	public void SetError(AsyncEndpointError error, TimeProvider dateTimeProvider)
 	{
 		Error = error;
 		UpdateStatus(JobStatus.Failed, dateTimeProvider);
@@ -266,7 +265,7 @@ public sealed class Job(DateTimeOffset currentTime)
 		AsyncEndpointError? error = null,
 		int? retryCount = null,
 		DateTime? retryDelayUntil = null,
-		IDateTimeProvider? dateTimeProvider = null)
+		TimeProvider? dateTimeProvider = null)
 	{
 		return new Job
 		{
@@ -287,7 +286,7 @@ public sealed class Job(DateTimeOffset currentTime)
 			CreatedAt = this.CreatedAt,
 			StartedAt = startedAt ?? this.StartedAt,
 			CompletedAt = completedAt ?? this.CompletedAt,
-			LastUpdatedAt = lastUpdatedAt ?? (dateTimeProvider?.DateTimeOffsetNow ?? this.LastUpdatedAt)
+			LastUpdatedAt = lastUpdatedAt ?? (dateTimeProvider?.GetUtcNow() ?? this.LastUpdatedAt)
 		};
 	}
 }

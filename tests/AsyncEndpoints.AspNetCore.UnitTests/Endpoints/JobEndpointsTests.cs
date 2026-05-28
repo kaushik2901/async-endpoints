@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Submission;
 using AsyncEndpoints.AspNetCore.Endpoints;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
@@ -16,7 +15,7 @@ public class JobEndpointsTests
 	{
 		var services = new ServiceCollection();
 		services.AddLogging();
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddSingleton(TimeProvider.System);
 		services.AddSingleton<ISerializer, Serializer>();
 		services.AddAsyncEndpointsInMemory();
 		services.AddSingleton<IJobSubmitter, JobSubmitter>();

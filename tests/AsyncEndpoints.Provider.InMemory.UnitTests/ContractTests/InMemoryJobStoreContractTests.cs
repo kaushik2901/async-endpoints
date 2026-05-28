@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.UnitTests.ContractTests;
 using AsyncEndpoints.Provider.InMemory.Storage;
 using Moq;
@@ -9,9 +8,8 @@ public class InMemoryJobStoreContractTests : JobStoreContractTestsBase
 {
 	protected override Abstractions.Storage.IJobStore CreateStore()
 	{
-		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
-		mockDateTimeProvider.Setup(x => x.UtcNow).Returns(() => DateTime.UtcNow);
-		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(() => DateTimeOffset.UtcNow);
+		var mockDateTimeProvider = new Mock<TimeProvider>();
+		mockDateTimeProvider.Setup(x => x.GetUtcNow()).Returns(() => DateTimeOffset.UtcNow);
 		return new InMemoryJobStore(mockDateTimeProvider.Object);
 	}
 }

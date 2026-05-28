@@ -1,4 +1,3 @@
-using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.AspNetCore.Endpoints;
@@ -15,7 +14,7 @@ public class JobResultEndpointTests
 	{
 		var services = new ServiceCollection();
 		services.AddLogging();
-		services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+		services.AddSingleton(TimeProvider.System);
 		services.AddSingleton<ISerializer, Serializer>();
 		services.AddAsyncEndpointsInMemory();
 		var provider = services.BuildServiceProvider();
