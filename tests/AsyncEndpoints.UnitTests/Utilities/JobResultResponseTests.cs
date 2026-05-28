@@ -1,8 +1,7 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.AspNetCore.Endpoints;
-using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -29,7 +28,7 @@ public class JobResultResponseTests
 			[],
 			[],
 			[],
-			AsyncEndpointsConstants.MaximumRetries,
+			3,
 			mockDateTimeProvider.Object);
 		var statusCode = 200;
 
@@ -57,7 +56,7 @@ public class JobResultResponseTests
 			[],
 			[],
 			[],
-			AsyncEndpointsConstants.MaximumRetries,
+			3,
 			mockDateTimeProvider.Object);
 
 		// Act
@@ -86,7 +85,7 @@ public class JobResultResponseTests
 			[],
 			[],
 			[],
-			AsyncEndpointsConstants.MaximumRetries,
+			3,
 			mockDateTimeProvider.Object);
 
 		// Manually set the properties that were set in the original test

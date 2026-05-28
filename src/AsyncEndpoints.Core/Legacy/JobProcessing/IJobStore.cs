@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Utilities;
 
-namespace AsyncEndpoints.Core.JobProcessing;
+namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 /// <summary>
 /// Defines a contract for storing and managing asynchronous jobs.

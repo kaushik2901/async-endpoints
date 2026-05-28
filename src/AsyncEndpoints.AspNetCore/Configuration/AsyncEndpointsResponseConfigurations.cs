@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.AspNetCore.Endpoints;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Configuration;

@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Core.JobProcessing;
+namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 /// <summary>
 /// Represents the type of error that occurred during job processing.

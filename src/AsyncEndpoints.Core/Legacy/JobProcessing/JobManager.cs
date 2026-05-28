@@ -1,10 +1,10 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Core.Infrastructure.Observability;
+using AsyncEndpoints.Core.Legacy.Observability;
 using Microsoft.Extensions.Logging;
 
-namespace AsyncEndpoints.Core.JobProcessing;
+namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 /// <inheritdoc />
 public class JobManager(IJobStore jobStore, ILogger<JobManager> logger, AsyncEndpointsOptions options, IDateTimeProvider dateTimeProvider, IAsyncEndpointsObservability metrics) : IJobManager

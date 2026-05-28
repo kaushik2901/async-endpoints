@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Core.Handlers;
+namespace AsyncEndpoints.Core.Legacy.Handlers;
 
 /// <summary>
 /// Represents the base context for an asynchronous request, containing associated HTTP context information.

@@ -1,7 +1,6 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
-using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Moq;
 
 namespace AsyncEndpoints.UnitTests.JobProcessing;
@@ -175,7 +174,7 @@ public class JobTests
 		Assert.Null(job.Result);
 		Assert.Null(job.Error);
 		Assert.Equal(0, job.RetryCount);
-		Assert.Equal(AsyncEndpointsConstants.MaximumRetries, job.MaxRetries);
+		Assert.Equal(3, job.MaxRetries);
 		Assert.Equal(currentTime, job.CreatedAt);
 		Assert.Equal(currentTime, job.LastUpdatedAt);
 		Assert.Null(job.RetryDelayUntil);

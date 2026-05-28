@@ -1,7 +1,6 @@
 using AsyncEndpoints.AspNetCore.Models;
-using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,12 +24,12 @@ public class JobResultResponse(Job job, int statusCode = 200) : IResult
 	public async Task ExecuteAsync(HttpContext httpContext)
 	{
 		var jobResponse = JobResponseMapper.ToResponse(_job);
-		jobResponse.Result = AsyncEndpointsConstants.JobResultPlaceholder;
+		jobResponse.Result = "{{JOB_RESULT_PLACEHOLDER}}";
 
 		var serializer = httpContext.RequestServices.GetRequiredService<ISerializer>();
 		var serializedResponse = serializer.Serialize(jobResponse);
 		var jobResult = string.IsNullOrEmpty(_job.Result) ? "null" : _job.Result;
-		var responseString = serializedResponse.Replace($"\"{AsyncEndpointsConstants.JobResultPlaceholder}\"", jobResult);
+		var responseString = serializedResponse.Replace($"\"{"{{JOB_RESULT_PLACEHOLDER}}"}\"", jobResult);
 
 		httpContext.Response.StatusCode = _statusCode;
 		httpContext.Response.ContentType = "application/json";

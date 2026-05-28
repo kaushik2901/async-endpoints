@@ -1,8 +1,7 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
-using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Core.JobProcessing;
-using AsyncEndpoints.Core.Utilities;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
+using AsyncEndpoints.Core.Legacy.Utilities;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -55,7 +54,7 @@ public class HandlerRegistrationTrackerTests
 			[],
 			[],
 			[],
-			AsyncEndpointsConstants.MaximumRetries,
+			3,
 			mockDateTimeProvider.Object);
 		var testRequest = new TestRequest { Value = "request" };
 

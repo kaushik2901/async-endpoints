@@ -1,7 +1,7 @@
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Extensions;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 

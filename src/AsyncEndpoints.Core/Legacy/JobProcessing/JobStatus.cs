@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Core.JobProcessing;
+namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 /// <summary>
 /// Represents the status of an asynchronous job in the system.

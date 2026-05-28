@@ -1,9 +1,8 @@
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Handlers;
 using AsyncEndpoints.AspNetCore.Serialization;
-using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Core.Handlers;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.Handlers;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +33,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapPost(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous POST endpoint that processes requests without body in the background.
@@ -51,7 +50,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapPost(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous PUT endpoint that processes requests in the background.
@@ -71,7 +70,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapPut(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous PUT endpoint that processes requests without body in the background.
@@ -88,7 +87,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapPut(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous PATCH endpoint that processes requests in the background.
@@ -108,7 +107,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous PATCH endpoint that processes requests without body in the background.
@@ -125,7 +124,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapPatch(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous DELETE endpoint that processes requests in the background.
@@ -145,7 +144,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IJsonBodyParserService jsonBodyParserService, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithBody(jobName, handler, httpContext, jsonBodyParserService, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous DELETE endpoint that processes requests without body in the background.
@@ -162,7 +161,7 @@ public static class RouteBuilderExtensions
 		Func<HttpContext, NoBodyRequest, CancellationToken, Task<IResult?>?>? handler = null) => endpoints
 			.MapDelete(pattern, (HttpContext httpContext, [FromServices] IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleRequestWithoutBody(jobName, handler, httpContext, asyncEndpointRequestDelegate, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	/// <summary>
 	/// Maps an asynchronous GET endpoint that fetches job responses by job ID.
@@ -175,7 +174,7 @@ public static class RouteBuilderExtensions
 		string pattern = "/jobs/{jobId:guid}") => endpoints
 			.MapGet(pattern, (HttpContext httpContext, [FromRoute] Guid jobId, [FromServices] IJobManager jobManager, [FromServices] AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken) =>
 				HandleGetJobDetailsRequest(httpContext, jobId, jobManager, responseConfig, cancellationToken))
-			.WithTags(AsyncEndpointsConstants.AsyncEndpointTag);
+			.WithTags("AsyncEndpoint");
 
 	private static async Task<IResult> HandleRequestWithBody<TRequest>(string jobName, Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, IJsonBodyParserService jsonBodyParserService, IAsyncEndpointRequestDelegate asyncEndpointRequestDelegate, AsyncEndpointsResponseConfigurations responseConfig, CancellationToken cancellationToken)
 	{

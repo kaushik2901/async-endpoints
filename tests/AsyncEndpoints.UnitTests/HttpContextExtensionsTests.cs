@@ -1,5 +1,4 @@
 using AsyncEndpoints.AspNetCore.Extensions;
-using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Microsoft.AspNetCore.Http;
 
@@ -13,7 +12,7 @@ public class HttpContextExtensionsTests
 		// Arrange
 		var expectedJobId = Guid.NewGuid();
 		var httpContext = new DefaultHttpContext();
-		httpContext.Request.Headers[AsyncEndpointsConstants.JobIdHeaderName] = expectedJobId.ToString();
+		httpContext.Request.Headers["X-Async-Request-Id"] = expectedJobId.ToString();
 
 		// Act
 		var result = httpContext.GetOrCreateJobId();

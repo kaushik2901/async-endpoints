@@ -1,4 +1,4 @@
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 
 namespace AsyncEndpoints.AspNetCore.Models;
 

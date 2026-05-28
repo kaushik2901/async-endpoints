@@ -1,6 +1,5 @@
-using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Core.JobProcessing;
-using AsyncEndpoints.Core.Utilities;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
+using AsyncEndpoints.Core.Legacy.Utilities;
 using AsyncEndpoints.UnitTests.TestSupport;
 using Moq;
 
@@ -37,7 +36,7 @@ public class AsyncContextBuilderTests
 			[],
 			[],
 			[],
-			AsyncEndpointsConstants.MaximumRetries,
+			3,
 			mockDateTimeProvider.Object);
 
 		// Act

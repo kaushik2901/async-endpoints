@@ -23,7 +23,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <None Include="..\..\async-endpoints.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

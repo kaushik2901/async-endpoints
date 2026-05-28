@@ -1,7 +1,7 @@
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using System.Diagnostics;
 
-namespace AsyncEndpoints.Core.Infrastructure.Observability;
+namespace AsyncEndpoints.Core.Legacy.Observability;
 
 /// <summary>
 /// Provides metric and tracing capabilities for AsyncEndpoints library

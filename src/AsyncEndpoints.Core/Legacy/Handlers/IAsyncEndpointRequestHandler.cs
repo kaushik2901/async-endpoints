@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Utilities;
 
-namespace AsyncEndpoints.Core.Handlers;
+namespace AsyncEndpoints.Core.Legacy.Handlers;
 
 /// <summary>
 /// Defines a contract for handling asynchronous endpoint requests of type TRequest and returning responses of type TResponse.

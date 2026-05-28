@@ -1,4 +1,3 @@
-using AsyncEndpoints.Core.Configuration;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Extensions;
@@ -7,7 +6,7 @@ public static class HttpContextExtensions
 {
 	public static Guid GetOrCreateJobId(this HttpContext httpContext)
 	{
-		if (!httpContext.Request.Headers.TryGetValue(AsyncEndpointsConstants.JobIdHeaderName, out var jobIdHeaderValueString))
+		if (!httpContext.Request.Headers.TryGetValue("X-Async-Request-Id", out var jobIdHeaderValueString))
 		{
 			return Guid.NewGuid();
 		}

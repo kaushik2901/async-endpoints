@@ -1,8 +1,7 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
-using AsyncEndpoints.Core.Configuration;
 
-namespace AsyncEndpoints.Core.JobProcessing;
+namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 /// <summary>
 /// Represents an asynchronous job in the AsyncEndpoints system.
@@ -73,7 +72,7 @@ public sealed class Job(DateTimeOffset currentTime)
 	/// <summary>
 	/// Gets or sets the maximum number of retries allowed for the job.
 	/// </summary>
-	public int MaxRetries { get; set; } = AsyncEndpointsConstants.MaximumRetries;
+	public int MaxRetries { get; set; } = 3;
 
 	/// <summary>
 	/// Gets or sets the time until which the job is scheduled for retry.

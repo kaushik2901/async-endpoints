@@ -1,9 +1,9 @@
 using AsyncEndpoints.Abstractions.Utilities;
-using AsyncEndpoints.Core.Handlers;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.Handlers;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using System.Collections.Concurrent;
 
-namespace AsyncEndpoints.Core.Utilities;
+namespace AsyncEndpoints.Core.Legacy.Utilities;
 
 /// <summary>
 /// Tracks registered handlers for async endpoints and provides methods to retrieve them.

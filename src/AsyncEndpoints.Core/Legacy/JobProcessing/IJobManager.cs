@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Utilities;
 
-namespace AsyncEndpoints.Core.JobProcessing;
+namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 public interface IJobManager
 {

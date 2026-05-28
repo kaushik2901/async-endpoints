@@ -1,7 +1,7 @@
-using AsyncEndpoints.Core.Handlers;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.Handlers;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 
-namespace AsyncEndpoints.Core.Utilities;
+namespace AsyncEndpoints.Core.Legacy.Utilities;
 
 /// <summary>
 /// Provides methods for building AsyncContext instances from job information.

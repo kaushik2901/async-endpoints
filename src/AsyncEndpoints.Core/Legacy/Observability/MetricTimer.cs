@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace AsyncEndpoints.Core.Infrastructure.Observability;
+namespace AsyncEndpoints.Core.Legacy.Observability;
 
 public class MetricTimer : IDisposable
 {

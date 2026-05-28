@@ -2,9 +2,8 @@ using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Handlers;
-using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -41,7 +40,7 @@ public class ConfigurableResponseTests
 			[],
 			[],
 			[],
-			AsyncEndpointsConstants.MaximumRetries,
+			3,
 			mockDateTimeProvider.Object);
 		var request = new object();
 

@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Core.JobProcessing;
+namespace AsyncEndpoints.Core.Legacy.JobProcessing;
 
 public interface IJobRecoveryService
 {

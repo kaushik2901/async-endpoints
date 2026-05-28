@@ -1,7 +1,7 @@
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Utilities;
-using AsyncEndpoints.Core.Handlers;
-using AsyncEndpoints.Core.JobProcessing;
+using AsyncEndpoints.Core.Legacy.Handlers;
+using AsyncEndpoints.Core.Legacy.JobProcessing;
 using System.Text.Json.Serialization;
 
 namespace AsyncEndpoints;
@@ -13,7 +13,7 @@ namespace AsyncEndpoints;
 [JsonSerializable(typeof(InnerExceptionInfo))]
 [JsonSerializable(typeof(JobRecord), TypeInfoPropertyName = "JobRecord")]
 [JsonSerializable(typeof(JobDescriptor), TypeInfoPropertyName = "JobDescriptor")]
-[JsonSerializable(typeof(Core.JobProcessing.JobStatus), TypeInfoPropertyName = "CoreJobStatus")]
+[JsonSerializable(typeof(Core.Legacy.JobProcessing.JobStatus), TypeInfoPropertyName = "CoreJobStatus")]
 [JsonSerializable(typeof(Abstractions.Jobs.JobStatus), TypeInfoPropertyName = "AbstractionsJobStatus")]
 public partial class AsyncEndpointsJsonSerializationContext : JsonSerializerContext
 {

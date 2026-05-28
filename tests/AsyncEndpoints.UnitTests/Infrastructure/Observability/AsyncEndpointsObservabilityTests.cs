@@ -1,5 +1,5 @@
 using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Core.Infrastructure.Observability;
+using AsyncEndpoints.Core.Legacy.Observability;
 using AsyncEndpoints.UnitTests.TestSupport;
 
 namespace AsyncEndpoints.UnitTests.Infrastructure.Observability;

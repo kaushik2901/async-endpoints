@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Core.Utilities;
+namespace AsyncEndpoints.Core.Legacy.Utilities;
 
 internal class NullDisposable : IDisposable
 {
