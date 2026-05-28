@@ -1,6 +1,5 @@
 using AsyncEndpoints.Abstractions.Submission;
 using AsyncEndpoints.AspNetCore.Configuration;
-using AsyncEndpoints.AspNetCore.Endpoints;
 using AsyncEndpoints.AspNetCore.Models;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Builder;
@@ -78,12 +77,6 @@ public static class AsyncEndpointRouteBuilderExtensions
 		endpoints.MapDelete(pattern, CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
-	public static IEndpointConventionBuilder MapAsyncGetJobDetails(
-		this IEndpointRouteBuilder endpoints,
-		string pattern = "/jobs/{jobId:guid}") =>
-		endpoints.MapGet(pattern, CreateJobDetailsRequestDelegate())
-		.WithTags("AsyncEndpoint");
-
 	private static RequestDelegate CreateRequestDelegate<TRequest>(
 		string jobName,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler)
@@ -120,11 +113,15 @@ public static class AsyncEndpointRouteBuilderExtensions
 
 			if (handler is not null)
 			{
-				var handlerResult = await handler(httpContext, request!, ct);
-				if (handlerResult is not null)
+				var handlerResultTask = handler(httpContext, request!, ct);
+				if (handlerResultTask is not null)
 				{
-					await handlerResult.ExecuteAsync(httpContext);
-					return;
+					var handlerResult = await handlerResultTask;
+					if (handlerResult is not null)
+					{
+						await handlerResult.ExecuteAsync(httpContext);
+						return;
+					}
 				}
 			}
 
@@ -144,24 +141,20 @@ public static class AsyncEndpointRouteBuilderExtensions
 
 			if (handler is not null)
 			{
-				var handlerResult = await handler(httpContext, ct);
-				if (handlerResult is not null)
+				var handlerResultTask = handler(httpContext, ct);
+				if (handlerResultTask is not null)
 				{
-					await handlerResult.ExecuteAsync(httpContext);
-					return;
+					var handlerResult = await handlerResultTask;
+					if (handlerResult is not null)
+					{
+						await handlerResult.ExecuteAsync(httpContext);
+						return;
+					}
 				}
 			}
 
 			var bodyText = await ReadBodyAsync(httpContext, ct);
 			await SubmitJobAndExecute(jobName, httpContext, submitter, responseConfig, bodyText, ct);
-		};
-	}
-
-	private static RequestDelegate CreateJobDetailsRequestDelegate()
-	{
-		return async httpContext =>
-		{
-			await Results.Ok().ExecuteAsync(httpContext);
 		};
 	}
 

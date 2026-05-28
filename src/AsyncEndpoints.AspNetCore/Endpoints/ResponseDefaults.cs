@@ -1,5 +1,4 @@
 using AsyncEndpoints.Abstractions.Jobs;
-using AsyncEndpoints.AspNetCore.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Endpoints;

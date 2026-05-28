@@ -1,5 +1,4 @@
 using AsyncEndpoints.Abstractions.Common;
-using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Handlers;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
