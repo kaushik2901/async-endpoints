@@ -24,8 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AsyncEndpoints.Provider.InMemory\AsyncEndpoints.Provider.InMemory.csproj" />
-    <ProjectReference Include="..\..\src\AsyncEndpoints\AsyncEndpoints.csproj" />
-    <ProjectReference Include="..\AsyncEndpoints.UnitTests\AsyncEndpoints.UnitTests.csproj" />
+    <ProjectReference Include="..\AsyncEndpoints.Abstractions.UnitTests\AsyncEndpoints.Abstractions.UnitTests.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
 

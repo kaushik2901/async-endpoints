@@ -3,12 +3,12 @@ using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using AsyncEndpoints.Core.Legacy.Observability;
-using AsyncEndpoints.UnitTests.TestSupport;
+using AsyncEndpoints.Core.UnitTests.TestSupport;
 using AutoFixture.Xunit2;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.JobProcessing;
+namespace AsyncEndpoints.Core.UnitTests.JobProcessing;
 
 public class JobManagerTests
 {
@@ -19,13 +19,10 @@ public class JobManagerTests
 		Mock<IDateTimeProvider> mockDateTimeProvider,
 		Mock<IAsyncEndpointsObservability> mockMetrics)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
-		// Act
 		var manager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, mockMetrics.Object);
 
-		// Assert
 		Assert.NotNull(manager);
 	}
 
@@ -38,7 +35,6 @@ public class JobManagerTests
 		string payload,
 		Job newJob)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
 		mockJobStore
@@ -55,10 +51,8 @@ public class JobManagerTests
 		var routeParams = new Dictionary<string, object?>();
 		var queryParams = new List<KeyValuePair<string, List<string?>>>();
 
-		// Act
 		var result = await jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, CancellationToken.None);
 
-		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.NotNull(result.Data);
 		mockJobStore.Verify(x => x.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -73,7 +67,6 @@ public class JobManagerTests
 		string payload,
 		Job existingJob)
 	{
-		// Arrange
 		var jobId = Guid.NewGuid();
 		var options = new AsyncEndpointsOptions();
 
@@ -87,10 +80,8 @@ public class JobManagerTests
 		var routeParams = new Dictionary<string, object?>();
 		var queryParams = new List<KeyValuePair<string, List<string?>>>();
 
-		// Act
 		var result = await jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, CancellationToken.None);
 
-		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Same(existingJob, result.Data);
 		mockJobStore.Verify(x => x.CreateJob(It.IsAny<Job>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -104,7 +95,6 @@ public class JobManagerTests
 		Guid workerId,
 		Job job)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
 		mockJobStore
@@ -113,10 +103,8 @@ public class JobManagerTests
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
-		// Act
 		var result = await jobManager.ClaimNextAvailableJob(workerId, CancellationToken.None);
 
-		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Same(job, result.Data);
 	}
@@ -130,7 +118,6 @@ public class JobManagerTests
 		string resultData,
 		Job job)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
 		mockJobStore
@@ -142,10 +129,8 @@ public class JobManagerTests
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
-		// Act
 		var result = await jobManager.ProcessJobSuccess(jobId, resultData, CancellationToken.None);
 
-		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Equal(JobStatus.Completed, job.Status);
 		Assert.Equal(resultData, job.Result);
@@ -159,7 +144,6 @@ public class JobManagerTests
 		Guid jobId,
 		string resultData)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
 		mockJobStore
@@ -168,10 +152,8 @@ public class JobManagerTests
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
-		// Act
 		var result = await jobManager.ProcessJobSuccess(jobId, resultData, CancellationToken.None);
 
-		// Assert
 		Assert.False(result.IsSuccess);
 	}
 
@@ -184,10 +166,9 @@ public class JobManagerTests
 		string error,
 		Job job)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
-		job.MaxRetries = 0; // Force max retries to be reached
+		job.MaxRetries = 0;
 		mockJobStore
 			.Setup(x => x.GetJobById(jobId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(MethodResult<Job>.Success(job));
@@ -197,10 +178,8 @@ public class JobManagerTests
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
-		// Act
 		var result = await jobManager.ProcessJobFailure(jobId, AsyncEndpointError.FromMessage(error), CancellationToken.None);
 
-		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Equal(JobStatus.Failed, job.Status);
 		Assert.Equal(error, job.Error?.Message);
@@ -215,7 +194,6 @@ public class JobManagerTests
 		string error,
 		Job job)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
 		job.MaxRetries = 3;
@@ -229,10 +207,8 @@ public class JobManagerTests
 
 		var jobManager = new JobManager(mockJobStore.Object, mockLogger.Object, options, mockDateTimeProvider.Object, Mock.Of<IAsyncEndpointsObservability>());
 
-		// Act
 		var result = await jobManager.ProcessJobFailure(jobId, AsyncEndpointError.FromMessage(error), CancellationToken.None);
 
-		// Assert
 		Assert.True(result.IsSuccess);
 		Assert.Equal(JobStatus.Scheduled, job.Status);
 		Assert.Equal(1, job.RetryCount);

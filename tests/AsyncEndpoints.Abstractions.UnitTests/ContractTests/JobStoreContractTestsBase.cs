@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Jobs;
 
-namespace AsyncEndpoints.UnitTests.ContractTests;
+namespace AsyncEndpoints.Abstractions.UnitTests.ContractTests;
 
 public abstract class JobStoreContractTestsBase
 {

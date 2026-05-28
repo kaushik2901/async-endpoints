@@ -1,7 +1,7 @@
 using AsyncEndpoints.Abstractions.Utilities;
-using AsyncEndpoints.UnitTests.TestSupport;
+using AsyncEndpoints.Abstractions.UnitTests.TestSupport;
 
-namespace AsyncEndpoints.UnitTests.Utilities;
+namespace AsyncEndpoints.Abstractions.UnitTests.Utilities;
 
 public class AsyncEndpointErrorTests
 {
@@ -11,10 +11,8 @@ public class AsyncEndpointErrorTests
 		string message,
 		InvalidOperationException exception)
 	{
-		// Act
 		var error = new AsyncEndpointError(code, message, exception);
 
-		// Assert
 		Assert.Equal(code, error.Code);
 		Assert.Equal(message, error.Message);
 		Assert.NotNull(error.Exception);
@@ -27,7 +25,6 @@ public class AsyncEndpointErrorTests
 		string message,
 		InvalidOperationException exception)
 	{
-		// Act & Assert
 		Assert.Throws<ArgumentNullException>(() => new AsyncEndpointError(null!, message, exception));
 	}
 
@@ -36,7 +33,6 @@ public class AsyncEndpointErrorTests
 		string code,
 		InvalidOperationException exception)
 	{
-		// Act & Assert
 		Assert.Throws<ArgumentNullException>(() => new AsyncEndpointError(code, null!, exception));
 	}
 
@@ -45,10 +41,8 @@ public class AsyncEndpointErrorTests
 		string message,
 		InvalidOperationException exception)
 	{
-		// Act
 		var error = AsyncEndpointError.FromMessage(message, exception);
 
-		// Assert
 		Assert.Equal("UNKNOWN", error.Code);
 		Assert.Equal(message, error.Message);
 		Assert.NotNull(error.Exception);
@@ -60,10 +54,8 @@ public class AsyncEndpointErrorTests
 	public void FromMessage_WithoutException_CreatesError(
 		string message)
 	{
-		// Act
 		var error = AsyncEndpointError.FromMessage(message);
 
-		// Assert
 		Assert.Equal("UNKNOWN", error.Code);
 		Assert.Equal(message, error.Message);
 		Assert.Null(error.Exception);
@@ -75,10 +67,8 @@ public class AsyncEndpointErrorTests
 		string message,
 		InvalidOperationException exception)
 	{
-		// Act
 		var error = AsyncEndpointError.FromCode(code, message, exception);
 
-		// Assert
 		Assert.Equal(code, error.Code);
 		Assert.Equal(message, error.Message);
 		Assert.NotNull(error.Exception);
@@ -91,10 +81,8 @@ public class AsyncEndpointErrorTests
 		string code,
 		string message)
 	{
-		// Act
 		var error = AsyncEndpointError.FromCode(code, message);
 
-		// Assert
 		Assert.Equal(code, error.Code);
 		Assert.Equal(message, error.Message);
 		Assert.Null(error.Exception);
@@ -104,10 +92,8 @@ public class AsyncEndpointErrorTests
 	public void FromException_CreatesErrorFromException(
 		InvalidOperationException exception)
 	{
-		// Act
 		var error = AsyncEndpointError.FromException(exception);
 
-		// Assert
 		Assert.Equal("INVALIDOPERATIONEXCEPTION", error.Code);
 		Assert.Equal(exception.Message, error.Message);
 		Assert.NotNull(error.Exception);
@@ -118,7 +104,6 @@ public class AsyncEndpointErrorTests
 	[Fact]
 	public void FromException_WithNullException_ThrowsArgumentNullException()
 	{
-		// Act & Assert
 		Assert.Throws<ArgumentNullException>(() => AsyncEndpointError.FromException(null!));
 	}
 }

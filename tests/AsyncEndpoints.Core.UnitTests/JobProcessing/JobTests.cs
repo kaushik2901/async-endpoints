@@ -3,14 +3,13 @@ using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.JobProcessing;
+namespace AsyncEndpoints.Core.UnitTests.JobProcessing;
 
 public class JobTests
 {
 	[Fact]
 	public void Create_WithAllParameters_SetsPropertiesCorrectly()
 	{
-		// Arrange
 		var id = Guid.NewGuid();
 		var name = "TestJob";
 		var payload = "{\"data\":\"value\"}";
@@ -22,10 +21,8 @@ public class JobTests
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 
-		// Act
 		var job = Job.Create(id, name, payload, headers, routeParams, queryParams, maxRetries, mockDateTimeProvider.Object);
 
-		// Assert
 		Assert.Equal(id, job.Id);
 		Assert.Equal(name, job.Name);
 		Assert.Equal(payload, job.Payload);
@@ -42,16 +39,13 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_UpdatesStatusAndLastUpdatedAt()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var newTime = DateTimeOffset.UtcNow.AddSeconds(1);
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(newTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
-		// Act
 		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
 
-		// Assert
 		Assert.Equal(JobStatus.InProgress, job.Status);
 		Assert.Equal(newTime, job.LastUpdatedAt);
 		Assert.Equal(newTime, job.StartedAt);
@@ -60,16 +54,13 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithCompletedStatus_SetsCompletedAt()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
-		// Act
 		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object);
 
-		// Assert
 		Assert.Equal(JobStatus.Completed, job.Status);
 		Assert.Equal(expectedTime, job.CompletedAt);
 	}
@@ -77,16 +68,13 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithFailedStatus_SetsCompletedAt()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
-		// Act
 		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object);
 
-		// Assert
 		Assert.Equal(JobStatus.Failed, job.Status);
 		Assert.Equal(expectedTime, job.CompletedAt);
 	}
@@ -94,16 +82,13 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithCanceledStatus_SetsCompletedAt()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
-		// Act
 		job.UpdateStatus(JobStatus.Canceled, mockDateTimeProvider.Object);
 
-		// Assert
 		Assert.Equal(JobStatus.Canceled, job.Status);
 		Assert.Equal(expectedTime, job.CompletedAt);
 	}
@@ -111,17 +96,14 @@ public class JobTests
 	[Fact]
 	public void SetResult_UpdatesStatusAndResult()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 		var result = "Success";
 
-		// Act
 		job.SetResult(result, mockDateTimeProvider.Object);
 
-		// Assert
 		Assert.Equal(result, job.Result);
 		Assert.Equal(JobStatus.Completed, job.Status);
 		Assert.Equal(expectedTime, job.CompletedAt);
@@ -130,43 +112,34 @@ public class JobTests
 	[Fact]
 	public void IncrementRetryCount_IncrementsRetryCount()
 	{
-		// Arrange
 		var currentTime = DateTimeOffset.UtcNow;
 		var job = new Job(currentTime);
 		var initialRetryCount = job.RetryCount;
 
-		// Act
 		job.IncrementRetryCount();
 
-		// Assert
 		Assert.Equal(initialRetryCount + 1, job.RetryCount);
 	}
 
 	[Fact]
 	public void SetRetryTime_SetsRetryDelayUntil()
 	{
-		// Arrange
 		var currentTime = DateTimeOffset.UtcNow;
 		var job = new Job(currentTime);
 		var retryTime = DateTime.UtcNow.AddMinutes(5);
 
-		// Act
 		job.SetRetryTime(retryTime);
 
-		// Assert
 		Assert.Equal(retryTime, job.RetryDelayUntil);
 	}
 
 	[Fact]
 	public void DefaultValues_AreCorrect()
 	{
-		// Arrange
 		var currentTime = DateTimeOffset.UtcNow;
 
-		// Act
 		var job = new Job(currentTime);
 
-		// Assert
 		Assert.NotEqual(Guid.Empty, job.Id);
 		Assert.Equal(string.Empty, job.Name);
 		Assert.Equal(JobStatus.Queued, job.Status);
@@ -189,13 +162,11 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithValidStateTransition_Succeeds()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
-		// Act & Assert - Different valid transitions
 		job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object);
 		Assert.Equal(JobStatus.InProgress, job.Status);
 
@@ -206,14 +177,12 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithValidRetryTransition_Succeeds()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
-		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object); // First transition to failed
+		job.UpdateStatus(JobStatus.Failed, mockDateTimeProvider.Object);
 
-		// Act & Assert - Transition from Failed to Queued for retry
 		job.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
 		Assert.Equal(JobStatus.Queued, job.Status);
 	}
@@ -221,14 +190,12 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithInvalidStateTransition_ThrowsInvalidOperationException()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
-		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object); // Start in Completed state
+		job.UpdateStatus(JobStatus.Completed, mockDateTimeProvider.Object);
 
-		// Act & Assert - Attempt invalid transition from Completed to InProgress
 		var exception = Assert.Throws<InvalidOperationException>(() =>
 			job.UpdateStatus(JobStatus.InProgress, mockDateTimeProvider.Object));
 		Assert.Contains("Invalid state transition", exception.Message);
@@ -237,21 +204,18 @@ public class JobTests
 	[Fact]
 	public void UpdateStatus_WithSameState_DoesNotThrow()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var expectedTime = DateTimeOffset.UtcNow;
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(expectedTime);
 		var job = Job.Create(Guid.NewGuid(), "TestJob", "{\"data\":\"value\"}", [], [], [], 2, mockDateTimeProvider.Object);
 
-		// Act & Assert - Same state transition should be allowed
-		job.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object); // Same as initial state
+		job.UpdateStatus(JobStatus.Queued, mockDateTimeProvider.Object);
 		Assert.Equal(JobStatus.Queued, job.Status);
 	}
 
 	[Fact]
 	public void CreateCopy_CreatesNewInstanceWithSameProperties()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var startedTime = DateTimeOffset.UtcNow.AddMinutes(1);
@@ -282,11 +246,9 @@ public class JobTests
 			LastUpdatedAt = createdTime
 		};
 
-		// Act
 		var copiedJob = job.CreateCopy();
 
-		// Assert
-		Assert.NotSame(job, copiedJob); // Different instances
+		Assert.NotSame(job, copiedJob);
 		Assert.Equal(job.Id, copiedJob.Id);
 		Assert.Equal(job.Name, copiedJob.Name);
 		Assert.Equal(job.Status, copiedJob.Status);
@@ -302,7 +264,6 @@ public class JobTests
 		Assert.Equal(job.CompletedAt, copiedJob.CompletedAt);
 		Assert.Equal(job.LastUpdatedAt, copiedJob.LastUpdatedAt);
 
-		// Verify deep copying of reference types
 		Assert.NotSame(job.Headers, copiedJob.Headers);
 		Assert.Equal(job.Headers, copiedJob.Headers);
 
@@ -322,7 +283,6 @@ public class JobTests
 	[Fact]
 	public void CreateCopy_UpdatesSpecifiedPropertiesOnly()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var currentTime = DateTimeOffset.UtcNow.AddMinutes(5);
@@ -347,7 +307,6 @@ public class JobTests
 			LastUpdatedAt = createdTime
 		};
 
-		// Act
 		var copiedJob = job.CreateCopy(
 			status: JobStatus.InProgress,
 			workerId: Guid.NewGuid(),
@@ -356,16 +315,14 @@ public class JobTests
 			lastUpdatedAt: currentTime
 		);
 
-		// Assert
-		Assert.NotSame(job, copiedJob); // Different instances
-		Assert.Equal(job.Id, copiedJob.Id); // Unchanged property
-		Assert.Equal(job.Name, copiedJob.Name); // Unchanged property
-		Assert.Equal(job.Payload, copiedJob.Payload); // Unchanged property
-		Assert.Equal(job.CreatedAt, copiedJob.CreatedAt); // Unchanged property
-		Assert.Equal(job.StartedAt, copiedJob.StartedAt); // Unchanged property
-		Assert.Equal(job.CompletedAt, copiedJob.CompletedAt); // Unchanged property
+		Assert.NotSame(job, copiedJob);
+		Assert.Equal(job.Id, copiedJob.Id);
+		Assert.Equal(job.Name, copiedJob.Name);
+		Assert.Equal(job.Payload, copiedJob.Payload);
+		Assert.Equal(job.CreatedAt, copiedJob.CreatedAt);
+		Assert.Equal(job.StartedAt, copiedJob.StartedAt);
+		Assert.Equal(job.CompletedAt, copiedJob.CompletedAt);
 
-		// Changed properties
 		Assert.Equal(JobStatus.InProgress, copiedJob.Status);
 		Assert.NotNull(copiedJob.WorkerId);
 		Assert.Equal("NewResult", copiedJob.Result);
@@ -376,7 +333,6 @@ public class JobTests
 	[Fact]
 	public void CreateCopy_UsesDateTimeProviderForLastUpdatedTime()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var newTime = DateTimeOffset.UtcNow.AddMinutes(10);
@@ -389,17 +345,14 @@ public class JobTests
 			Status = JobStatus.Queued
 		};
 
-		// Act
 		var copiedJob = job.CreateCopy(dateTimeProvider: mockDateTimeProvider.Object);
 
-		// Assert
 		Assert.Equal(newTime, copiedJob.LastUpdatedAt);
 	}
 
 	[Fact]
 	public void CreateCopy_UpdatesStartedAtWhenInProgress()
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<IDateTimeProvider>();
 		var createdTime = DateTimeOffset.UtcNow;
 		var newTime = DateTimeOffset.UtcNow.AddMinutes(10);
@@ -412,13 +365,11 @@ public class JobTests
 			Status = JobStatus.Queued
 		};
 
-		// Act
 		var copiedJob = job.CreateCopy(
 			status: JobStatus.InProgress,
 			startedAt: newTime
 		);
 
-		// Assert
 		Assert.Equal(JobStatus.InProgress, copiedJob.Status);
 		Assert.Equal(newTime, copiedJob.StartedAt);
 	}

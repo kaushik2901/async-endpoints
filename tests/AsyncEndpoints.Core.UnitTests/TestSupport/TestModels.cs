@@ -1,7 +1,7 @@
 using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Legacy.Handlers;
 
-namespace AsyncEndpoints.UnitTests.TestSupport;
+namespace AsyncEndpoints.Core.UnitTests.TestSupport;
 
 public class TestRequest
 {

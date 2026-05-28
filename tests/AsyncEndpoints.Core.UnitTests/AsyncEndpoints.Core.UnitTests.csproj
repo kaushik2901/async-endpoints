@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AsyncEndpoints.Core\AsyncEndpoints.Core.csproj" />
+    <ProjectReference Include="..\..\src\AsyncEndpoints.Worker\AsyncEndpoints.Worker.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
 

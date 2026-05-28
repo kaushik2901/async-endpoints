@@ -10,8 +10,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\..\src\AsyncEndpoints.AspNetCore\AsyncEndpoints.AspNetCore.csproj" />
 		<ProjectReference Include="..\..\..\src\AsyncEndpoints.Redis\AsyncEndpoints.Redis.csproj" />
-		<ProjectReference Include="..\..\..\src\AsyncEndpoints\AsyncEndpoints.csproj" />
 		<ProjectReference Include="..\RedisExampleCore\RedisExampleCore.csproj" />
 	</ItemGroup>
 

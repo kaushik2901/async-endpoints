@@ -3,12 +3,12 @@ using AsyncEndpoints.Abstractions.Utilities;
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using AsyncEndpoints.Core.Legacy.Observability;
-using AsyncEndpoints.UnitTests.TestSupport;
+using AsyncEndpoints.Core.UnitTests.TestSupport;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Diagnostics;
 
-namespace AsyncEndpoints.UnitTests.JobProcessing;
+namespace AsyncEndpoints.Core.UnitTests.JobProcessing;
 
 public class JobManagerObservabilityTests
 {
@@ -22,7 +22,6 @@ public class JobManagerObservabilityTests
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		Job job)
 	{
-		// Arrange
 		var jobId = job.Id;
 
 		var options = new AsyncEndpointsOptions();
@@ -47,10 +46,8 @@ public class JobManagerObservabilityTests
 		var routeParams = new Dictionary<string, object?>();
 		var queryParams = new List<KeyValuePair<string, List<string?>>>();
 
-		// Act
 		await jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, CancellationToken.None);
 
-		// Assert
 		mockMetrics.Verify(m => m.RecordJobCreated(jobName, It.IsAny<string>()), Times.Once);
 	}
 
@@ -63,7 +60,6 @@ public class JobManagerObservabilityTests
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		AsyncEndpointError error)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
 		var job = Job.Create(
@@ -92,10 +88,8 @@ public class JobManagerObservabilityTests
 			mockDateTimeProvider.Object,
 			mockMetrics.Object);
 
-		// Act
 		await jobManager.ProcessJobFailure(jobId, error, CancellationToken.None);
 
-		// Assert
 		mockMetrics.Verify(m => m.RecordJobFailed(job.Name, error.Code, It.IsAny<string>()), Times.Once);
 	}
 
@@ -108,7 +102,6 @@ public class JobManagerObservabilityTests
 		Mock<IAsyncEndpointsObservability> mockMetrics,
 		AsyncEndpointError error)
 	{
-		// Arrange
 		var options = new AsyncEndpointsOptions();
 
 		var job = Job.Create(
@@ -137,10 +130,8 @@ public class JobManagerObservabilityTests
 			mockDateTimeProvider.Object,
 			mockMetrics.Object);
 
-		// Act
 		await jobManager.ProcessJobFailure(jobId, error, CancellationToken.None);
 
-		// Assert
 		mockMetrics.Verify(m => m.RecordJobRetries(job.Name, It.IsAny<string>()), Times.Once);
 	}
 }

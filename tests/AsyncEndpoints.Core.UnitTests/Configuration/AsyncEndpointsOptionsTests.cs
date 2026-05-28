@@ -1,17 +1,15 @@
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Hosting;
 
-namespace AsyncEndpoints.UnitTests.Configuration;
+namespace AsyncEndpoints.Core.UnitTests.Configuration;
 
 public class AsyncEndpointsOptionsTests
 {
 	[Fact]
 	public void AsyncEndpointsOptions_HasCorrectDefaults()
 	{
-		// Act
 		var options = new AsyncEndpointsOptions();
 
-		// Assert
 		Assert.Equal(Environment.ProcessorCount, options.MaxConcurrency);
 		Assert.Equal(3, options.MaxRetries);
 		Assert.Equal(TimeSpan.FromSeconds(30), options.HeartbeatInterval);
@@ -27,7 +25,6 @@ public class AsyncEndpointsOptionsTests
 	[Fact]
 	public void AsyncEndpointsOptionsBuilder_FluentApiWorks()
 	{
-		// Act
 		var options = new AsyncEndpointsOptionsBuilder()
 			.WithMaxConcurrency(8)
 			.WithMaxRetries(5)
@@ -39,7 +36,6 @@ public class AsyncEndpointsOptionsTests
 			.WithObservability(false)
 			.Build();
 
-		// Assert
 		Assert.Equal(8, options.MaxConcurrency);
 		Assert.Equal(5, options.MaxRetries);
 		Assert.Equal(TimeSpan.FromSeconds(10), options.HeartbeatInterval);
@@ -54,13 +50,10 @@ public class AsyncEndpointsOptionsTests
 	[Fact]
 	public void AsyncEndpointsOptionsBuilder_Build_ReturnsExpectedValues()
 	{
-		// Arrange
 		var builder = new AsyncEndpointsOptionsBuilder();
 
-		// Act
 		var result = builder.Build();
 
-		// Assert
 		Assert.NotNull(result);
 		Assert.Equal(Environment.ProcessorCount, result.MaxConcurrency);
 	}
@@ -68,15 +61,12 @@ public class AsyncEndpointsOptionsTests
 	[Fact]
 	public void ChannelBuilder_CreatesChannelConfigsCorrectly()
 	{
-		// Arrange
 		var builder = new ChannelBuilder();
 
-		// Act
 		builder
 			.AddChannel("channel-1", c => { c.MaxConcurrency = 4; c.MaxRetries = 2; })
 			.AddChannel("channel-2", c => { c.MaxConcurrency = 8; c.MaxRetries = 5; });
 
-		// Assert
 		Assert.Equal(2, builder.Channels.Count);
 		Assert.Equal("channel-1", builder.Channels[0].Name);
 		Assert.Equal(4, builder.Channels[0].MaxConcurrency);
@@ -89,13 +79,10 @@ public class AsyncEndpointsOptionsTests
 	[Fact]
 	public void ChannelBuilder_Defaults_AreCorrect()
 	{
-		// Arrange
 		var builder = new ChannelBuilder();
 
-		// Act
 		builder.AddChannel("default-channel");
 
-		// Assert
 		Assert.Single(builder.Channels);
 		Assert.Equal("default-channel", builder.Channels[0].Name);
 		Assert.Equal(Environment.ProcessorCount, builder.Channels[0].MaxConcurrency);
@@ -105,10 +92,8 @@ public class AsyncEndpointsOptionsTests
 	[Fact]
 	public void PartitionOptions_HasCorrectDefaults()
 	{
-		// Arrange
 		var options = new PartitionOptions();
 
-		// Assert
 		Assert.Equal(4, options.PartitionCount);
 		Assert.Equal(TimeSpan.FromSeconds(60), options.LeaseTimeout);
 		Assert.Equal(TimeSpan.FromSeconds(120), options.RebalanceInterval);
@@ -117,10 +102,8 @@ public class AsyncEndpointsOptionsTests
 	[Fact]
 	public void WorkerOptions_HasCorrectDefaults()
 	{
-		// Arrange
 		var options = new WorkerOptions();
 
-		// Assert
 		Assert.NotEqual(Guid.Empty, options.WorkerId);
 		Assert.Equal(Environment.ProcessorCount, options.MaxConcurrency);
 		Assert.Equal(TimeSpan.FromMilliseconds(100), options.PollingIntervalMin);
@@ -133,11 +116,9 @@ public class AsyncEndpointsOptionsTests
 	[Fact]
 	public void WorkerOptions_UniqueWorkerIdPerInstance()
 	{
-		// Arrange
 		var options1 = new WorkerOptions();
 		var options2 = new WorkerOptions();
 
-		// Assert
 		Assert.NotEqual(options1.WorkerId, options2.WorkerId);
 	}
 }

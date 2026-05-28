@@ -1,4 +1,4 @@
-using AsyncEndpoints.Extensions;
+using AsyncEndpoints.AspNetCore.Extensions;
 using AsyncEndpoints.Redis.Extensions;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;

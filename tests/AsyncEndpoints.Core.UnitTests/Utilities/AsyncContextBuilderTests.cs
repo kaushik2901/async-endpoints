@@ -1,9 +1,9 @@
 using AsyncEndpoints.Core.Legacy.JobProcessing;
 using AsyncEndpoints.Core.Legacy.Utilities;
-using AsyncEndpoints.UnitTests.TestSupport;
+using AsyncEndpoints.Core.UnitTests.TestSupport;
 using Moq;
 
-namespace AsyncEndpoints.UnitTests.Utilities;
+namespace AsyncEndpoints.Core.UnitTests.Utilities;
 
 public class AsyncContextBuilderTests
 {
@@ -12,10 +12,8 @@ public class AsyncContextBuilderTests
 		TestRequest request,
 		Job job)
 	{
-		// Act
 		var context = AsyncContextBuilder.Build(request, job);
 
-		// Assert
 		Assert.Equal(request, context.Request);
 		Assert.Equal(job.Headers, context.Headers);
 		Assert.Equal(job.RouteParams, context.RouteParams);
@@ -26,7 +24,6 @@ public class AsyncContextBuilderTests
 	public void Build_WithEmptyCollections_HandlesCorrectly(
 		TestRequest request)
 	{
-		// Arrange
 		var mockDateTimeProvider = new Mock<Abstractions.Infrastructure.IDateTimeProvider>();
 		mockDateTimeProvider.Setup(x => x.DateTimeOffsetNow).Returns(DateTimeOffset.UtcNow);
 		var job = Job.Create(
@@ -39,10 +36,8 @@ public class AsyncContextBuilderTests
 			3,
 			mockDateTimeProvider.Object);
 
-		// Act
 		var context = AsyncContextBuilder.Build(request, job);
 
-		// Assert
 		Assert.Equal(request, context.Request);
 		Assert.Equal(job.Headers, context.Headers);
 		Assert.Equal(job.RouteParams, context.RouteParams);

@@ -2,7 +2,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 
-namespace AsyncEndpoints.UnitTests.TestSupport;
+namespace AsyncEndpoints.Abstractions.UnitTests.TestSupport;
 
 public class AutoMoqDataAttribute : AutoDataAttribute
 {

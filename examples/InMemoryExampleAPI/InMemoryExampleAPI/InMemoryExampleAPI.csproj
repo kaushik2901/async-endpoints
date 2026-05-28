@@ -7,6 +7,7 @@
 		<PublishAot>true</PublishAot>
 	</PropertyGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\..\..\src\AsyncEndpoints\AsyncEndpoints.csproj" />
+	  <ProjectReference Include="..\..\..\src\AsyncEndpoints.AspNetCore\AsyncEndpoints.AspNetCore.csproj" />
+	  <ProjectReference Include="..\..\..\src\AsyncEndpoints.Provider.InMemory\AsyncEndpoints.Provider.InMemory.csproj" />
 	</ItemGroup>
 </Project>
