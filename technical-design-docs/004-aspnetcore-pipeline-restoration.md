@@ -85,7 +85,7 @@ public sealed record HttpJobPayload
 ```
 
 **Key decisions:**
-- `Body` is stored as a raw JSON string (not a `JsonElement` or deserialized type) to preserve the original payload for AOT-safe deserialization on the worker side
+- `Body` is stored as a raw JSON string (not a `JsonElement` or deserialized type) to preserve the original payload for AOT-safe transmission
 - `RouteParams` uses `Dictionary<string, string?>` instead of `Dictionary<string, object?>` (legacy) because `object?` prevents source-generated serialization
 - Type is a record — immutable by convention, supports `with` expressions
 
@@ -150,28 +150,13 @@ routes.MapPost("/orders", async (HttpContext httpContext, ...) =>
 })
 ```
 
-**Handler flow (worker side):**
-
-```
-Handler registered for "create-order":
-  HandlerRegistry.Register("create-order", async (sp, record, ct) =>
-  {
-      var payload = serializer.Deserialize<HttpJobPayload>(record.Payload, ...);
-      var request = serializer.Deserialize<CreateOrderRequest>(payload.Body, ...);
-      var handler = sp.GetRequiredService<IJobHandler<CreateOrderRequest>>();
-      await handler.HandleAsync(request, ct);
-      return null; // or a result string
-  });
-```
-
 ### 2.3 `IJobSubmitter` Enhancement
 
-Add a `jobName` parameter overload to allow explicit job naming:
+Add `jobName` parameter to `SubmitAsync`:
 
 ```csharp
 public interface IJobSubmitter
 {
-    Task<Guid> SubmitAsync<T>(T job, string? channel = null, string? partitionKey = null, CancellationToken ct = default);
     Task<Guid> SubmitAsync<T>(string jobName, T job, string? channel = null, string? partitionKey = null, CancellationToken ct = default);
 }
 ```
@@ -183,15 +168,13 @@ public async Task<Guid> SubmitAsync<T>(string jobName, T job, string? channel = 
 {
     var payload = SerializeJob(job);
     var descriptor = new JobDescriptor(
-        JobName: jobName,                 // Use provided name
+        JobName: jobName,
         Payload: payload,
         Channel: channel ?? "default",
         PartitionKey: partitionKey);
     return await _store.EnqueueAsync(descriptor, ct);
 }
 ```
-
-The original overload delegates to this with `jobName = typeof(T).Name` for backward compatibility.
 
 ### 2.4 `AsyncEndpointsResponseConfigurations` Revival
 
@@ -332,146 +315,20 @@ Replace all non-success response patterns with RFC 7807 Problem Details:
 | `src/AsyncEndpoints.Abstractions/Submission/IJobSubmitter.cs` | Add `jobName` overload |
 | `src/AsyncEndpoints.Core/Submission/JobSubmitter.cs` | Implement `jobName` overload |
 
-### 3.3 Removed or Kept as-Is
+### 3.3 Removed Files
 
-| File | Decision |
-|------|----------|
-| `RouteBuilderExtensions.cs` | Keep as `[Obsolete]` — replaced by `AsyncEndpointRouteBuilderExtensions` |
-| `AsyncEndpointRequestDelegate.cs` | Keep as `[Obsolete]` — replaced by new flow |
-| `IAsyncEndpointRequestDelegate.cs` | Keep as `[Obsolete]` — replaced by new flow |
-| `JobResultResponse.cs` | Keep as `[Obsolete]` — replaced by `Models/JobResultResponse.cs` |
-| `JobResponse.cs` / `JobResponseMapper.cs` | Keep as `[Obsolete]` — replaced by response DTOs |
-| `IAsyncEndpointRequestHandler.cs` | Keep as `[Obsolete]` — replaced by `IJobHandler<T>` |
-
----
-
-## 4. Handler Registration Pattern
-
-To support the new per-endpoint flow, we need a way to register handlers that can deserialize `HttpJobPayload` and extract the typed request body. The existing `IHandlerRegistry` works with raw `(IServiceProvider, JobRecord, CancellationToken) => Task<string?>` delegates.
-
-**Recommended pattern for developers:**
-
-```csharp
-// Program.cs
-builder.Services.AddAsyncEndpointsCore();
-builder.Services.AddAsyncEndpointsAspNetCore();
-builder.Services.AddInMemoryStore();
-builder.Services.AddScoped<IJobHandler<CreateOrderRequest>, CreateOrderHandler>();
-
-var app = builder.Build();
-
-app.MapAsyncEndpoint<CreateOrderRequest>("create-order")
-   .MapPost("/orders");
-
-app.Run();
-
-// Handler registration (inside AddAsyncEndpointsCore or via extension)
-HandlerRegistry.Register("create-order", async (sp, record, ct) =>
-{
-    var serializer = sp.GetRequiredService<ISerializer>();
-    var handler = sp.GetRequiredService<IJobHandler<CreateOrderRequest>>();
-
-    // Deserialize the HTTP context payload
-    var httpPayload = serializer.Deserialize<HttpJobPayload>(
-        record.Payload, AsyncEndpointsJsonSerializationContext.Default.HttpJobPayload);
-
-    // Deserialize the actual request body
-    var request = serializer.Deserialize<CreateOrderRequest>(
-        httpPayload.Body, AsyncEndpointsJsonSerializationContext.Default.CreateOrderRequest ???);
-
-    await handler.HandleAsync(request, ct);
-    return null;
-});
-```
-
-For a smoother developer experience, provide a generic registration helper:
-
-```csharp
-public static class HandlerRegistrationExtensions
-{
-    public static void RegisterJobHandler<TRequest>(
-        this IHandlerRegistry registry,
-        string jobName,
-        Func<HttpJobPayload, TRequest>? bodyTransform = null)
-    {
-        registry.Register(jobName, async (sp, record, ct) =>
-        {
-            var serializer = sp.GetRequiredService<ISerializer>();
-            var handler = sp.GetRequiredService<IJobHandler<TRequest>>();
-
-            var jsonTypeInfo = AsyncEndpointsJsonSerializationContext.Default.HttpJobPayload;
-            var httpPayload = serializer.Deserialize(record.Payload, typeof(HttpJobPayload), jsonTypeInfo) as HttpJobPayload
-                ?? throw new InvalidOperationException("Failed to deserialize job payload");
-
-            TRequest request;
-            if (bodyTransform is not null)
-            {
-                request = bodyTransform(httpPayload);
-            }
-            else
-            {
-                var requestTypeInfo = (JsonTypeInfo<TRequest>?)AsyncEndpointsJsonSerializationContext.Default.GetTypeInfo(typeof(TRequest));
-                request = requestTypeInfo is not null
-                    ? serializer.Deserialize(httpPayload.Body, requestTypeInfo)!
-                    : serializer.Deserialize<TRequest>(httpPayload.Body, (JsonSerializerOptions?)null)!;
-            }
-
-            await handler.HandleAsync(request, ct);
-            return null;
-        });
-    }
-}
-```
+| File | Reason |
+|------|--------|
+| `RouteBuilderExtensions.cs` | Replaced by `AsyncEndpointRouteBuilderExtensions` |
+| `AsyncEndpointRequestDelegate.cs` | Replaced by new inline endpoint flow |
+| `IAsyncEndpointRequestDelegate.cs` | No longer needed |
+| `JobResultResponse.cs` | Replaced by `Models/JobResultResponse.cs` |
+| `JobResponse.cs` / `JobResponseMapper.cs` | Replaced by response DTOs |
+| `IAsyncEndpointRequestHandler.cs` | Replaced by new handler registration pattern |
 
 ---
 
-## 5. Migration Path for Existing Users
-
-### 5.1 Using the Legacy Obsolete Types (No Action Needed)
-All legacy types remain as `[Obsolete]` — existing code using `RouteBuilderExtensions`, `IAsyncEndpointRequestHandler`, etc. continues to compile with warnings.
-
-### 5.2 Migrating from Legacy to New Pipeline
-
-**Before (old):**
-```csharp
-app.MapAsyncPost<CreateOrderRequest>("create-order", "/orders");
-```
-
-**After (new):**
-```csharp
-app.MapAsyncEndpoint<CreateOrderRequest>("create-order")
-   .MapPost("/orders");
-```
-
-The handler changes from:
-```csharp
-class CreateOrderHandler : IAsyncEndpointRequestHandler<CreateOrderRequest, OrderResponse>
-{
-    public async Task<MethodResult<OrderResponse>> HandleAsync(AsyncContext<CreateOrderRequest> context, CancellationToken token)
-    {
-        var request = context.Request;
-        // Access to headers: context.Headers
-        // Access to route params: context.RouteParams
-        // Access to query params: context.QueryParams
-    }
-}
-```
-
-To:
-```csharp
-class CreateOrderHandler : IJobHandler<CreateOrderRequest>
-{
-    public async Task HandleAsync(CreateOrderRequest request, CancellationToken ct)
-    {
-        // Worker-side: request is the deserialized body
-        // HTTP context available via HttpJobPayload in record.Payload
-    }
-}
-```
-
----
-
-## 6. Implementation Order
+## 4. Implementation Order
 
 | Phase | What | Dependencies |
 |-------|------|-------------|
@@ -485,26 +342,14 @@ class CreateOrderHandler : IJobHandler<CreateOrderRequest>
 | **8** | Create `AsyncEndpointRouteBuilderExtensions` with per-endpoint registration | Phase 3, 4 |
 | **9** | Update `EndpointRouteBuilderExtensions.MapAsyncEndpointsEndpoints` to accept response config | Phase 4 |
 | **10** | Fix `JsonBodyParserService` for AOT-safe deserialization | Phase 2 |
-| **11** | Add handler registration helper extensions | Phase 2 |
-| **12** | Update DI registration in `ServiceCollectionExtensions` | Phase 4 |
-| **13** | Write/update tests for all new components | All phases |
-| **14** | Verify AOT compatibility with `dotnet publish -aot` | All phases |
+| **11** | Update DI registration in `ServiceCollectionExtensions` | Phase 4 |
+| **12** | Write/update tests for all new components | All phases |
+| **13** | Verify AOT compatibility with `dotnet publish -aot` | All phases |
 
 ---
 
-## 7. Backward Compatibility
+## 5. Open Questions
 
-All changes are additive:
-- `IJobSubmitter` gains a new overload — existing implementations continue to work
-- `AsyncEndpointsResponseConfigurations` gets un-obsoleted — old references continue to compile
-- Legacy `RouteBuilderExtensions`, `AsyncEndpointRequestDelegate`, etc. remain `[Obsolete]` with no behavior change
-- The existing `JobEndpoints.PostJob` endpoint continues to exist as a simple/default submission endpoint
-- New `AsyncEndpointRouteBuilderExtensions` provides per-endpoint registration without breaking existing code
+1. Should `AsyncEndpointsResponseConfigurations` be registered as Singleton or Scoped? **Recommendation:** Singleton — the delegates are pure factories with no mutable state.
 
-## 8. Open Questions
-
-1. Should `IJobSubmitter.SubmitAsync(string jobName, ...)` be the primary method and the original become a convenience overload? **Recommendation:** Yes — makes explicit naming the default.
-
-2. Should `AsyncEndpointsResponseConfigurations` be registered as Singleton or Scoped? **Recommendation:** Singleton — the delegates are pure factories with no mutable state.
-
-3. Should we remove `MapAsyncEndpointsEndpoints()` or keep it as a convenience? **Recommendation:** Keep it as a simple default for quick-start scenarios. The new per-endpoint registration is opt-in.
+2. Should we remove `MapAsyncEndpointsEndpoints()` or keep it as a convenience? **Recommendation:** Keep it as a simple default for quick-start scenarios. The new per-endpoint registration is opt-in.
