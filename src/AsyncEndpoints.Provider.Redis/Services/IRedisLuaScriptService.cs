@@ -1,6 +1,6 @@
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Services;
+namespace AsyncEndpoints.Provider.Redis.Services;
 
 public interface IRedisLuaScriptService
 {

@@ -4,8 +4,8 @@
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>AsyncEndpoints.Redis</PackageId>
-    <Title>AsyncEndpoints.Redis</Title>
+    <PackageId>AsyncEndpoints.Provider.Redis</PackageId>
+    <Title>AsyncEndpoints.Provider.Redis</Title>
     <PackageVersion>1.1.1-alpha</PackageVersion>
     <Authors>Kaushik Jadav</Authors>
     <Description>Redis integration for AsyncEndpoints library with distributed job storage capabilities.</Description>

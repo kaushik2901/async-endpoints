@@ -1,7 +1,7 @@
 using AsyncEndpoints.Abstractions.Jobs;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Services;
+namespace AsyncEndpoints.Provider.Redis.Services;
 
 public interface IJobHashConverter
 {

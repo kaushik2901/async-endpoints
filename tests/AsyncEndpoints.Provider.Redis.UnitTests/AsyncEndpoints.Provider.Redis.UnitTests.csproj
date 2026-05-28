@@ -26,7 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\AsyncEndpoints.Redis\AsyncEndpoints.Redis.csproj" />
+		<ProjectReference Include="..\..\src\AsyncEndpoints.Provider.Redis\AsyncEndpoints.Provider.Redis.csproj" />
 		<ProjectReference Include="..\AsyncEndpoints.Abstractions.UnitTests\AsyncEndpoints.Abstractions.UnitTests.csproj" />
 	</ItemGroup>
 

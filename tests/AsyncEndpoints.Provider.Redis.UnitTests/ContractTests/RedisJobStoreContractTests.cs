@@ -1,12 +1,12 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.UnitTests.ContractTests;
-using AsyncEndpoints.Redis.Services;
-using AsyncEndpoints.Redis.Storage;
+using AsyncEndpoints.Provider.Redis.Services;
+using AsyncEndpoints.Provider.Redis.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.UnitTests.ContractTests;
+namespace AsyncEndpoints.Provider.Redis.UnitTests.ContractTests;
 
 public class RedisJobStoreContractTests : JobStoreContractTestsBase, IAsyncLifetime
 {

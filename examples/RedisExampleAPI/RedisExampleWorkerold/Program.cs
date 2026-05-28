@@ -1,5 +1,5 @@
 using AsyncEndpoints;
-using AsyncEndpoints.Redis;
+using AsyncEndpoints.Provider.Redis.Extensions;
 using RedisExampleCore;
 using RedisExampleWorker;
 

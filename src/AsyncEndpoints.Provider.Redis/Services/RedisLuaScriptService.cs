@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Services;
+namespace AsyncEndpoints.Provider.Redis.Services;
 
 public class RedisLuaScriptService : IRedisLuaScriptService
 {

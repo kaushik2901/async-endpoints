@@ -1,11 +1,11 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
-using AsyncEndpoints.Redis.Services;
+using AsyncEndpoints.Provider.Redis.Services;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Storage;
+namespace AsyncEndpoints.Provider.Redis.Storage;
 
 public class RedisJobStore : IJobStore
 {

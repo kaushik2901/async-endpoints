@@ -1,5 +1,5 @@
 using AsyncEndpoints.Abstractions.Storage;
-using AsyncEndpoints.Provider.InMemory.JobProcessing;
+using AsyncEndpoints.Provider.InMemory.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AsyncEndpoints.Provider.InMemory.DependencyInjection;

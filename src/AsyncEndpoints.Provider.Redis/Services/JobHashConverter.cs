@@ -3,7 +3,7 @@ using StackExchange.Redis;
 using System.Globalization;
 using System.Text.Json;
 
-namespace AsyncEndpoints.Redis.Services;
+namespace AsyncEndpoints.Provider.Redis.Services;
 
 public class JobHashConverter : IJobHashConverter
 {

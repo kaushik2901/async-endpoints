@@ -1,4 +1,4 @@
-namespace AsyncEndpoints.Redis.Configuration;
+namespace AsyncEndpoints.Provider.Redis.Configuration;
 
 /// <summary>
 /// Configuration class for Redis settings.

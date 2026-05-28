@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.UnitTests.ContractTests;
-using AsyncEndpoints.Provider.InMemory.JobProcessing;
+using AsyncEndpoints.Provider.InMemory.Storage;
 using Moq;
 
 namespace AsyncEndpoints.Provider.InMemory.UnitTests.ContractTests;

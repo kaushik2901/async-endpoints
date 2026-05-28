@@ -30,6 +30,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\..\src\AsyncEndpoints.AspNetCore\AsyncEndpoints.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\AsyncEndpoints.Provider.InMemory\AsyncEndpoints.Provider.InMemory.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
 

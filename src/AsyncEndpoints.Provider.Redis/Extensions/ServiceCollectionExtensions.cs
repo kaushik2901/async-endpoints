@@ -1,13 +1,13 @@
 using AsyncEndpoints.Abstractions.Infrastructure;
 using AsyncEndpoints.Abstractions.Storage;
-using AsyncEndpoints.Redis.Configuration;
-using AsyncEndpoints.Redis.Services;
-using AsyncEndpoints.Redis.Storage;
+using AsyncEndpoints.Provider.Redis.Configuration;
+using AsyncEndpoints.Provider.Redis.Services;
+using AsyncEndpoints.Provider.Redis.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace AsyncEndpoints.Redis.Extensions;
+namespace AsyncEndpoints.Provider.Redis.Extensions;
 
 public static class RedisServiceCollectionExtensions
 {

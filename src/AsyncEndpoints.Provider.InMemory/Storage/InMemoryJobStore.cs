@@ -3,7 +3,7 @@ using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
 using System.Collections.Concurrent;
 
-namespace AsyncEndpoints.Provider.InMemory.JobProcessing;
+namespace AsyncEndpoints.Provider.InMemory.Storage;
 
 public class InMemoryJobStore : IJobStore
 {

@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisExampleAPI", "RedisExa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncEndpoints", "..\..\src\AsyncEndpoints\AsyncEndpoints.csproj", "{F84BBE19-C55A-1504-9C8A-E9D6E43245CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncEndpoints.Redis", "..\..\src\AsyncEndpoints.Redis\AsyncEndpoints.Redis.csproj", "{4DFDF8AD-E6BB-9ABC-4618-0547019ECB98}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncEndpoints.Provider.Redis", "..\..\src\AsyncEndpoints.Provider.Redis\AsyncEndpoints.Provider.Redis.csproj", "{4DFDF8AD-E6BB-9ABC-4618-0547019ECB98}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisExampleCore", "RedisExampleCore\RedisExampleCore.csproj", "{7BF96843-FC5F-4D53-A2E7-E2FAE2A30BD2}"
 EndProject
