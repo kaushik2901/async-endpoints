@@ -1,4 +1,5 @@
 using AsyncEndpoints.Abstractions.Submission;
+using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Endpoints;
 using AsyncEndpoints.Core.DependencyInjection;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
@@ -11,7 +12,7 @@ namespace AsyncEndpoints.AspNetCore.UnitTests.Endpoints;
 
 public class JobEndpointsTests
 {
-	private static (IServiceProvider Services, IJobSubmitter Submitter) CreateTestServices()
+	private static (IServiceProvider Services, IJobSubmitter Submitter, AsyncEndpointsResponseConfigurations ResponseConfig) CreateTestServices()
 	{
 		var services = new ServiceCollection();
 		services.AddLogging();
@@ -19,52 +20,54 @@ public class JobEndpointsTests
 		services.AddSingleton<ISerializer, Serializer>();
 		services.AddInMemoryStore();
 		services.AddSingleton<IJobSubmitter, JobSubmitter>();
+		services.AddSingleton<AsyncEndpointsResponseConfigurations>();
 		var provider = services.BuildServiceProvider();
 		var submitter = provider.GetRequiredService<IJobSubmitter>();
-		return (provider, submitter);
+		var responseConfig = provider.GetRequiredService<AsyncEndpointsResponseConfigurations>();
+		return (provider, submitter, responseConfig);
 	}
 
 	[Fact]
 	public async Task PostJob_ValidBody_Returns202AcceptedWithJobId()
 	{
-		var (sp, submitter) = CreateTestServices();
+		var (sp, submitter, responseConfig) = CreateTestServices();
 		var httpContext = new DefaultHttpContext();
 		httpContext.RequestServices = sp;
 		var body = """{"data":"test_value"}""";
 		httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
 		httpContext.Request.ContentType = "application/json";
 
-		var result = await JobEndpoints.PostJob(httpContext, submitter, CancellationToken.None);
+		var result = await JobEndpoints.PostJob(httpContext, submitter, responseConfig, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status202Accepted, statusCodeResult.StatusCode);
 	}
 
 	[Fact]
-	public async Task PostJob_InvalidBody_Returns400()
+	public async Task PostJob_AnyBody_Returns202Accepted()
 	{
-		var (sp, submitter) = CreateTestServices();
+		var (sp, submitter, responseConfig) = CreateTestServices();
 		var httpContext = new DefaultHttpContext();
 		httpContext.RequestServices = sp;
 		httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("not valid json"));
 		httpContext.Request.ContentType = "application/json";
 
-		var result = await JobEndpoints.PostJob(httpContext, submitter, CancellationToken.None);
+		var result = await JobEndpoints.PostJob(httpContext, submitter, responseConfig, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
-		Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
+		Assert.Equal(StatusCodes.Status202Accepted, statusCodeResult.StatusCode);
 	}
 
 	[Fact]
 	public async Task PostJob_EmptyBody_Returns400()
 	{
-		var (sp, submitter) = CreateTestServices();
+		var (sp, submitter, responseConfig) = CreateTestServices();
 		var httpContext = new DefaultHttpContext();
 		httpContext.RequestServices = sp;
 		httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(""));
 		httpContext.Request.ContentType = "application/json";
 
-		var result = await JobEndpoints.PostJob(httpContext, submitter, CancellationToken.None);
+		var result = await JobEndpoints.PostJob(httpContext, submitter, responseConfig, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status400BadRequest, statusCodeResult.StatusCode);
@@ -73,7 +76,7 @@ public class JobEndpointsTests
 	[Fact]
 	public async Task PostJob_UsesSpecifiedChannel()
 	{
-		var (sp, submitter) = CreateTestServices();
+		var (sp, submitter, responseConfig) = CreateTestServices();
 		var httpContext = new DefaultHttpContext();
 		httpContext.RequestServices = sp;
 		httpContext.Request.QueryString = new QueryString("?channel=custom-channel");
@@ -81,7 +84,7 @@ public class JobEndpointsTests
 		httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
 		httpContext.Request.ContentType = "application/json";
 
-		var result = await JobEndpoints.PostJob(httpContext, submitter, CancellationToken.None);
+		var result = await JobEndpoints.PostJob(httpContext, submitter, responseConfig, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status202Accepted, statusCodeResult.StatusCode);
@@ -90,7 +93,7 @@ public class JobEndpointsTests
 	[Fact]
 	public async Task PostJob_UsesXChannelHeader()
 	{
-		var (sp, submitter) = CreateTestServices();
+		var (sp, submitter, responseConfig) = CreateTestServices();
 		var httpContext = new DefaultHttpContext();
 		httpContext.RequestServices = sp;
 		httpContext.Request.Headers["X-Channel"] = "header-channel";
@@ -98,7 +101,7 @@ public class JobEndpointsTests
 		httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
 		httpContext.Request.ContentType = "application/json";
 
-		var result = await JobEndpoints.PostJob(httpContext, submitter, CancellationToken.None);
+		var result = await JobEndpoints.PostJob(httpContext, submitter, responseConfig, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status202Accepted, statusCodeResult.StatusCode);

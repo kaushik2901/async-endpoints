@@ -12,6 +12,8 @@ public static class ServiceCollectionExtensions
 	{
 		services.AddHttpContextAccessor();
 		services.AddSingleton<AspNetCoreOptions>();
+		services.AddSingleton<AsyncEndpointsResponseConfigurations>();
+		services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsAspNetCoreJsonSerializationContext.Default);
 		return services;
 	}
 

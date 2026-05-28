@@ -17,7 +17,33 @@ public sealed class JobSubmitter : IJobSubmitter
 		_serializer = serializer;
 	}
 
+	public async Task<Guid> SubmitAsync<T>(string jobName, T job, string? channel = null, string? partitionKey = null, CancellationToken ct = default)
+	{
+		var payload = SerializeJob(job);
+		var descriptor = new JobDescriptor(
+			JobName: jobName,
+			Payload: payload,
+			Channel: channel ?? "default",
+			PartitionKey: partitionKey);
+		return await _store.EnqueueAsync(descriptor, ct);
+	}
+
+	public Task<Guid> SubmitRawAsync(string jobName, string payload, string? channel = null, string? partitionKey = null, CancellationToken ct = default)
+	{
+		var descriptor = new JobDescriptor(
+			JobName: jobName,
+			Payload: payload,
+			Channel: channel ?? "default",
+			PartitionKey: partitionKey);
+		return _store.EnqueueAsync(descriptor, ct);
+	}
+
 	public async Task<Guid> SubmitAsync<T>(T job, string? channel = null, string? partitionKey = null, CancellationToken ct = default)
+	{
+		return await SubmitAsync(typeof(T).Name, job, channel, partitionKey, ct);
+	}
+
+	private string SerializeJob<T>(T job)
 	{
 		JsonTypeInfo<T>? typeInfo = null;
 		try
@@ -28,14 +54,8 @@ public sealed class JobSubmitter : IJobSubmitter
 		{
 		}
 
-		var payload = typeInfo is not null
+		return typeInfo is not null
 			? _serializer.Serialize(job, typeInfo)
 			: _serializer.Serialize(job, (System.Text.Json.JsonSerializerOptions?)null);
-		var descriptor = new JobDescriptor(
-			JobName: typeof(T).Name,
-			Payload: payload,
-			Channel: channel ?? "default",
-			PartitionKey: partitionKey);
-		return await _store.EnqueueAsync(descriptor, ct);
 	}
 }

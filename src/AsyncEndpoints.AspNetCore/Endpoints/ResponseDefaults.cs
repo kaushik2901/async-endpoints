@@ -1,39 +1,51 @@
-using AsyncEndpoints.Abstractions.Common;
-using AsyncEndpoints.Core.Legacy.JobProcessing;
+using AsyncEndpoints.Abstractions.Jobs;
+using AsyncEndpoints.AspNetCore.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Endpoints;
 
-[Obsolete("Use the new pipeline's response pattern instead.")]
 public static class ResponseDefaults
 {
-	public static Task<IResult> DefaultJobSubmittedResponseFactory(Job job, HttpContext _)
+	public static Task<IResult> DefaultJobSubmittedResponseFactory(Guid jobId, HttpContext _)
+		=> Task.FromResult(Results.Accepted($"/jobs/{jobId}", new Models.JobSubmittedResponse { JobId = jobId }));
+
+	public static Task<IResult> DefaultJobStatusResponseFactory(JobRecord? record, HttpContext _)
 	{
-		return Task.FromResult<IResult>(JobResultResponse.Accepted(job));
+		if (record is null)
+			return Task.FromResult(Results.Problem(
+				detail: "Job not found", statusCode: 404));
+
+		return Task.FromResult(Results.Ok(new Models.JobStatusResponse
+		{
+			JobId = record.JobId,
+			JobName = record.JobName,
+			Status = record.Status.ToString(),
+			Result = record.Result,
+			ErrorMessage = record.ErrorMessage,
+			CreatedAt = record.CreatedAt,
+			StartedAt = record.StartedAt,
+			CompletedAt = record.CompletedAt,
+			RetryCount = record.RetryCount,
+			MaxRetries = record.MaxRetries
+		}));
 	}
 
-	public static Task<IResult> DefaultJobStatusResponseFactory(MethodResult<Job> jobResult, HttpContext _)
+	public static Task<IResult> DefaultJobResultResponseFactory(JobRecord record, HttpContext _)
 	{
-		if (!jobResult.IsSuccess)
+		if (record.Status == Abstractions.Jobs.JobStatus.Completed)
 		{
-			return Task.FromResult(Results.Problem(
-				detail: jobResult.Error?.Message ?? "An unknown error occurred while submitting the job",
-				title: "Job Submission Failed",
-				statusCode: 500
-			));
+			return Task.FromResult(Results.Ok(new Models.JobResultResponse
+			{
+				JobId = record.JobId,
+				Result = record.Result
+			}));
 		}
 
-		var job = jobResult.Data;
-		return Task.FromResult<IResult>(JobResultResponse.Ok(job));
-	}
-
-	public static Task<IResult> DefaultJobSubmissionErrorResponseFactory(AsyncEndpointError? error, HttpContext _)
-	{
 		return Task.FromResult(Results.Problem(
-			detail: error?.Message ?? "An unknown error occurred while submitting the job",
-			title: "Job Submission Failed",
-			statusCode: 500
-		));
+			detail: record.Status == Abstractions.Jobs.JobStatus.Failed || record.Status == Abstractions.Jobs.JobStatus.DeadLettered
+				? record.ErrorMessage ?? "Job failed"
+				: "Job has not yet completed",
+			statusCode: 409));
 	}
 
 	public static Task<IResult> DefaultExceptionResponseFactory(Exception exception, HttpContext _)

@@ -212,7 +212,13 @@ public static class RouteBuilderExtensions
 		try
 		{
 			var result = await jobManager.GetJobById(jobId, cancellationToken);
-			return await responseConfig.JobStatusResponseFactory(result, httpContext);
+			if (!result.IsSuccess)
+			{
+				return Results.Problem(
+					detail: result.Error?.Message ?? "Job not found",
+					statusCode: 404);
+			}
+			return Results.Ok();
 		}
 		catch (Exception ex)
 		{

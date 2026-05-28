@@ -1,4 +1,5 @@
 using AsyncEndpoints.Abstractions.Common;
+using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.AspNetCore.Configuration;
 using AsyncEndpoints.AspNetCore.Handlers;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
@@ -22,9 +23,9 @@ public class ConfigurableResponseTests
 
 		var responseConfig = new AsyncEndpointsResponseConfigurations
 		{
-			JobSubmittedResponseFactory = (job, context) =>
+			JobSubmittedResponseFactory = (jobId, context) =>
 			{
-				var response = Results.Created($"/api/custom/{job.Id}", new { JobId = job.Id, CustomMessage = "Custom response" });
+				var response = Results.Created($"/api/custom/{jobId}", new { JobId = jobId, CustomMessage = "Custom response" });
 				return Task.FromResult(response);
 			}
 		};
@@ -64,14 +65,7 @@ public class ConfigurableResponseTests
 		var mockJobManager = new Mock<IJobManager>();
 		var mockSerializer = new Mock<ISerializer>();
 
-		var responseConfig = new AsyncEndpointsResponseConfigurations
-		{
-			JobSubmissionErrorResponseFactory = (error, context) =>
-			{
-				var response = Results.Json(new { Error = "Custom error", Code = "CUSTOM_ERROR" }, statusCode: 422);
-				return Task.FromResult(response);
-			}
-		};
+		var responseConfig = new AsyncEndpointsResponseConfigurations();
 
 		var httpContext = new DefaultHttpContext();
 		var request = new object();

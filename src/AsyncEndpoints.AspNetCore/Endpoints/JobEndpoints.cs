@@ -1,4 +1,7 @@
 using AsyncEndpoints.Abstractions.Submission;
+using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Extensions;
+using AsyncEndpoints.AspNetCore.Models;
 using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 
@@ -9,22 +12,27 @@ public static class JobEndpoints
 	public static async Task<IResult> PostJob(
 		HttpContext httpContext,
 		IJobSubmitter submitter,
+		AsyncEndpointsResponseConfigurations responseConfig,
 		CancellationToken ct)
 	{
-		JsonElement body;
+		string bodyText;
 		try
 		{
 			using var reader = new StreamReader(httpContext.Request.Body);
-			var bodyText = await reader.ReadToEndAsync(ct);
+			bodyText = await reader.ReadToEndAsync(ct);
 			if (string.IsNullOrWhiteSpace(bodyText))
 			{
-				return Results.BadRequest(new { error = "Request body is required" });
+				return Results.Problem(
+					detail: "Request body is required",
+					statusCode: 400);
 			}
-			body = JsonSerializer.Deserialize<JsonElement>(bodyText);
 		}
-		catch (JsonException)
+		catch (Exception ex)
 		{
-			return Results.BadRequest(new { error = "Invalid JSON in request body" });
+			return Results.Problem(
+				detail: ex.Message,
+				title: "Invalid request body",
+				statusCode: 400);
 		}
 
 		var channel = httpContext.Request.Query["channel"].FirstOrDefault()
@@ -34,10 +42,22 @@ public static class JobEndpoints
 		var partitionKey = httpContext.Request.Headers["X-Partition-Key"].FirstOrDefault()
 			?? httpContext.Request.Query["partitionKey"].FirstOrDefault();
 
+		var jobName = httpContext.Request.Headers["X-Job-Name"].FirstOrDefault()
+			?? "default";
+
+		var httpPayload = new HttpJobPayload
+		{
+			Body = bodyText,
+			Headers = httpContext.GetHeadersFromContext(),
+			RouteParams = httpContext.GetRouteParamsFromContext(),
+			QueryParams = httpContext.GetQueryParamsFromContext()
+		};
+
 		Guid jobId;
 		try
 		{
-			jobId = await submitter.SubmitAsync(body, channel, partitionKey, ct);
+			var jsonPayload = JsonSerializer.Serialize(httpPayload, AsyncEndpointsAspNetCoreJsonSerializationContext.Default.HttpJobPayload);
+			jobId = await submitter.SubmitRawAsync(jobName, jsonPayload, channel, partitionKey, ct);
 		}
 		catch (Exception ex)
 		{
@@ -47,6 +67,6 @@ public static class JobEndpoints
 				statusCode: StatusCodes.Status500InternalServerError);
 		}
 
-		return Results.Accepted($"/jobs/{jobId}", new { jobId });
+		return await responseConfig.JobSubmittedResponseFactory(jobId, httpContext);
 	}
 }

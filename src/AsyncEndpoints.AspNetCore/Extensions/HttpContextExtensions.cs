@@ -29,26 +29,26 @@ public static class HttpContextExtensions
 		return headers;
 	}
 
-	public static Dictionary<string, object?> GetRouteParamsFromContext(this HttpContext context)
+	public static Dictionary<string, string?> GetRouteParamsFromContext(this HttpContext context)
 	{
-		var routeParams = new Dictionary<string, object?>();
+		var routeParams = new Dictionary<string, string?>();
 		var routeValues = context.Request.RouteValues;
 		if (routeValues is not null)
 		{
 			foreach (var routeValue in routeValues)
 			{
-				routeParams[routeValue.Key] = routeValue.Value;
+				routeParams[routeValue.Key] = routeValue.Value?.ToString();
 			}
 		}
 		return routeParams;
 	}
 
-	public static List<KeyValuePair<string, List<string?>>> GetQueryParamsFromContext(this HttpContext context)
+	public static Dictionary<string, List<string?>> GetQueryParamsFromContext(this HttpContext context)
 	{
-		var queryParams = new List<KeyValuePair<string, List<string?>>>();
+		var queryParams = new Dictionary<string, List<string?>>();
 		foreach (var queryParam in context.Request.Query)
 		{
-			queryParams.Add(new KeyValuePair<string, List<string?>>(queryParam.Key, [.. queryParam.Value]));
+			queryParams[queryParam.Key] = [.. queryParam.Value];
 		}
 		return queryParams;
 	}

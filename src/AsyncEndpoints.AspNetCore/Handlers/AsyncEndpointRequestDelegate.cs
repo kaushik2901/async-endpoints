@@ -40,8 +40,14 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 
 		var jobId = httpContext.GetOrCreateJobId();
 		var headers = httpContext.GetHeadersFromContext();
-		var routeParams = httpContext.GetRouteParamsFromContext();
-		var queryParams = httpContext.GetQueryParamsFromContext();
+
+		var routeParams = new Dictionary<string, object?>();
+		foreach (var rp in httpContext.GetRouteParamsFromContext())
+			routeParams[rp.Key] = rp.Value;
+
+		var queryParams = new List<KeyValuePair<string, List<string?>>>();
+		foreach (var qp in httpContext.GetQueryParamsFromContext())
+			queryParams.Add(new KeyValuePair<string, List<string?>>(qp.Key, qp.Value));
 
 		var submitJobResult = await _jobManager.SubmitJob(jobName, payload, jobId, headers, routeParams, queryParams, cancellationToken);
 		if (!submitJobResult.IsSuccess)
@@ -57,16 +63,17 @@ public sealed class AsyncEndpointRequestDelegate(ILogger<AsyncEndpointRequestDel
 					submitJobResult.Error.Exception.StackTrace);
 			}
 
-			return await _responseConfigurations.JobSubmissionErrorResponseFactory(
-				submitJobResult.Error,
-				httpContext);
+			return Results.Problem(
+				detail: submitJobResult.Error?.Message ?? "Job submission failed",
+				title: "Job Submission Failed",
+				statusCode: 500);
 		}
 
 		var job = submitJobResult.Data!;
 
 		_logger.LogInformation("Successfully created job {JobId} for job: {JobName}", job.Id, jobName);
 
-		return await _responseConfigurations.JobSubmittedResponseFactory(job, httpContext);
+		return await _responseConfigurations.JobSubmittedResponseFactory(job.Id, httpContext);
 	}
 
 	private static async Task<IResult?> HandleRequestDelegate<TRequest>(Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler, HttpContext httpContext, TRequest request, CancellationToken token)

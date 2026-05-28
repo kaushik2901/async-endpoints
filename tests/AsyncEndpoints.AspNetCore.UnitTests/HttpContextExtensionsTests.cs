@@ -69,8 +69,7 @@ public class HttpContextExtensionsTests
 		var result = httpContext.GetQueryParamsFromContext();
 
 		Assert.NotNull(result);
-		var param = result.FirstOrDefault(p => p.Key == queryParamName);
-		Assert.NotEqual(default, param);
-		Assert.Contains(queryParamValue, param.Value);
+		Assert.Contains(queryParamName, result.Keys);
+		Assert.Contains(queryParamValue, result[queryParamName]);
 	}
 }

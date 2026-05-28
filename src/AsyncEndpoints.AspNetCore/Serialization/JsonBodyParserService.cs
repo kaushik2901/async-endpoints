@@ -3,6 +3,7 @@ using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace AsyncEndpoints.AspNetCore.Serialization;
 
@@ -35,7 +36,24 @@ public class JsonBodyParserService(ISerializer serializer, ILogger<JsonBodyParse
 
 			httpContext.Request.EnableBuffering();
 
-			var result = await _serializer.DeserializeAsync<T>(httpContext.Request.Body, (System.Text.Json.JsonSerializerOptions?)null, cancellationToken);
+			T? result;
+			var typeInfo = (JsonTypeInfo<T>?)AsyncEndpointsAspNetCoreJsonSerializationContext.Default.GetTypeInfo(typeof(T));
+			if (typeInfo is not null)
+			{
+				result = await _serializer.DeserializeAsync(httpContext.Request.Body, typeInfo, cancellationToken);
+			}
+			else
+			{
+				var coreTypeInfo = (JsonTypeInfo<T>?)AsyncEndpointsJsonSerializationContext.Default.GetTypeInfo(typeof(T));
+				if (coreTypeInfo is not null)
+				{
+					result = await _serializer.DeserializeAsync(httpContext.Request.Body, coreTypeInfo, cancellationToken);
+				}
+				else
+				{
+					result = await _serializer.DeserializeAsync<T>(httpContext.Request.Body, (JsonSerializerOptions?)null, cancellationToken);
+				}
+			}
 
 			httpContext.Request.Body.Position = 0;
 

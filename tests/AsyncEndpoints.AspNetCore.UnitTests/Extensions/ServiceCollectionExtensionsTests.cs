@@ -20,6 +20,7 @@ public class ServiceCollectionExtensionsTests
 
 		Assert.NotNull(provider.GetService<IHttpContextAccessor>());
 		Assert.NotNull(provider.GetService<AspNetCoreOptions>());
+		Assert.NotNull(provider.GetService<AsyncEndpointsResponseConfigurations>());
 	}
 
 	[Fact]
