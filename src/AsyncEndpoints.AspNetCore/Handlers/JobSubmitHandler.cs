@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace AsyncEndpoints.AspNetCore.Handlers;
 
-public static class AsyncEndpointHandler
+public static class JobSubmitHandler
 {
 	public static async Task HandleJobSubmission<TRequest>(
 		HttpContext httpContext,

@@ -10,7 +10,7 @@ using System.Text;
 
 namespace AsyncEndpoints.AspNetCore.UnitTests.Handlers;
 
-public class AsyncEndpointHandlerTests
+public class JobSubmitHandlerTests
 {
 	private static DefaultHttpContext CreateHttpContext()
 	{
@@ -40,7 +40,7 @@ public class AsyncEndpointHandlerTests
 
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 
-		await AsyncEndpointHandler.HandleJobSubmission<TestRequest>(
+		await JobSubmitHandler.HandleJobSubmission<TestRequest>(
 			httpContext, "TestJob", null,
 			submitter.Object, responseConfig, serializer.Object, CancellationToken.None);
 
@@ -62,7 +62,7 @@ public class AsyncEndpointHandlerTests
 		Task<IResult?> Handler(HttpContext ctx, TestRequest req, CancellationToken ct)
 			=> Task.FromResult<IResult?>(Results.Ok());
 
-		await AsyncEndpointHandler.HandleJobSubmission<TestRequest>(
+		await JobSubmitHandler.HandleJobSubmission<TestRequest>(
 			httpContext, "TestJob", Handler,
 			submitter.Object, responseConfig, serializer.Object, CancellationToken.None);
 
@@ -87,7 +87,7 @@ public class AsyncEndpointHandlerTests
 
 		Task<IResult?>? Handler(HttpContext ctx, TestRequest req, CancellationToken ct) => null;
 
-		await AsyncEndpointHandler.HandleJobSubmission<TestRequest>(
+		await JobSubmitHandler.HandleJobSubmission<TestRequest>(
 			httpContext, "TestJob", Handler,
 			submitter.Object, responseConfig, serializer.Object, CancellationToken.None);
 
@@ -113,7 +113,7 @@ public class AsyncEndpointHandlerTests
 		Task<IResult?>? Handler(HttpContext ctx, TestRequest req, CancellationToken ct)
 			=> Task.FromResult<IResult?>(null);
 
-		await AsyncEndpointHandler.HandleJobSubmission<TestRequest>(
+		await JobSubmitHandler.HandleJobSubmission<TestRequest>(
 			httpContext, "TestJob", Handler,
 			submitter.Object, responseConfig, serializer.Object, CancellationToken.None);
 
@@ -133,7 +133,7 @@ public class AsyncEndpointHandlerTests
 		var serializer = new Mock<ISerializer>();
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 
-		await AsyncEndpointHandler.HandleJobSubmission<TestRequest>(
+		await JobSubmitHandler.HandleJobSubmission<TestRequest>(
 			httpContext, "TestJob", null,
 			submitter.Object, responseConfig, serializer.Object, CancellationToken.None);
 
@@ -152,7 +152,7 @@ public class AsyncEndpointHandlerTests
 		serializer.Setup(s => s.Deserialize<TestRequest>(It.IsAny<string>())).Throws(new InvalidOperationException("bad json"));
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 
-		await AsyncEndpointHandler.HandleJobSubmission<TestRequest>(
+		await JobSubmitHandler.HandleJobSubmission<TestRequest>(
 			httpContext, "TestJob", null,
 			submitter.Object, responseConfig, serializer.Object, CancellationToken.None);
 
@@ -174,7 +174,7 @@ public class AsyncEndpointHandlerTests
 		serializer.Setup(s => s.Deserialize<TestRequest>(It.IsAny<string>())).Returns(new TestRequest());
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 
-		await AsyncEndpointHandler.HandleJobSubmission<TestRequest>(
+		await JobSubmitHandler.HandleJobSubmission<TestRequest>(
 			httpContext, "TestJob", null,
 			submitter.Object, responseConfig, serializer.Object, CancellationToken.None);
 
@@ -191,7 +191,7 @@ public class AsyncEndpointHandlerTests
 		Task<IResult?>? Handler(HttpContext ctx, CancellationToken ct)
 			=> Task.FromResult<IResult?>(Results.Ok());
 
-		await AsyncEndpointHandler.HandleJobSubmission(
+		await JobSubmitHandler.HandleJobSubmission(
 			httpContext, "TestJob", Handler,
 			submitter.Object, responseConfig, CancellationToken.None);
 
@@ -212,7 +212,7 @@ public class AsyncEndpointHandlerTests
 
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 
-		await AsyncEndpointHandler.HandleJobSubmission(
+		await JobSubmitHandler.HandleJobSubmission(
 			httpContext, "TestJob", (Func<HttpContext, CancellationToken, Task<IResult?>?>?)null,
 			submitter.Object, responseConfig, CancellationToken.None);
 
@@ -235,7 +235,7 @@ public class AsyncEndpointHandlerTests
 
 		Task<IResult?>? Handler(HttpContext ctx, CancellationToken ct) => null;
 
-		await AsyncEndpointHandler.HandleJobSubmission(
+		await JobSubmitHandler.HandleJobSubmission(
 			httpContext, "TestJob", Handler,
 			submitter.Object, responseConfig, CancellationToken.None);
 
@@ -259,7 +259,7 @@ public class AsyncEndpointHandlerTests
 		Task<IResult?>? Handler(HttpContext ctx, CancellationToken ct)
 			=> Task.FromResult<IResult?>(null);
 
-		await AsyncEndpointHandler.HandleJobSubmission(
+		await JobSubmitHandler.HandleJobSubmission(
 			httpContext, "TestJob", Handler,
 			submitter.Object, responseConfig, CancellationToken.None);
 
@@ -279,7 +279,7 @@ public class AsyncEndpointHandlerTests
 
 		var responseConfig = new AsyncEndpointsResponseConfigurations();
 
-		await AsyncEndpointHandler.HandleJobSubmission(
+		await JobSubmitHandler.HandleJobSubmission(
 			httpContext, "TestJob", (Func<HttpContext, CancellationToken, Task<IResult?>?>?)null,
 			submitter.Object, responseConfig, CancellationToken.None);
 

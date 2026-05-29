@@ -14,7 +14,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPost(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapPost(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPost(
@@ -22,7 +22,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPost(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapPost(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPut<TRequest>(
@@ -30,7 +30,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPut(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapPut(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPut(
@@ -38,7 +38,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPut(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapPut(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPatch<TRequest>(
@@ -46,7 +46,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPatch(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapPatch(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncPatch(
@@ -54,7 +54,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapPatch(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapPatch(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncDelete<TRequest>(
@@ -62,7 +62,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, TRequest, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapDelete(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapDelete(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointConventionBuilder MapAsyncDelete(
@@ -70,7 +70,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 		string jobName,
 		string pattern,
 		Func<HttpContext, CancellationToken, Task<IResult?>?>? handler = null) =>
-		endpoints.MapDelete(pattern, AsyncEndpointHandler.CreateRequestDelegate(jobName, handler))
+		endpoints.MapDelete(pattern, JobSubmitHandler.CreateRequestDelegate(jobName, handler))
 		.WithTags("AsyncEndpoint");
 
 	public static IEndpointRouteBuilder MapAsyncEndpointsEndpoints(
