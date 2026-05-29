@@ -1,4 +1,5 @@
 using AsyncEndpoints.Abstractions.Jobs;
+using AsyncEndpoints.Provider.Redis.Infrastructure;
 using StackExchange.Redis;
 using System.Globalization;
 using System.Text.Json;
@@ -27,7 +28,7 @@ public class JobHashConverter : IJobHashConverter
 			new HashEntry("LastHeartbeat", record.LastHeartbeat?.ToString("O") ?? ""),
 			new HashEntry("Result", record.Result ?? ""),
 			new HashEntry("ErrorMessage", record.ErrorMessage ?? ""),
-			new HashEntry("Metadata", record.Metadata is not null ? JsonSerializer.Serialize(record.Metadata) : "")
+			new HashEntry("Metadata", record.Metadata is not null ? JsonSerializer.Serialize(record.Metadata, RedisJsonContext.Default.DictionaryStringString) : "")
 		];
 	}
 
@@ -88,7 +89,7 @@ public class JobHashConverter : IJobHashConverter
 	private static Dictionary<string, string>? DeserializeMetadata(string? value)
 	{
 		if (string.IsNullOrEmpty(value)) return null;
-		try { return JsonSerializer.Deserialize<Dictionary<string, string>>(value); }
+		try { return JsonSerializer.Deserialize(value, RedisJsonContext.Default.DictionaryStringString); }
 		catch { return null; }
 	}
 }

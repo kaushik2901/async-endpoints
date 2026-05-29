@@ -1,3 +1,4 @@
+using AsyncEndpoints.Abstractions.Infrastructure.Serialization;
 using AsyncEndpoints.Abstractions.Listener;
 using AsyncEndpoints.Abstractions.Partitioning;
 using AsyncEndpoints.Abstractions.Storage;
@@ -6,7 +7,6 @@ using AsyncEndpoints.Core.Channels;
 using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.DependencyInjection;
 using AsyncEndpoints.Core.Execution;
-using AsyncEndpoints.Core.Infrastructure.Serialization;
 using AsyncEndpoints.Core.Partitioning;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

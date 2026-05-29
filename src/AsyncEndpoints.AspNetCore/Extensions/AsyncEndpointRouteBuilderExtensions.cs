@@ -1,13 +1,13 @@
+using AsyncEndpoints.Abstractions.Infrastructure.Serialization;
 using AsyncEndpoints.Abstractions.Submission;
 using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Infrastructure;
 using AsyncEndpoints.AspNetCore.Models;
-using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 namespace AsyncEndpoints.AspNetCore.Extensions;
 
@@ -166,15 +166,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 
 	private static TRequest? DeserializeBody<TRequest>(ISerializer serializer, string bodyText)
 	{
-		var typeInfo = (JsonTypeInfo<TRequest>?)AsyncEndpointsAspNetCoreJsonSerializationContext.Default.GetTypeInfo(typeof(TRequest));
-		if (typeInfo is not null)
-			return serializer.Deserialize(bodyText, typeInfo);
-
-		var coreTypeInfo = (JsonTypeInfo<TRequest>?)AsyncEndpointsJsonSerializationContext.Default.GetTypeInfo(typeof(TRequest));
-		if (coreTypeInfo is not null)
-			return serializer.Deserialize(bodyText, coreTypeInfo);
-
-		return serializer.Deserialize<TRequest>(bodyText, (JsonSerializerOptions?)null);
+		return serializer.Deserialize<TRequest>(bodyText);
 	}
 
 	private static async Task SubmitJobAndExecute(
@@ -198,7 +190,7 @@ public static class AsyncEndpointRouteBuilderExtensions
 
 		try
 		{
-			var jsonPayload = JsonSerializer.Serialize(httpPayload, AsyncEndpointsAspNetCoreJsonSerializationContext.Default.HttpJobPayload);
+			var jsonPayload = JsonSerializer.Serialize(httpPayload, AspNetCoreJsonContext.Default.HttpJobPayload);
 			var jobId = await submitter.SubmitAsync(jobName, jsonPayload, channel, partitionKey, ct);
 			var response = await responseConfig.JobSubmittedResponseFactory(jobId, httpContext);
 			await response.ExecuteAsync(httpContext);

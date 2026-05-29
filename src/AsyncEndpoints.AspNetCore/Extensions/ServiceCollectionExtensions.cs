@@ -1,6 +1,8 @@
 using AsyncEndpoints.AspNetCore.Configuration;
+using AsyncEndpoints.AspNetCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json.Serialization.Metadata;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Text.Json.Serialization;
 
 namespace AsyncEndpoints.AspNetCore.Extensions;
 
@@ -11,17 +13,8 @@ public static class ServiceCollectionExtensions
 		services.AddHttpContextAccessor();
 		services.AddSingleton<AspNetCoreOptions>();
 		services.AddSingleton<AsyncEndpointsResponseConfigurations>();
-		services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsAspNetCoreJsonSerializationContext.Default);
-		return services;
-	}
-
-	public static IServiceCollection AddAsyncEndpointsJsonTypeInfoResolver(this IServiceCollection services, IJsonTypeInfoResolver jsonTypeInfoResolver)
-	{
-		services.ConfigureHttpJsonOptions(options =>
-		{
-			options.SerializerOptions.TypeInfoResolverChain.Add(jsonTypeInfoResolver);
-		});
-
+		services.TryAddSingleton<AspNetCoreJsonContext>();
+		services.TryAddSingleton<JsonSerializerContext>(sp => sp.GetRequiredService<AspNetCoreJsonContext>());
 		return services;
 	}
 }

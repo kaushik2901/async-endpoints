@@ -1,3 +1,4 @@
+using AsyncEndpoints.Abstractions.Infrastructure.Serialization;
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.AspNetCore.Endpoints;

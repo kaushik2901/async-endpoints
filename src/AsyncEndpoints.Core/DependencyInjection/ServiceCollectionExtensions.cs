@@ -1,3 +1,5 @@
+using AsyncEndpoints.Abstractions.Infrastructure;
+using AsyncEndpoints.Abstractions.Infrastructure.Serialization;
 using AsyncEndpoints.Abstractions.Listener;
 using AsyncEndpoints.Abstractions.Partitioning;
 using AsyncEndpoints.Abstractions.Storage;
@@ -13,6 +15,7 @@ using AsyncEndpoints.Core.Submission;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using System.Text.Json.Serialization;
 
 namespace AsyncEndpoints.Core.DependencyInjection;
 
@@ -27,6 +30,8 @@ public static class ServiceCollectionExtensions
 		services.AddSingleton(options);
 		services.AddSingleton<IOptions<AsyncEndpointsOptions>>(new OptionsWrapper<AsyncEndpointsOptions>(options));
 
+		services.TryAddSingleton<AsyncEndpointsJsonContext>();
+		services.TryAddSingleton<JsonSerializerContext>(sp => sp.GetRequiredService<AsyncEndpointsJsonContext>());
 		services.TryAddSingleton<ISerializer, Serializer>();
 
 		services.TryAddSingleton<IJobSubmitter, JobSubmitter>();
