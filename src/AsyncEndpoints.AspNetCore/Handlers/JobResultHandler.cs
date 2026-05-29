@@ -1,11 +1,23 @@
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace AsyncEndpoints.AspNetCore.Endpoints;
+namespace AsyncEndpoints.AspNetCore.Handlers;
 
-public static class JobResultEndpoint
+public static class JobResultHandler
 {
+	internal static RequestDelegate CreateRequestDelegate()
+	{
+		return async httpContext =>
+		{
+			var store = httpContext.RequestServices.GetRequiredService<IJobStore>();
+			var jobId = Guid.Parse((string)httpContext.Request.RouteValues["jobId"]!);
+			var result = await GetJobResult(jobId, store, httpContext.RequestAborted);
+			await result.ExecuteAsync(httpContext);
+		};
+	}
+
 	public static async Task<IResult> GetJobResult(
 		Guid jobId,
 		IJobStore store,

@@ -1,15 +1,15 @@
 using AsyncEndpoints.Abstractions.Infrastructure.Serialization;
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
-using AsyncEndpoints.AspNetCore.Endpoints;
+using AsyncEndpoints.AspNetCore.Handlers;
 using AsyncEndpoints.Core.DependencyInjection;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AsyncEndpoints.AspNetCore.UnitTests.Endpoints;
+namespace AsyncEndpoints.AspNetCore.UnitTests.Handlers;
 
-public class JobResultEndpointTests
+public class JobResultHandlerTests
 {
 	private static (IServiceProvider Services, IJobStore Store) CreateTestServices()
 	{
@@ -32,7 +32,7 @@ public class JobResultEndpointTests
 		await store.UpdateStatusAsync(jobId, JobStatus.Processing);
 		await store.UpdateStatusAsync(jobId, JobStatus.Completed, "\"test result\"");
 
-		var result = await JobResultEndpoint.GetJobResult(jobId, store, CancellationToken.None);
+		var result = await JobResultHandler.GetJobResult(jobId, store, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status200OK, statusCodeResult.StatusCode);
@@ -43,7 +43,7 @@ public class JobResultEndpointTests
 	{
 		var (sp, store) = CreateTestServices();
 
-		var result = await JobResultEndpoint.GetJobResult(Guid.NewGuid(), store, CancellationToken.None);
+		var result = await JobResultHandler.GetJobResult(Guid.NewGuid(), store, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
@@ -56,7 +56,7 @@ public class JobResultEndpointTests
 		var descriptor = new JobDescriptor("TestJob", "{}");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		var result = await JobResultEndpoint.GetJobResult(jobId, store, CancellationToken.None);
+		var result = await JobResultHandler.GetJobResult(jobId, store, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status409Conflict, statusCodeResult.StatusCode);
@@ -71,7 +71,7 @@ public class JobResultEndpointTests
 		await store.UpdateStatusAsync(jobId, JobStatus.Processing);
 		await store.UpdateStatusAsync(jobId, JobStatus.Failed, "error occurred");
 
-		var result = await JobResultEndpoint.GetJobResult(jobId, store, CancellationToken.None);
+		var result = await JobResultHandler.GetJobResult(jobId, store, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status409Conflict, statusCodeResult.StatusCode);

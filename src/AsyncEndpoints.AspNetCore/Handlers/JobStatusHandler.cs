@@ -1,11 +1,23 @@
 using AsyncEndpoints.Abstractions.Storage;
 using AsyncEndpoints.AspNetCore.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace AsyncEndpoints.AspNetCore.Endpoints;
+namespace AsyncEndpoints.AspNetCore.Handlers;
 
-public static class JobStatusEndpoint
+public static class JobStatusHandler
 {
+	internal static RequestDelegate CreateRequestDelegate()
+	{
+		return async httpContext =>
+		{
+			var store = httpContext.RequestServices.GetRequiredService<IJobStore>();
+			var jobId = Guid.Parse((string)httpContext.Request.RouteValues["jobId"]!);
+			var result = await GetJobStatus(jobId, store, httpContext.RequestAborted);
+			await result.ExecuteAsync(httpContext);
+		};
+	}
+
 	public static async Task<IResult> GetJobStatus(
 		Guid jobId,
 		IJobStore store,

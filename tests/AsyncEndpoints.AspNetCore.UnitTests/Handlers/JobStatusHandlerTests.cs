@@ -1,15 +1,15 @@
 using AsyncEndpoints.Abstractions.Infrastructure.Serialization;
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
-using AsyncEndpoints.AspNetCore.Endpoints;
+using AsyncEndpoints.AspNetCore.Handlers;
 using AsyncEndpoints.Core.DependencyInjection;
 using AsyncEndpoints.Core.Infrastructure.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AsyncEndpoints.AspNetCore.UnitTests.Endpoints;
+namespace AsyncEndpoints.AspNetCore.UnitTests.Handlers;
 
-public class JobStatusEndpointTests
+public class JobStatusHandlerTests
 {
 	private static (IServiceProvider Services, IJobStore Store) CreateTestServices()
 	{
@@ -30,7 +30,7 @@ public class JobStatusEndpointTests
 		var descriptor = new JobDescriptor("TestJob", "{}");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		var result = await JobStatusEndpoint.GetJobStatus(jobId, store, CancellationToken.None);
+		var result = await JobStatusHandler.GetJobStatus(jobId, store, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status200OK, statusCodeResult.StatusCode);
@@ -42,7 +42,7 @@ public class JobStatusEndpointTests
 		var (sp, store) = CreateTestServices();
 		var fakeId = Guid.NewGuid();
 
-		var result = await JobStatusEndpoint.GetJobStatus(fakeId, store, CancellationToken.None);
+		var result = await JobStatusHandler.GetJobStatus(fakeId, store, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status404NotFound, statusCodeResult.StatusCode);
@@ -55,7 +55,7 @@ public class JobStatusEndpointTests
 		var descriptor = new JobDescriptor("TestJob", """{"key":"value"}""");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		var result = await JobStatusEndpoint.GetJobStatus(jobId, store, CancellationToken.None);
+		var result = await JobStatusHandler.GetJobStatus(jobId, store, CancellationToken.None);
 
 		var statusCodeResult = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
 		Assert.Equal(StatusCodes.Status200OK, statusCodeResult.StatusCode);

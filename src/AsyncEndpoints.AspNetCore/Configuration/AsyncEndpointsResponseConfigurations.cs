@@ -1,5 +1,5 @@
 using AsyncEndpoints.Abstractions.Jobs;
-using AsyncEndpoints.AspNetCore.Endpoints;
+using AsyncEndpoints.AspNetCore.Handlers;
 using Microsoft.AspNetCore.Http;
 
 namespace AsyncEndpoints.AspNetCore.Configuration;
