@@ -15,11 +15,13 @@ namespace AsyncEndpoints.Worker.UnitTests;
 
 public class JobWorkerServiceTests
 {
+	private const string TestWorkerId = "test-worker";
+
 	[Fact]
 	public async Task ExecuteAsync_LoopsUntilCancelled()
 	{
 		var mockListener = new Mock<IJobListener>();
-		mockListener.Setup(l => l.WaitForNextJobAsync("default", null, It.IsAny<CancellationToken>()))
+		mockListener.Setup(l => l.WaitForNextJobAsync("default", null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync((JobRecord?)null);
 
 		var mockStore = new Mock<IJobStore>();
@@ -32,7 +34,7 @@ public class JobWorkerServiceTests
 		await worker.StartAsync(cts.Token);
 		await worker.StopAsync(CancellationToken.None);
 
-		mockListener.Verify(l => l.WaitForNextJobAsync("default", null, It.IsAny<CancellationToken>()),
+		mockListener.Verify(l => l.WaitForNextJobAsync("default", null, It.IsAny<string>(), It.IsAny<CancellationToken>()),
 			Times.AtLeast(1));
 	}
 
@@ -43,7 +45,7 @@ public class JobWorkerServiceTests
 		var record = new JobRecord { JobId = jobId, JobName = "TestJob" };
 
 		var mockListener = new Mock<IJobListener>();
-		mockListener.SetupSequence(l => l.WaitForNextJobAsync("default", null, It.IsAny<CancellationToken>()))
+		mockListener.SetupSequence(l => l.WaitForNextJobAsync("default", null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(record)
 			.ReturnsAsync((JobRecord?)null);
 
@@ -68,7 +70,7 @@ public class JobWorkerServiceTests
 		var job2 = new JobRecord { JobId = Guid.NewGuid(), JobName = "Job2" };
 
 		var mockListener = new Mock<IJobListener>();
-		mockListener.SetupSequence(l => l.WaitForNextJobAsync("default", null, It.IsAny<CancellationToken>()))
+		mockListener.SetupSequence(l => l.WaitForNextJobAsync("default", null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(job1)
 			.ReturnsAsync(job2)
 			.ReturnsAsync((JobRecord?)null);
@@ -118,6 +120,7 @@ public class JobWorkerServiceTests
 			pipeline,
 			concurrencyManager,
 			heartbeatService,
+			options,
 			Mock.Of<ILogger<JobWorkerService>>());
 
 		using var cts = new CancellationTokenSource(3000);
@@ -163,6 +166,7 @@ public class JobWorkerServiceTests
 			pipeline,
 			concurrencyManager,
 			heartbeatService,
+			options,
 			Mock.Of<ILogger<JobWorkerService>>());
 	}
 }

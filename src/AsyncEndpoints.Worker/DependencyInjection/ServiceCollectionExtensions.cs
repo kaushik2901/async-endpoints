@@ -38,6 +38,7 @@ public static class ServiceCollectionExtensions
 				sp.GetRequiredService<JobExecutionPipeline>(),
 				sp.GetRequiredService<WorkerConcurrencyManager>(),
 				sp.GetRequiredService<HeartbeatService>(),
+				options,
 				sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<JobWorkerService>>());
 		});
 
@@ -56,12 +57,14 @@ public static class ServiceCollectionExtensions
 	{
 		services.AddSingleton<IHostedService>(sp =>
 		{
+			var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AsyncEndpointsOptions>>();
 			return new JobWorkerService(
 				channelName,
 				sp.GetRequiredService<Abstractions.Listener.IJobListener>(),
 				sp.GetRequiredService<JobExecutionPipeline>(),
 				sp.GetRequiredService<WorkerConcurrencyManager>(),
 				sp.GetRequiredService<HeartbeatService>(),
+				options,
 				sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<JobWorkerService>>());
 		});
 

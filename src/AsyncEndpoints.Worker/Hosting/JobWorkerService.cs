@@ -1,15 +1,18 @@
 using AsyncEndpoints.Abstractions.Listener;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Concurrency;
 using AsyncEndpoints.Worker.Execution;
 using AsyncEndpoints.Worker.Heartbeat;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Worker.Hosting;
 
 public sealed class JobWorkerService : BackgroundService
 {
 	private readonly string _channel;
+	private readonly string _workerId;
 	private readonly IJobListener _listener;
 	private readonly JobExecutionPipeline _pipeline;
 	private readonly WorkerConcurrencyManager _concurrencyManager;
@@ -22,9 +25,11 @@ public sealed class JobWorkerService : BackgroundService
 		JobExecutionPipeline pipeline,
 		WorkerConcurrencyManager concurrencyManager,
 		HeartbeatService heartbeatService,
+		IOptions<AsyncEndpointsOptions> options,
 		ILogger<JobWorkerService> logger)
 	{
 		_channel = channel;
+		_workerId = options.Value.WorkerId ?? Guid.NewGuid().ToString("N");
 		_listener = listener;
 		_pipeline = pipeline;
 		_concurrencyManager = concurrencyManager;
@@ -40,7 +45,7 @@ public sealed class JobWorkerService : BackgroundService
 		{
 			try
 			{
-				var job = await _listener.WaitForNextJobAsync(_channel, null, stoppingToken);
+				var job = await _listener.WaitForNextJobAsync(_channel, null, _workerId, stoppingToken);
 
 				if (job is null)
 				{

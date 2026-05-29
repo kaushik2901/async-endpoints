@@ -4,6 +4,8 @@ namespace AsyncEndpoints.Abstractions.UnitTests.ContractTests;
 
 public abstract class JobStoreContractTestsBase
 {
+	protected const string TestWorkerId = "test-worker";
+
 	protected abstract Abstractions.Storage.IJobStore CreateStore();
 
 	[Fact]
@@ -22,7 +24,7 @@ public abstract class JobStoreContractTestsBase
 	{
 		var store = CreateStore();
 
-		var result = await store.DequeueAsync("nonexistent", null);
+		var result = await store.DequeueAsync("nonexistent", null, TestWorkerId);
 
 		Assert.Null(result);
 	}
@@ -34,12 +36,13 @@ public abstract class JobStoreContractTestsBase
 		var descriptor = new JobDescriptor("TestJob", "{}", Channel: "test");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		var result = await store.DequeueAsync("test", null);
+		var result = await store.DequeueAsync("test", null, TestWorkerId);
 
 		Assert.NotNull(result);
 		Assert.Equal(jobId, result.JobId);
 		Assert.Equal("TestJob", result.JobName);
 		Assert.Equal(JobStatus.Processing, result.Status);
+		Assert.Equal(TestWorkerId, result.WorkerId);
 		Assert.NotNull(result.StartedAt);
 		Assert.NotNull(result.LastHeartbeat);
 	}
@@ -51,8 +54,8 @@ public abstract class JobStoreContractTestsBase
 		await store.EnqueueAsync(new JobDescriptor("JobA", "{}", Channel: "channel-a"));
 		await store.EnqueueAsync(new JobDescriptor("JobB", "{}", Channel: "channel-b"));
 
-		var resultA = await store.DequeueAsync("channel-a", null);
-		var resultB = await store.DequeueAsync("channel-b", null);
+		var resultA = await store.DequeueAsync("channel-a", null, TestWorkerId);
+		var resultB = await store.DequeueAsync("channel-b", null, TestWorkerId);
 
 		Assert.NotNull(resultA);
 		Assert.Equal("JobA", resultA.JobName);
@@ -67,8 +70,8 @@ public abstract class JobStoreContractTestsBase
 		await store.EnqueueAsync(new JobDescriptor("Low", "{}", Channel: "test", Priority: 1));
 		await store.EnqueueAsync(new JobDescriptor("High", "{}", Channel: "test", Priority: 10));
 
-		var first = await store.DequeueAsync("test", null);
-		var second = await store.DequeueAsync("test", null);
+		var first = await store.DequeueAsync("test", null, TestWorkerId);
+		var second = await store.DequeueAsync("test", null, TestWorkerId);
 
 		Assert.NotNull(first);
 		Assert.Equal("High", first.JobName);
@@ -82,8 +85,8 @@ public abstract class JobStoreContractTestsBase
 		var store = CreateStore();
 		await store.EnqueueAsync(new JobDescriptor("TestJob", "{}", Channel: "test"));
 
-		var task1 = store.DequeueAsync("test", null);
-		var task2 = store.DequeueAsync("test", null);
+		var task1 = store.DequeueAsync("test", null, "worker-a");
+		var task2 = store.DequeueAsync("test", null, "worker-b");
 
 		var results = await Task.WhenAll(task1, task2);
 
@@ -99,7 +102,7 @@ public abstract class JobStoreContractTestsBase
 		var descriptor = new JobDescriptor("TestJob", "{}", Channel: "test");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		var dequeued = await store.DequeueAsync("test", null);
+		var dequeued = await store.DequeueAsync("test", null, TestWorkerId);
 		Assert.NotNull(dequeued);
 		var originalHeartbeat = dequeued.LastHeartbeat;
 
@@ -119,7 +122,7 @@ public abstract class JobStoreContractTestsBase
 		var descriptor = new JobDescriptor("TestJob", "{}", Channel: "test");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		await store.DequeueAsync("test", null);
+		await store.DequeueAsync("test", null, TestWorkerId);
 
 		var reclaimed = await store.ReclaimStaleJobsAsync(TimeSpan.FromSeconds(-1));
 
@@ -133,7 +136,7 @@ public abstract class JobStoreContractTestsBase
 		var descriptor = new JobDescriptor("TestJob", "{}", Channel: "test");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		await store.DequeueAsync("test", null);
+		await store.DequeueAsync("test", null, TestWorkerId);
 		await store.HeartbeatAsync(jobId);
 
 		var reclaimed = await store.ReclaimStaleJobsAsync(TimeSpan.FromHours(1));
@@ -172,7 +175,7 @@ public abstract class JobStoreContractTestsBase
 		var descriptor = new JobDescriptor("TestJob", "{}", Channel: "test");
 		var jobId = await store.EnqueueAsync(descriptor);
 
-		await store.DequeueAsync("test", null);
+		await store.DequeueAsync("test", null, TestWorkerId);
 		await store.UpdateStatusAsync(jobId, JobStatus.Completed, "done");
 
 		var status = await store.GetStatusAsync(jobId);
@@ -198,7 +201,7 @@ public abstract class JobStoreContractTestsBase
 		var store = CreateStore();
 		var jobId = await store.EnqueueAsync(new JobDescriptor("TestJob", "{}", Channel: "test"));
 
-		await store.DequeueAsync("test", null);
+		await store.DequeueAsync("test", null, TestWorkerId);
 		await store.UpdateStatusAsync(jobId, JobStatus.Failed, "error occurred");
 
 		var status = await store.GetStatusAsync(jobId);
@@ -212,7 +215,7 @@ public abstract class JobStoreContractTestsBase
 		var store = CreateStore();
 		var jobId = await store.EnqueueAsync(new JobDescriptor("TestJob", "{}", Channel: "test"));
 
-		await store.DequeueAsync("test", null);
+		await store.DequeueAsync("test", null, TestWorkerId);
 		await store.UpdateStatusAsync(jobId, JobStatus.Failed);
 		await store.UpdateStatusAsync(jobId, JobStatus.Queued);
 
@@ -226,7 +229,7 @@ public abstract class JobStoreContractTestsBase
 		var store = CreateStore();
 		var jobId = await store.EnqueueAsync(new JobDescriptor("TestJob", "{}", Channel: "test"));
 
-		await store.DequeueAsync("test", null);
+		await store.DequeueAsync("test", null, TestWorkerId);
 		await store.UpdateStatusAsync(jobId, JobStatus.Failed);
 		await store.UpdateStatusAsync(jobId, JobStatus.DeadLettered);
 
@@ -240,7 +243,7 @@ public abstract class JobStoreContractTestsBase
 		var store = CreateStore();
 		var jobId = await store.EnqueueAsync(new JobDescriptor("TestJob", "{}", Channel: "test"));
 
-		await store.DequeueAsync("test", null);
+		await store.DequeueAsync("test", null, TestWorkerId);
 		await store.UpdateStatusAsync(jobId, JobStatus.Queued);
 
 		var status = await store.GetStatusAsync(jobId);
@@ -272,7 +275,7 @@ public abstract class JobStoreContractTestsBase
 		await store.EnqueueAsync(new JobDescriptor("Job2", "{}", Channel: "test", PartitionKey: "p2"));
 
 		var partition1 = new HashSet<int> { Math.Abs("p1".GetHashCode(StringComparison.Ordinal)) % 100 };
-		var fromP1 = await store.DequeueAsync("test", partition1);
+		var fromP1 = await store.DequeueAsync("test", partition1, TestWorkerId);
 
 		Assert.NotNull(fromP1);
 		Assert.Equal("Job1", fromP1.JobName);

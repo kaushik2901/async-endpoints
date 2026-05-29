@@ -43,6 +43,12 @@ public sealed class AsyncEndpointsOptionsBuilder
 		return this;
 	}
 
+	public AsyncEndpointsOptionsBuilder WithWorkerId(string workerId)
+	{
+		_options.WorkerId = workerId;
+		return this;
+	}
+
 	public AsyncEndpointsOptionsBuilder WithDefaultChannel(string channel)
 	{
 		_options.DefaultChannel = channel;

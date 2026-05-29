@@ -19,9 +19,9 @@ public sealed class PollingJobListener : IJobListener
 		_currentInterval = _options.PollingMinInterval;
 	}
 
-	public async Task<JobRecord?> WaitForNextJobAsync(string channel, IReadOnlySet<int>? partitions, CancellationToken ct = default)
+	public async Task<JobRecord?> WaitForNextJobAsync(string channel, IReadOnlySet<int>? partitions, string workerId, CancellationToken ct = default)
 	{
-		var job = await _store.DequeueAsync(channel, partitions, ct);
+		var job = await _store.DequeueAsync(channel, partitions, workerId, ct);
 
 		if (job is not null)
 		{

@@ -43,7 +43,7 @@ public class InMemoryJobStore : IJobStore
 		return Task.FromResult(jobId);
 	}
 
-	public Task<JobRecord?> DequeueAsync(string channel, IReadOnlySet<int>? partitions, CancellationToken ct = default)
+	public Task<JobRecord?> DequeueAsync(string channel, IReadOnlySet<int>? partitions, string workerId, CancellationToken ct = default)
 	{
 		var candidates = _jobs.Values
 			.Where(j => string.Equals(j.Channel, channel, StringComparison.OrdinalIgnoreCase))
@@ -59,7 +59,8 @@ public class InMemoryJobStore : IJobStore
 			{
 				Status = JobStatus.Processing,
 				StartedAt = _dateTimeProvider.GetUtcNow().UtcDateTime,
-				LastHeartbeat = _dateTimeProvider.GetUtcNow().UtcDateTime
+				LastHeartbeat = _dateTimeProvider.GetUtcNow().UtcDateTime,
+				WorkerId = workerId
 			};
 
 			if (_jobs.TryUpdate(record.JobId, updated, record))

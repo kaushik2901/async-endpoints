@@ -56,7 +56,7 @@ public class RedisJobStore : IJobStore
 		return jobId;
 	}
 
-	public async Task<JobRecord?> DequeueAsync(string channel, IReadOnlySet<int>? partitions, CancellationToken ct = default)
+	public async Task<JobRecord?> DequeueAsync(string channel, IReadOnlySet<int>? partitions, string workerId, CancellationToken ct = default)
 	{
 		var nowIso = _dateTimeProvider.GetUtcNow().ToString("O");
 		var nowUnix = _dateTimeProvider.GetUtcNow().ToUnixTimeSeconds().ToString();
@@ -64,7 +64,7 @@ public class RedisJobStore : IJobStore
 			? string.Join(",", partitions)
 			: "";
 
-		var result = await _luaScriptService.DequeueJobAsync(_database, channel, nowIso, nowUnix, partitionStr);
+		var result = await _luaScriptService.DequeueJobAsync(_database, channel, nowIso, nowUnix, partitionStr, workerId);
 
 		if (result.Length == 0)
 			return null;

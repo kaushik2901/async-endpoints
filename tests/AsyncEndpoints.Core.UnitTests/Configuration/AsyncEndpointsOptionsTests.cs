@@ -17,6 +17,7 @@ public class AsyncEndpointsOptionsTests
 		Assert.Equal(TimeSpan.FromMilliseconds(100), options.PollingMinInterval);
 		Assert.Equal(TimeSpan.FromSeconds(30), options.PollingMaxInterval);
 		Assert.Equal("default", options.DefaultChannel);
+		Assert.Null(options.WorkerId);
 		Assert.False(options.EnablePartitioning);
 		Assert.True(options.ObservabilityEnabled);
 		Assert.Null(options.SerializerOptions);
@@ -32,6 +33,7 @@ public class AsyncEndpointsOptionsTests
 			.WithHeartbeatInterval(TimeSpan.FromSeconds(10))
 			.WithStaleJobTimeout(TimeSpan.FromSeconds(60))
 			.WithPollingInterval(TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(15))
+			.WithWorkerId("my-worker")
 			.WithDefaultChannel("test-channel")
 			.EnablePartitioning(true)
 			.WithObservability(false)
@@ -45,6 +47,7 @@ public class AsyncEndpointsOptionsTests
 		Assert.Equal(TimeSpan.FromMilliseconds(200), options.PollingMinInterval);
 		Assert.Equal(TimeSpan.FromSeconds(15), options.PollingMaxInterval);
 		Assert.Equal("test-channel", options.DefaultChannel);
+		Assert.Equal("my-worker", options.WorkerId);
 		Assert.True(options.EnablePartitioning);
 		Assert.False(options.ObservabilityEnabled);
 	}

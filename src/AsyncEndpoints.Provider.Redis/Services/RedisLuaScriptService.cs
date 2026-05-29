@@ -38,7 +38,7 @@ public class RedisLuaScriptService : IRedisLuaScriptService
 		return result.ToString();
 	}
 
-	public async Task<RedisValue[]> DequeueJobAsync(IDatabase database, string channel, string nowIso, string nowUnix, string? partitions)
+	public async Task<RedisValue[]> DequeueJobAsync(IDatabase database, string channel, string nowIso, string nowUnix, string? partitions, string workerId)
 	{
 		var script = @"
             local queueKey = 'ae:queue:' .. KEYS[1]
@@ -46,6 +46,7 @@ public class RedisLuaScriptService : IRedisLuaScriptService
             local nowIso = ARGV[1]
             local nowUnix = ARGV[2]
             local partitionFilter = ARGV[3]
+            local workerId = ARGV[4]
 
             local jobIds = redis.call('ZRANGE', queueKey, 0, -1)
 
@@ -69,7 +70,7 @@ public class RedisLuaScriptService : IRedisLuaScriptService
                     end
 
                     if partitionOk then
-                        redis.call('HSET', jobKey, 'Status', '300', 'StartedAt', nowIso, 'LastHeartbeat', nowIso)
+                        redis.call('HSET', jobKey, 'Status', '300', 'StartedAt', nowIso, 'LastHeartbeat', nowIso, 'WorkerId', workerId)
                         redis.call('ZREM', queueKey, jobId)
                         redis.call('ZADD', heartbeatKey, nowUnix, jobId)
                         local data = redis.call('HGETALL', jobKey)
@@ -83,7 +84,7 @@ public class RedisLuaScriptService : IRedisLuaScriptService
             return nil
         ";
 
-		var result = await database.ScriptEvaluateAsync(script, keys: [new RedisKey(channel)], values: [nowIso, nowUnix, partitions ?? ""]);
+		var result = await database.ScriptEvaluateAsync(script, keys: [new RedisKey(channel)], values: [nowIso, nowUnix, partitions ?? "", workerId]);
 
 		if (result.IsNull)
 			return [];

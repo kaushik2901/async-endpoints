@@ -9,6 +9,8 @@ namespace AsyncEndpoints.Core.UnitTests;
 
 public class PollingJobListenerTests
 {
+	private const string TestWorkerId = "test-worker";
+
 	[Fact]
 	public async Task WaitForNextJobAsync_CallsStoreDequeue()
 	{
@@ -16,12 +18,12 @@ public class PollingJobListenerTests
 		var options = new AsyncEndpointsOptions();
 		var listener = new PollingJobListener(mockStore.Object, Options.Create(options));
 
-		mockStore.Setup(s => s.DequeueAsync("default", null, It.IsAny<CancellationToken>()))
+		mockStore.Setup(s => s.DequeueAsync("default", null, TestWorkerId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync((JobRecord?)null);
 
-		var result = await listener.WaitForNextJobAsync("default", null, CancellationToken.None);
+		var result = await listener.WaitForNextJobAsync("default", null, TestWorkerId, CancellationToken.None);
 
-		mockStore.Verify(s => s.DequeueAsync("default", null, It.IsAny<CancellationToken>()), Times.Once);
+		mockStore.Verify(s => s.DequeueAsync("default", null, TestWorkerId, It.IsAny<CancellationToken>()), Times.Once);
 		Assert.Null(result);
 	}
 
@@ -38,22 +40,22 @@ public class PollingJobListenerTests
 
 		var jobRecord = new JobRecord { JobId = Guid.NewGuid(), JobName = "test" };
 
-		mockStore.SetupSequence(s => s.DequeueAsync("default", null, It.IsAny<CancellationToken>()))
+		mockStore.SetupSequence(s => s.DequeueAsync("default", null, TestWorkerId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync((JobRecord?)null)
 			.ReturnsAsync((JobRecord?)null)
 			.ReturnsAsync(jobRecord);
 
-		var result1 = await listener.WaitForNextJobAsync("default", null, CancellationToken.None);
+		var result1 = await listener.WaitForNextJobAsync("default", null, TestWorkerId, CancellationToken.None);
 		Assert.Null(result1);
 
-		var result2 = await listener.WaitForNextJobAsync("default", null, CancellationToken.None);
+		var result2 = await listener.WaitForNextJobAsync("default", null, TestWorkerId, CancellationToken.None);
 		Assert.Null(result2);
 
-		var result3 = await listener.WaitForNextJobAsync("default", null, CancellationToken.None);
+		var result3 = await listener.WaitForNextJobAsync("default", null, TestWorkerId, CancellationToken.None);
 		Assert.NotNull(result3);
 		Assert.Equal(jobRecord.JobId, result3.JobId);
 
-		mockStore.Verify(s => s.DequeueAsync("default", null, It.IsAny<CancellationToken>()), Times.Exactly(3));
+		mockStore.Verify(s => s.DequeueAsync("default", null, TestWorkerId, It.IsAny<CancellationToken>()), Times.Exactly(3));
 	}
 
 	[Fact]
@@ -67,15 +69,15 @@ public class PollingJobListenerTests
 		};
 		var listener = new PollingJobListener(mockStore.Object, Options.Create(options));
 
-		mockStore.Setup(s => s.DequeueAsync("default", null, It.IsAny<CancellationToken>()))
+		mockStore.Setup(s => s.DequeueAsync("default", null, TestWorkerId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync((JobRecord?)null);
 
 		var sw = System.Diagnostics.Stopwatch.StartNew();
-		await listener.WaitForNextJobAsync("default", null, CancellationToken.None);
+		await listener.WaitForNextJobAsync("default", null, TestWorkerId, CancellationToken.None);
 		var firstElapsed = sw.Elapsed;
 
 		sw.Restart();
-		await listener.WaitForNextJobAsync("default", null, CancellationToken.None);
+		await listener.WaitForNextJobAsync("default", null, TestWorkerId, CancellationToken.None);
 		var secondElapsed = sw.Elapsed;
 
 		Assert.True(firstElapsed.TotalMilliseconds >= 40,
@@ -98,6 +100,6 @@ public class PollingJobListenerTests
 		cts.Cancel();
 
 		await Assert.ThrowsAsync<TaskCanceledException>(() =>
-			listener.WaitForNextJobAsync("default", null, cts.Token));
+			listener.WaitForNextJobAsync("default", null, TestWorkerId, cts.Token));
 	}
 }
