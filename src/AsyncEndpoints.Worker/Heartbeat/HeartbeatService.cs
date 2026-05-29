@@ -1,5 +1,5 @@
 using AsyncEndpoints.Abstractions.Storage;
-using AsyncEndpoints.Worker.Hosting;
+using AsyncEndpoints.Core.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -8,10 +8,10 @@ namespace AsyncEndpoints.Worker.Heartbeat;
 public sealed class HeartbeatService
 {
 	private readonly IJobStore _store;
-	private readonly WorkerOptions _options;
+	private readonly AsyncEndpointsOptions _options;
 	private readonly ILogger<HeartbeatService> _logger;
 
-	public HeartbeatService(IJobStore store, IOptions<WorkerOptions> options, ILogger<HeartbeatService> logger)
+	public HeartbeatService(IJobStore store, IOptions<AsyncEndpointsOptions> options, ILogger<HeartbeatService> logger)
 	{
 		_store = store;
 		_options = options.Value;

@@ -1,4 +1,5 @@
 using AsyncEndpoints.Abstractions.Storage;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,7 +13,7 @@ public class StaleJobSweeperTests
 	public async Task ExecuteAsync_CallsReclaimStaleJobs()
 	{
 		var mockStore = new Mock<IJobStore>();
-		var options = new WorkerOptions { StaleJobTimeout = TimeSpan.FromMilliseconds(100) };
+		var options = new AsyncEndpointsOptions { StaleJobTimeout = TimeSpan.FromMilliseconds(100) };
 		var logger = Mock.Of<ILogger<StaleJobSweeper>>();
 
 		var sweeper = new StaleJobSweeper(mockStore.Object, Options.Create(options), logger);

@@ -1,7 +1,7 @@
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Execution;
-using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -13,13 +13,13 @@ public sealed class JobExecutionPipeline
 	private readonly IJobStore _store;
 	private readonly RetryHandler _retryHandler;
 	private readonly ILogger<JobExecutionPipeline> _logger;
-	private readonly WorkerOptions _options;
+	private readonly AsyncEndpointsOptions _options;
 
 	public JobExecutionPipeline(
 		JobDispatcher dispatcher,
 		IJobStore store,
 		RetryHandler retryHandler,
-		IOptions<WorkerOptions> options,
+		IOptions<AsyncEndpointsOptions> options,
 		ILogger<JobExecutionPipeline> logger)
 	{
 		_dispatcher = dispatcher;

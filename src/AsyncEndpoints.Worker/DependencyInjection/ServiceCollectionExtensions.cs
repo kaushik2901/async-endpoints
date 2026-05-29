@@ -1,3 +1,4 @@
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Concurrency;
 using AsyncEndpoints.Worker.Execution;
 using AsyncEndpoints.Worker.Heartbeat;
@@ -9,20 +10,17 @@ namespace AsyncEndpoints.Worker.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
-	private static readonly HashSet<string> _registeredChannels = [];
-
 	/// <summary>
 	/// Registers the main background worker for the default channel.
-	/// Each call to <c>AddChannelWorker</c> adds a dedicated polling loop for that channel.
+	/// Configuration is read from <see cref="AsyncEndpointsOptions"/> (registered by <c>AddAsyncEndpointsCore</c>).
 	/// </summary>
 	public static IServiceCollection AddAsyncEndpointsWorker(
 		this IServiceCollection services,
-		Action<WorkerOptions>? configure = null)
+		Action<AsyncEndpointsOptions>? configure = null)
 	{
-		services.AddOptions<WorkerOptions>();
 		if (configure is not null)
 		{
-			services.Configure(configure);
+			services.PostConfigure<AsyncEndpointsOptions>(o => configure(o));
 		}
 
 		services.AddSingleton<WorkerConcurrencyManager>();
@@ -32,16 +30,14 @@ public static class ServiceCollectionExtensions
 
 		services.AddSingleton<IHostedService>(sp =>
 		{
-			var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<WorkerOptions>>();
+			var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AsyncEndpointsOptions>>();
 			var channel = options.Value.DefaultChannel;
-			EnsureChannelNotDuplicate(channel);
 			return new JobWorkerService(
 				channel,
 				sp.GetRequiredService<Abstractions.Listener.IJobListener>(),
 				sp.GetRequiredService<JobExecutionPipeline>(),
 				sp.GetRequiredService<WorkerConcurrencyManager>(),
 				sp.GetRequiredService<HeartbeatService>(),
-				options,
 				sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<JobWorkerService>>());
 		});
 
@@ -52,8 +48,7 @@ public static class ServiceCollectionExtensions
 
 	/// <summary>
 	/// Adds a dedicated background worker for a specific channel with its own polling loop.
-	/// Multiple calls for different channel names are supported (competing-consumers pattern).
-	/// Duplicate registrations for the same channel name will throw.
+	/// Multiple calls for the same channel are allowed (competing-consumers pattern).
 	/// </summary>
 	public static IServiceCollection AddChannelWorker(
 		this IServiceCollection services,
@@ -61,29 +56,15 @@ public static class ServiceCollectionExtensions
 	{
 		services.AddSingleton<IHostedService>(sp =>
 		{
-			var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<WorkerOptions>>();
-			EnsureChannelNotDuplicate(channelName);
 			return new JobWorkerService(
 				channelName,
 				sp.GetRequiredService<Abstractions.Listener.IJobListener>(),
 				sp.GetRequiredService<JobExecutionPipeline>(),
 				sp.GetRequiredService<WorkerConcurrencyManager>(),
 				sp.GetRequiredService<HeartbeatService>(),
-				options,
 				sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<JobWorkerService>>());
 		});
 
 		return services;
-	}
-
-	private static void EnsureChannelNotDuplicate(string channel)
-	{
-		if (!_registeredChannels.Add(channel))
-		{
-			throw new InvalidOperationException(
-				$"A worker for channel '{channel}' is already registered. " +
-				"Use a different channel name, or if competing-consumers are intentional, " +
-				"register the worker manually via AddSingleton<IHostedService>.");
-		}
 	}
 }

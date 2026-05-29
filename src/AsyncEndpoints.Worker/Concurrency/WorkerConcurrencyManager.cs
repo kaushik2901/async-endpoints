@@ -1,4 +1,4 @@
-using AsyncEndpoints.Worker.Hosting;
+using AsyncEndpoints.Core.Configuration;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 
@@ -8,10 +8,10 @@ public sealed class WorkerConcurrencyManager : IDisposable
 {
 	private readonly ConcurrentDictionary<string, SemaphoreSlim> _channelSemaphores = new(StringComparer.OrdinalIgnoreCase);
 	private readonly ConcurrentDictionary<(string channel, int partition), SemaphoreSlim> _partitionSemaphores = new();
-	private readonly WorkerOptions _options;
+	private readonly AsyncEndpointsOptions _options;
 	private bool _disposed;
 
-	public WorkerConcurrencyManager(IOptions<WorkerOptions> options)
+	public WorkerConcurrencyManager(IOptions<AsyncEndpointsOptions> options)
 	{
 		_options = options.Value;
 	}

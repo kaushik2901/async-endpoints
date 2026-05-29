@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Jobs;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Execution;
-using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Worker.UnitTests;
@@ -11,7 +11,7 @@ public class RetryHandlerTests
 
 	public RetryHandlerTests()
 	{
-		var options = new WorkerOptions { MaxRetries = 3, RetryDelayBaseSeconds = 2.0 };
+		var options = new AsyncEndpointsOptions { MaxRetries = 3, RetryDelayBaseSeconds = 2.0 };
 		_handler = new RetryHandler(Options.Create(options));
 	}
 
@@ -37,7 +37,7 @@ public class RetryHandlerTests
 	}
 
 	[Fact]
-	public void ShouldRetry_UsesWorkerOptionsMaxRetries_WhenRecordMaxRetriesIsZero()
+	public void ShouldRetry_UsesOptionsMaxRetries_WhenRecordMaxRetriesIsZero()
 	{
 		var record = new JobRecord { RetryCount = 2, MaxRetries = 0 };
 		Assert.True(_handler.ShouldRetry(record));

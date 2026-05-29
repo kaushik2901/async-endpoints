@@ -1,5 +1,4 @@
 using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Worker.Hosting;
 
 namespace AsyncEndpoints.Core.UnitTests.Configuration;
 
@@ -12,6 +11,7 @@ public class AsyncEndpointsOptionsTests
 
 		Assert.Equal(Environment.ProcessorCount, options.MaxConcurrency);
 		Assert.Equal(3, options.MaxRetries);
+		Assert.Equal(2.0, options.RetryDelayBaseSeconds);
 		Assert.Equal(TimeSpan.FromSeconds(30), options.HeartbeatInterval);
 		Assert.Equal(TimeSpan.FromSeconds(120), options.StaleJobTimeout);
 		Assert.Equal(TimeSpan.FromMilliseconds(100), options.PollingMinInterval);
@@ -28,6 +28,7 @@ public class AsyncEndpointsOptionsTests
 		var options = new AsyncEndpointsOptionsBuilder()
 			.WithMaxConcurrency(8)
 			.WithMaxRetries(5)
+			.WithRetryDelayBaseSeconds(3.0)
 			.WithHeartbeatInterval(TimeSpan.FromSeconds(10))
 			.WithStaleJobTimeout(TimeSpan.FromSeconds(60))
 			.WithPollingInterval(TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(15))
@@ -38,6 +39,7 @@ public class AsyncEndpointsOptionsTests
 
 		Assert.Equal(8, options.MaxConcurrency);
 		Assert.Equal(5, options.MaxRetries);
+		Assert.Equal(3.0, options.RetryDelayBaseSeconds);
 		Assert.Equal(TimeSpan.FromSeconds(10), options.HeartbeatInterval);
 		Assert.Equal(TimeSpan.FromSeconds(60), options.StaleJobTimeout);
 		Assert.Equal(TimeSpan.FromMilliseconds(200), options.PollingMinInterval);
@@ -99,26 +101,4 @@ public class AsyncEndpointsOptionsTests
 		Assert.Equal(TimeSpan.FromSeconds(120), options.RebalanceInterval);
 	}
 
-	[Fact]
-	public void WorkerOptions_HasCorrectDefaults()
-	{
-		var options = new WorkerOptions();
-
-		Assert.NotEqual(Guid.Empty, options.WorkerId);
-		Assert.Equal(Environment.ProcessorCount, options.MaxConcurrency);
-		Assert.Equal(TimeSpan.FromMilliseconds(100), options.PollingIntervalMin);
-		Assert.Equal(TimeSpan.FromSeconds(30), options.PollingIntervalMax);
-		Assert.Equal(TimeSpan.FromSeconds(30), options.HeartbeatInterval);
-		Assert.Equal(TimeSpan.FromSeconds(120), options.StaleJobTimeout);
-		Assert.Equal(50, options.MaxQueueSize);
-	}
-
-	[Fact]
-	public void WorkerOptions_UniqueWorkerIdPerInstance()
-	{
-		var options1 = new WorkerOptions();
-		var options2 = new WorkerOptions();
-
-		Assert.NotEqual(options1.WorkerId, options2.WorkerId);
-	}
 }

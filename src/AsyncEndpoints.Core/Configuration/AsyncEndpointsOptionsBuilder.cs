@@ -18,6 +18,12 @@ public sealed class AsyncEndpointsOptionsBuilder
 		return this;
 	}
 
+	public AsyncEndpointsOptionsBuilder WithRetryDelayBaseSeconds(double seconds)
+	{
+		_options.RetryDelayBaseSeconds = seconds;
+		return this;
+	}
+
 	public AsyncEndpointsOptionsBuilder WithHeartbeatInterval(TimeSpan interval)
 	{
 		_options.HeartbeatInterval = interval;

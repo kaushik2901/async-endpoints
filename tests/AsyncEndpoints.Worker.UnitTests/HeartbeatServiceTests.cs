@@ -1,6 +1,6 @@
 using AsyncEndpoints.Abstractions.Storage;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Heartbeat;
-using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -14,7 +14,7 @@ public class HeartbeatServiceTests
 	{
 		var jobId = Guid.NewGuid();
 		var mockStore = new Mock<IJobStore>();
-		var options = new WorkerOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(50) };
+		var options = new AsyncEndpointsOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(50) };
 		var logger = Mock.Of<ILogger<HeartbeatService>>();
 
 		var service = new HeartbeatService(mockStore.Object, Options.Create(options), logger);
@@ -31,7 +31,7 @@ public class HeartbeatServiceTests
 	{
 		var jobId = Guid.NewGuid();
 		var mockStore = new Mock<IJobStore>();
-		var options = new WorkerOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(20) };
+		var options = new AsyncEndpointsOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(20) };
 		var logger = Mock.Of<ILogger<HeartbeatService>>();
 
 		var service = new HeartbeatService(mockStore.Object, Options.Create(options), logger);
@@ -56,7 +56,7 @@ public class HeartbeatServiceTests
 	{
 		var jobId = Guid.NewGuid();
 		var mockStore = new Mock<IJobStore>();
-		var options = new WorkerOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(20) };
+		var options = new AsyncEndpointsOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(20) };
 		var logger = Mock.Of<ILogger<HeartbeatService>>();
 
 		var service = new HeartbeatService(mockStore.Object, Options.Create(options), logger);

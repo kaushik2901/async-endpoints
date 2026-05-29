@@ -1,4 +1,5 @@
 using AsyncEndpoints.Abstractions.Storage;
+using AsyncEndpoints.Core.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,12 +9,12 @@ namespace AsyncEndpoints.Worker.Hosting;
 public sealed class StaleJobSweeper : BackgroundService
 {
 	private readonly IJobStore _store;
-	private readonly WorkerOptions _options;
+	private readonly AsyncEndpointsOptions _options;
 	private readonly ILogger<StaleJobSweeper> _logger;
 
 	public StaleJobSweeper(
 		IJobStore store,
-		IOptions<WorkerOptions> options,
+		IOptions<AsyncEndpointsOptions> options,
 		ILogger<StaleJobSweeper> logger)
 	{
 		_store = store;

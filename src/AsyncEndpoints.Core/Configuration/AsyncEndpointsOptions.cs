@@ -6,6 +6,7 @@ public sealed class AsyncEndpointsOptions
 {
 	public int MaxConcurrency { get; set; } = Environment.ProcessorCount;
 	public int MaxRetries { get; set; } = 3;
+	public double RetryDelayBaseSeconds { get; set; } = 2.0;
 	public TimeSpan HeartbeatInterval { get; set; } = TimeSpan.FromSeconds(30);
 	public TimeSpan StaleJobTimeout { get; set; } = TimeSpan.FromSeconds(120);
 	public TimeSpan PollingMinInterval { get; set; } = TimeSpan.FromMilliseconds(100);

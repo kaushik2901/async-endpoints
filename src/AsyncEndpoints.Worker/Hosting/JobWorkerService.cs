@@ -4,7 +4,6 @@ using AsyncEndpoints.Worker.Execution;
 using AsyncEndpoints.Worker.Heartbeat;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Worker.Hosting;
 
@@ -16,7 +15,6 @@ public sealed class JobWorkerService : BackgroundService
 	private readonly WorkerConcurrencyManager _concurrencyManager;
 	private readonly HeartbeatService _heartbeatService;
 	private readonly ILogger<JobWorkerService> _logger;
-	private readonly WorkerOptions _options;
 
 	public JobWorkerService(
 		string channel,
@@ -24,7 +22,6 @@ public sealed class JobWorkerService : BackgroundService
 		JobExecutionPipeline pipeline,
 		WorkerConcurrencyManager concurrencyManager,
 		HeartbeatService heartbeatService,
-		IOptions<WorkerOptions> options,
 		ILogger<JobWorkerService> logger)
 	{
 		_channel = channel;
@@ -33,7 +30,6 @@ public sealed class JobWorkerService : BackgroundService
 		_concurrencyManager = concurrencyManager;
 		_heartbeatService = heartbeatService;
 		_logger = logger;
-		_options = options.Value;
 	}
 
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)

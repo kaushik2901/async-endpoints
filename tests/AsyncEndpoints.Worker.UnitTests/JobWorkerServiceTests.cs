@@ -1,6 +1,7 @@
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Listener;
 using AsyncEndpoints.Abstractions.Storage;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Execution;
 using AsyncEndpoints.Worker.Concurrency;
 using AsyncEndpoints.Worker.Execution;
@@ -22,7 +23,7 @@ public class JobWorkerServiceTests
 			.ReturnsAsync((JobRecord?)null);
 
 		var mockStore = new Mock<IJobStore>();
-		var options = Options.Create(new WorkerOptions { DefaultChannel = "default", HeartbeatInterval = TimeSpan.FromMilliseconds(100) });
+		var options = Options.Create(new AsyncEndpointsOptions { DefaultChannel = "default", HeartbeatInterval = TimeSpan.FromMilliseconds(100) });
 
 		var worker = CreateWorker(mockListener.Object, mockStore.Object, options);
 
@@ -47,7 +48,7 @@ public class JobWorkerServiceTests
 			.ReturnsAsync((JobRecord?)null);
 
 		var mockStore = new Mock<IJobStore>();
-		var options = Options.Create(new WorkerOptions { DefaultChannel = "default", HeartbeatInterval = TimeSpan.FromMilliseconds(50) });
+		var options = Options.Create(new AsyncEndpointsOptions { DefaultChannel = "default", HeartbeatInterval = TimeSpan.FromMilliseconds(50) });
 
 		var worker = CreateWorker(mockListener.Object, mockStore.Object, options);
 
@@ -73,13 +74,13 @@ public class JobWorkerServiceTests
 			.ReturnsAsync((JobRecord?)null);
 
 		var mockStore = new Mock<IJobStore>();
-		var options = Options.Create(new WorkerOptions
+		var options = Options.Create(new AsyncEndpointsOptions
 		{
 			DefaultChannel = "default",
 			MaxConcurrency = 1,
 			HeartbeatInterval = TimeSpan.FromMilliseconds(200)
 		});
-		var concurrencyOptions = Options.Create(new WorkerOptions { MaxConcurrency = 1 });
+		var concurrencyOptions = Options.Create(new AsyncEndpointsOptions { MaxConcurrency = 1 });
 
 		var handlerRegistry = new Mock<IHandlerRegistry>();
 		handlerRegistry.Setup(r => r.GetInvoker(It.IsAny<string>()))
@@ -108,7 +109,7 @@ public class JobWorkerServiceTests
 		var concurrencyManager = new WorkerConcurrencyManager(concurrencyOptions);
 		var heartbeatService = new HeartbeatService(
 			mockStore.Object,
-			Options.Create(new WorkerOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(200) }),
+			Options.Create(new AsyncEndpointsOptions { HeartbeatInterval = TimeSpan.FromMilliseconds(200) }),
 			Mock.Of<ILogger<HeartbeatService>>());
 
 		var worker = new JobWorkerService(
@@ -117,7 +118,6 @@ public class JobWorkerServiceTests
 			pipeline,
 			concurrencyManager,
 			heartbeatService,
-			options,
 			Mock.Of<ILogger<JobWorkerService>>());
 
 		using var cts = new CancellationTokenSource(3000);
@@ -132,7 +132,7 @@ public class JobWorkerServiceTests
 	private static JobWorkerService CreateWorker(
 		IJobListener listener,
 		IJobStore store,
-		IOptions<WorkerOptions> options)
+		IOptions<AsyncEndpointsOptions> options)
 	{
 		var handlerRegistry = new Mock<IHandlerRegistry>();
 		handlerRegistry.Setup(r => r.GetInvoker(It.IsAny<string>()))
@@ -163,7 +163,6 @@ public class JobWorkerServiceTests
 			pipeline,
 			concurrencyManager,
 			heartbeatService,
-			options,
 			Mock.Of<ILogger<JobWorkerService>>());
 	}
 }

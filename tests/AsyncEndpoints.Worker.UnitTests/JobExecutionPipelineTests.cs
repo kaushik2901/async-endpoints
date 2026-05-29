@@ -1,8 +1,8 @@
 using AsyncEndpoints.Abstractions.Jobs;
 using AsyncEndpoints.Abstractions.Storage;
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Core.Execution;
 using AsyncEndpoints.Worker.Execution;
-using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -14,12 +14,12 @@ public class JobExecutionPipelineTests
 	private readonly Mock<IJobStore> _mockStore;
 	private readonly RetryHandler _retryHandler;
 	private readonly ILogger<JobExecutionPipeline> _logger;
-	private readonly WorkerOptions _options;
+	private readonly AsyncEndpointsOptions _options;
 
 	public JobExecutionPipelineTests()
 	{
 		_mockStore = new Mock<IJobStore>();
-		_options = new WorkerOptions { MaxRetries = 3 };
+		_options = new AsyncEndpointsOptions { MaxRetries = 3 };
 		_retryHandler = new RetryHandler(Options.Create(_options));
 		_logger = Mock.Of<ILogger<JobExecutionPipeline>>();
 	}

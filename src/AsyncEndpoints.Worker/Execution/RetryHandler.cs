@@ -1,14 +1,14 @@
 using AsyncEndpoints.Abstractions.Jobs;
-using AsyncEndpoints.Worker.Hosting;
+using AsyncEndpoints.Core.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Worker.Execution;
 
 public sealed class RetryHandler
 {
-	private readonly WorkerOptions _options;
+	private readonly AsyncEndpointsOptions _options;
 
-	public RetryHandler(IOptions<WorkerOptions> options)
+	public RetryHandler(IOptions<AsyncEndpointsOptions> options)
 	{
 		_options = options.Value;
 	}

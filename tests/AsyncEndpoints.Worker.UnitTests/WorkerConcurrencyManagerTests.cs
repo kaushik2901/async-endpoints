@@ -1,5 +1,5 @@
+using AsyncEndpoints.Core.Configuration;
 using AsyncEndpoints.Worker.Concurrency;
-using AsyncEndpoints.Worker.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace AsyncEndpoints.Worker.UnitTests;
@@ -9,7 +9,7 @@ public class WorkerConcurrencyManagerTests
 	[Fact]
 	public async Task CurrentCount_ReturnsMaxConcurrency_Initially()
 	{
-		var options = new WorkerOptions { MaxConcurrency = 5 };
+		var options = new AsyncEndpointsOptions { MaxConcurrency = 5 };
 		var manager = new WorkerConcurrencyManager(Options.Create(options));
 
 		Assert.Equal(5, manager.CurrentCount("default"));
@@ -18,7 +18,7 @@ public class WorkerConcurrencyManagerTests
 	[Fact]
 	public async Task WaitAsync_Blocks_WhenAtMaxConcurrency()
 	{
-		var options = new WorkerOptions { MaxConcurrency = 1 };
+		var options = new AsyncEndpointsOptions { MaxConcurrency = 1 };
 		var manager = new WorkerConcurrencyManager(Options.Create(options));
 
 		await manager.WaitAsync("default", null, default);
@@ -44,7 +44,7 @@ public class WorkerConcurrencyManagerTests
 	[Fact]
 	public async Task Release_AllowsNextJob()
 	{
-		var options = new WorkerOptions { MaxConcurrency = 1 };
+		var options = new AsyncEndpointsOptions { MaxConcurrency = 1 };
 		var manager = new WorkerConcurrencyManager(Options.Create(options));
 
 		await manager.WaitAsync("default", null, default);
@@ -59,7 +59,7 @@ public class WorkerConcurrencyManagerTests
 	[Fact]
 	public async Task CurrentCount_DecreasesAfterWait()
 	{
-		var options = new WorkerOptions { MaxConcurrency = 5 };
+		var options = new AsyncEndpointsOptions { MaxConcurrency = 5 };
 		var manager = new WorkerConcurrencyManager(Options.Create(options));
 
 		await manager.WaitAsync("default", null, default);
@@ -70,7 +70,7 @@ public class WorkerConcurrencyManagerTests
 	[Fact]
 	public async Task PerChannelSemaphores_AreIsolated()
 	{
-		var options = new WorkerOptions { MaxConcurrency = 1 };
+		var options = new AsyncEndpointsOptions { MaxConcurrency = 1 };
 		var manager = new WorkerConcurrencyManager(Options.Create(options));
 
 		await manager.WaitAsync("channel-a", null, default);
@@ -98,7 +98,7 @@ public class WorkerConcurrencyManagerTests
 	[Fact]
 	public async Task PartitionSemaphore_EnsuresOrdering()
 	{
-		var options = new WorkerOptions { MaxConcurrency = 5 };
+		var options = new AsyncEndpointsOptions { MaxConcurrency = 5 };
 		var manager = new WorkerConcurrencyManager(Options.Create(options));
 
 		await manager.WaitAsync("default", 1, default);
@@ -126,7 +126,7 @@ public class WorkerConcurrencyManagerTests
 	[Fact]
 	public async Task Dispose_ReleasesAllSemaphores()
 	{
-		var options = new WorkerOptions { MaxConcurrency = 2 };
+		var options = new AsyncEndpointsOptions { MaxConcurrency = 2 };
 		var manager = new WorkerConcurrencyManager(Options.Create(options));
 
 		await manager.WaitAsync("default", null, default);
