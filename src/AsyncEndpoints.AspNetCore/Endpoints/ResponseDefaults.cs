@@ -31,7 +31,7 @@ public static class ResponseDefaults
 
 	public static Task<IResult> DefaultJobResultResponseFactory(JobRecord record, HttpContext _)
 	{
-		if (record.Status == Abstractions.Jobs.JobStatus.Completed)
+		if (record.Status == JobStatus.Completed)
 		{
 			return Task.FromResult(Results.Ok(new Models.JobResultResponse
 			{
@@ -41,7 +41,7 @@ public static class ResponseDefaults
 		}
 
 		return Task.FromResult(Results.Problem(
-			detail: record.Status == Abstractions.Jobs.JobStatus.Failed || record.Status == Abstractions.Jobs.JobStatus.DeadLettered
+			detail: record.Status == JobStatus.Failed || record.Status == JobStatus.DeadLettered
 				? record.ErrorMessage ?? "Job failed"
 				: "Job has not yet completed",
 			statusCode: 409));

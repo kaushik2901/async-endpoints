@@ -1,6 +1,4 @@
 using AsyncEndpoints.AspNetCore.Configuration;
-using AsyncEndpoints.Core.Configuration;
-using AsyncEndpoints.Core.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json.Serialization.Metadata;
 
@@ -14,14 +12,6 @@ public static class ServiceCollectionExtensions
 		services.AddSingleton<AspNetCoreOptions>();
 		services.AddSingleton<AsyncEndpointsResponseConfigurations>();
 		services.AddAsyncEndpointsJsonTypeInfoResolver(AsyncEndpointsAspNetCoreJsonSerializationContext.Default);
-		return services;
-	}
-
-	[Obsolete("Use AddAsyncEndpointsCore + AddAsyncEndpointsAspNetCore instead.")]
-	public static IServiceCollection AddAsyncEndpoints(this IServiceCollection services, Action<AsyncEndpointsOptionsBuilder>? configureOptions = null)
-	{
-		services.AddAsyncEndpointsCore(configureOptions);
-		services.AddAsyncEndpointsAspNetCore();
 		return services;
 	}
 
