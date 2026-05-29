@@ -9,7 +9,6 @@
     <PackageVersion>1.1.1-alpha</PackageVersion>
     <Authors>Kaushik Jadav</Authors>
     <Description>Redis integration for AsyncEndpoints library with distributed job storage capabilities.</Description>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>async;endpoints;background-jobs;queue;redis</PackageTags>
     <RepositoryUrl>https://github.com/kaushik2901/async-endpoints</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -18,7 +17,6 @@
     <IsAotCompatible>true</IsAotCompatible>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <PackageIcon>async-endpoints.png</PackageIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
